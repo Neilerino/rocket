@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Check, X, ChevronDown, MessageSquare, TrendingUp, Calendar } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from 'shad/components/ui/card';
 
 const TrainingTracker = () => {
   const [activeView, setActiveView] = useState('week');
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  
+
   const weekSchedule = [
     {
       day: 'Monday',
@@ -15,30 +15,30 @@ const TrainingTracker = () => {
           id: 1,
           title: 'Morning Strength Session',
           exercises: [
-            { 
-              id: 1, 
-              name: 'Campus Board Repeaters', 
-              completed: false, 
+            {
+              id: 1,
+              name: 'Campus Board Repeaters',
+              completed: false,
               rpe: null,
               notes: '',
               progress: [],
               showNotes: false,
-              showProgress: false
+              showProgress: false,
             },
-            { 
-              id: 2, 
-              name: 'Max Hangs', 
-              completed: false, 
+            {
+              id: 2,
+              name: 'Max Hangs',
+              completed: false,
               rpe: null,
               notes: '',
               progress: [],
               showNotes: false,
-              showProgress: false
-            }
+              showProgress: false,
+            },
           ],
-          expanded: false
-        }
-      ]
+          expanded: false,
+        },
+      ],
     },
     {
       day: 'Tuesday',
@@ -48,25 +48,25 @@ const TrainingTracker = () => {
           id: 2,
           title: 'Circuit Training',
           exercises: [
-            { 
-              id: 3, 
-              name: '4x4s on Wall', 
-              completed: false, 
+            {
+              id: 3,
+              name: '4x4s on Wall',
+              completed: false,
               rpe: null,
               notes: '',
               progress: [],
               showNotes: false,
-              showProgress: false
-            }
+              showProgress: false,
+            },
           ],
-          expanded: false
-        }
-      ]
+          expanded: false,
+        },
+      ],
     },
     {
       day: 'Wednesday',
       workoutType: 'Rest',
-      workouts: []
+      workouts: [],
     },
     {
       day: 'Thursday',
@@ -76,30 +76,30 @@ const TrainingTracker = () => {
           id: 3,
           title: 'Movement Skills',
           exercises: [
-            { 
-              id: 4, 
-              name: 'Silent Feet Drills', 
-              completed: false, 
+            {
+              id: 4,
+              name: 'Silent Feet Drills',
+              completed: false,
               rpe: null,
               notes: '',
               progress: [],
               showNotes: false,
-              showProgress: false
+              showProgress: false,
             },
-            { 
-              id: 5, 
-              name: 'Rooting Practice', 
-              completed: false, 
+            {
+              id: 5,
+              name: 'Rooting Practice',
+              completed: false,
               rpe: null,
               notes: '',
               progress: [],
               showNotes: false,
-              showProgress: false
-            }
+              showProgress: false,
+            },
           ],
-          expanded: false
-        }
-      ]
+          expanded: false,
+        },
+      ],
     },
     {
       day: 'Friday',
@@ -109,20 +109,20 @@ const TrainingTracker = () => {
           id: 4,
           title: 'Explosive Training',
           exercises: [
-            { 
-              id: 6, 
-              name: 'Limit Bouldering', 
-              completed: false, 
+            {
+              id: 6,
+              name: 'Limit Bouldering',
+              completed: false,
               rpe: null,
               notes: '',
               progress: [],
               showNotes: false,
-              showProgress: false
-            }
+              showProgress: false,
+            },
           ],
-          expanded: false
-        }
-      ]
+          expanded: false,
+        },
+      ],
     },
     {
       day: 'Saturday',
@@ -132,33 +132,33 @@ const TrainingTracker = () => {
           id: 5,
           title: 'Project Work',
           exercises: [
-            { 
-              id: 7, 
-              name: 'Project Attempts', 
-              completed: false, 
+            {
+              id: 7,
+              name: 'Project Attempts',
+              completed: false,
               rpe: null,
               notes: '',
               progress: [],
               showNotes: false,
-              showProgress: false
-            }
+              showProgress: false,
+            },
           ],
-          expanded: false
-        }
-      ]
+          expanded: false,
+        },
+      ],
     },
     {
       day: 'Sunday',
       workoutType: 'Rest',
-      workouts: []
-    }
+      workouts: [],
+    },
   ];
 
   const WeeklyView = () => (
     <div className="space-y-2">
       {weekSchedule.map((day, index) => (
-        <Card 
-          key={index} 
+        <Card
+          key={index}
           className={`cursor-pointer hover:bg-gray-50 transition-colors ${
             selectedDay === index ? 'border-blue-500 border-2' : ''
           }`}
@@ -172,18 +172,19 @@ const TrainingTracker = () => {
           <div className="p-4 flex items-center justify-between">
             <div>
               <h3 className="font-semibold">{day.day}</h3>
-              <p className={`text-sm ${
-                day.workoutType === 'Rest' ? 'text-gray-400' : 'text-blue-500'
-              }`}>
+              <p
+                className={`text-sm ${
+                  day.workoutType === 'Rest' ? 'text-gray-400' : 'text-blue-500'
+                }`}
+              >
                 {day.workoutType}
               </p>
             </div>
             {day.workouts.length > 0 && (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500">
-                  {day.workouts.reduce((acc, workout) => 
-                    acc + workout.exercises.length, 0
-                  )} exercises
+                  {day.workouts.reduce((acc, workout) => acc + workout.exercises.length, 0)}{' '}
+                  exercises
                 </span>
                 <ChevronDown size={16} className="text-gray-400" />
               </div>
@@ -205,7 +206,7 @@ const TrainingTracker = () => {
             <h2 className="text-xl font-bold">{dayData.day}</h2>
             <p className="text-blue-500">{dayData.workoutType}</p>
           </div>
-          <button 
+          <button
             onClick={() => setActiveView('week')}
             className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
           >
@@ -213,25 +214,24 @@ const TrainingTracker = () => {
           </button>
         </div>
 
-        {dayData.workouts.map(workout => (
+        {dayData.workouts.map((workout) => (
           <Card key={workout.id} className="bg-white shadow-sm">
             <CardHeader className="p-4">
-              <CardTitle className="text-lg font-semibold">
-                {workout.title}
-              </CardTitle>
+              <CardTitle className="text-lg font-semibold">{workout.title}</CardTitle>
             </CardHeader>
-            
+
             <CardContent className="p-4">
               <div className="space-y-3">
-                {workout.exercises.map(exercise => (
-                  <div key={exercise.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                {workout.exercises.map((exercise) => (
+                  <div
+                    key={exercise.id}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => {}}
                         className={`p-1 rounded-full ${
-                          exercise.completed 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-gray-200'
+                          exercise.completed ? 'bg-green-500 text-white' : 'bg-gray-200'
                         }`}
                       >
                         {exercise.completed ? <Check size={16} /> : <X size={16} />}
@@ -240,7 +240,7 @@ const TrainingTracker = () => {
                         {exercise.name}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <input
                         type="number"

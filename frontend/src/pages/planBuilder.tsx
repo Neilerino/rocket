@@ -3,13 +3,13 @@ import { Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 
 const PlanBuilder = () => {
   const presetExercises = [
-    "Campus Board Repeaters",
-    "Max Hangs",
-    "4x4s on Wall",
-    "Limit Bouldering",
-    "Power Endurance Circuits",
-    "Core Workout",
-    "Pull-ups"
+    'Campus Board Repeaters',
+    'Max Hangs',
+    '4x4s on Wall',
+    'Limit Bouldering',
+    'Power Endurance Circuits',
+    'Core Workout',
+    'Pull-ups',
   ];
 
   const [planName, setPlanName] = useState('');
@@ -22,60 +22,64 @@ const PlanBuilder = () => {
     const newDay = {
       id: Date.now(),
       name: `Day ${days.length + 1}`,
-      exercises: []
+      exercises: [],
     };
     setDays([...days, newDay]);
     setExpandedDay(newDay.id);
   };
 
   const removeDay = (dayId) => {
-    setDays(days.filter(day => day.id !== dayId));
+    setDays(days.filter((day) => day.id !== dayId));
   };
 
   const updateDayName = (dayId, newName) => {
-    setDays(days.map(day => 
-      day.id === dayId ? { ...day, name: newName } : day
-    ));
+    setDays(days.map((day) => (day.id === dayId ? { ...day, name: newName } : day)));
   };
 
   const addExercise = (dayId, exercise) => {
-    setDays(days.map(day => {
-      if (day.id === dayId) {
-        return {
-          ...day,
-          exercises: [...day.exercises, { name: exercise, sets: 3, reps: 5 }]
-        };
-      }
-      return day;
-    }));
+    setDays(
+      days.map((day) => {
+        if (day.id === dayId) {
+          return {
+            ...day,
+            exercises: [...day.exercises, { name: exercise, sets: 3, reps: 5 }],
+          };
+        }
+        return day;
+      }),
+    );
     setNewExercise('');
     setShowPresets(false);
   };
 
   const removeExercise = (dayId, index) => {
-    setDays(days.map(day => {
-      if (day.id === dayId) {
-        return {
-          ...day,
-          exercises: day.exercises.filter((_, i) => i !== index)
-        };
-      }
-      return day;
-    }));
+    setDays(
+      days.map((day) => {
+        if (day.id === dayId) {
+          return {
+            ...day,
+            exercises: day.exercises.filter((_, i) => i !== index),
+          };
+        }
+        return day;
+      }),
+    );
   };
 
   const updateExercise = (dayId, exerciseIndex, field, value) => {
-    setDays(days.map(day => {
-      if (day.id === dayId) {
-        const updatedExercises = [...day.exercises];
-        updatedExercises[exerciseIndex] = {
-          ...updatedExercises[exerciseIndex],
-          [field]: value
-        };
-        return { ...day, exercises: updatedExercises };
-      }
-      return day;
-    }));
+    setDays(
+      days.map((day) => {
+        if (day.id === dayId) {
+          const updatedExercises = [...day.exercises];
+          updatedExercises[exerciseIndex] = {
+            ...updatedExercises[exerciseIndex],
+            [field]: value,
+          };
+          return { ...day, exercises: updatedExercises };
+        }
+        return day;
+      }),
+    );
   };
 
   return (
@@ -91,7 +95,7 @@ const PlanBuilder = () => {
 
       {/* Days */}
       <div className="space-y-4 mb-4">
-        {days.map(day => (
+        {days.map((day) => (
           <div key={day.id} className="border rounded-lg overflow-hidden">
             <div className="bg-gray-50 p-3 flex items-center justify-between">
               <input
@@ -121,21 +125,24 @@ const PlanBuilder = () => {
               <div className="p-3 space-y-3">
                 {/* Exercises for this day */}
                 {day.exercises.map((exercise, index) => (
-                  <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg"
+                  >
                     <button
                       onClick={() => removeExercise(day.id, index)}
                       className="text-red-500 hover:bg-red-50 p-2 rounded-full"
                     >
                       <X size={16} />
                     </button>
-                    
+
                     <input
                       type="text"
                       value={exercise.name}
                       onChange={(e) => updateExercise(day.id, index, 'name', e.target.value)}
                       className="flex-1 bg-transparent"
                     />
-                    
+
                     <input
                       type="number"
                       value={exercise.sets}
@@ -143,7 +150,7 @@ const PlanBuilder = () => {
                       className="w-16 p-1 text-center border rounded"
                       placeholder="Sets"
                     />
-                    
+
                     <input
                       type="number"
                       value={exercise.reps}
@@ -210,7 +217,7 @@ const PlanBuilder = () => {
       </button>
 
       {/* Save Plan Button */}
-      {(planName && days.length > 0) && (
+      {planName && days.length > 0 && (
         <button
           onClick={() => {
             // Save plan logic here

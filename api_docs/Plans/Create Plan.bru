@@ -1,0 +1,19 @@
+meta {
+  name: Create Plan
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{hostname}}/api/v1/plans/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "userId": 2,
+    "description": "Another Test Plan!",
+    "name": "Second Test Plan"
+  }
+}

@@ -6,25 +6,25 @@ const Home = () => {
   const [savedPlans] = useState([
     {
       id: 1,
-      name: "Strength Focus",
-      lastUsed: "2024-12-28",
+      name: 'Strength Focus',
+      lastUsed: '2024-12-28',
       daysCount: 4,
-      type: "Strength"
+      type: 'Strength',
     },
     {
       id: 2,
-      name: "Endurance Block",
-      lastUsed: "2024-12-27",
+      name: 'Endurance Block',
+      lastUsed: '2024-12-27',
       daysCount: 3,
-      type: "Endurance"
+      type: 'Endurance',
     },
     {
       id: 3,
-      name: "Power Project",
-      lastUsed: "2024-12-26",
+      name: 'Power Project',
+      lastUsed: '2024-12-26',
       daysCount: 3,
-      type: "Power"
-    }
+      type: 'Power',
+    },
   ]);
 
   return (
@@ -36,7 +36,9 @@ const Home = () => {
           <p className="text-gray-600">Manage and create your climbing workouts</p>
         </div>
         <button
-          onClick={() => {/* Navigate to plan builder */}}
+          onClick={() => {
+            /* Navigate to plan builder */
+          }}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center space-x-2 hover:bg-blue-700"
         >
           <Plus size={20} />
@@ -47,7 +49,9 @@ const Home = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <button
-          onClick={() => {/* Navigate to today's workout */}}
+          onClick={() => {
+            /* Navigate to today's workout */
+          }}
           className="p-6 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors flex items-center justify-between"
         >
           <div className="flex items-center space-x-3">
@@ -61,7 +65,9 @@ const Home = () => {
         </button>
 
         <button
-          onClick={() => {/* Navigate to plan builder */}}
+          onClick={() => {
+            /* Navigate to plan builder */
+          }}
           className="p-6 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-between"
         >
           <div className="flex items-center space-x-3">
@@ -79,8 +85,8 @@ const Home = () => {
       <div>
         <h2 className="text-lg font-semibold mb-4">Your Plans</h2>
         <div className="space-y-3">
-          {savedPlans.map(plan => (
-            <div 
+          {savedPlans.map((plan) => (
+            <div
               key={plan.id}
               className="p-4 bg-white border rounded-lg hover:border-blue-500 cursor-pointer"
             >
@@ -92,12 +98,13 @@ const Home = () => {
                   <div>
                     <h3 className="font-medium">{plan.name}</h3>
                     <p className="text-sm text-gray-500">
-                      {plan.daysCount} days • Last used {new Date(plan.lastUsed).toLocaleDateString()}
+                      {plan.daysCount} days • Last used{' '}
+                      {new Date(plan.lastUsed).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button 
+                  <button
                     className="p-2 hover:bg-gray-100 rounded-full"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -123,7 +130,9 @@ const Home = () => {
           <h3 className="text-lg font-medium mb-2">No Plans Yet</h3>
           <p className="text-gray-600 mb-4">Create your first training plan to get started</p>
           <button
-            onClick={() => {/* Navigate to plan builder */}}
+            onClick={() => {
+              /* Navigate to plan builder */
+            }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg inline-flex items-center space-x-2 hover:bg-blue-700"
           >
             <Plus size={20} />
