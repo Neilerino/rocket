@@ -87,14 +87,14 @@ CREATE TABLE IF NOT EXISTS exercises (
 
 CREATE TABLE parameter_types (
     id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL CONSTRAINT parameter_types_default_unit_chk CHECK validate_length (name, 1, 255), -- e.g., "Percentage", "Edge Depth"
-    data_type TEXT NOT NULL CONSTRAINT parameter_types_default_unit_chk CHECK validate_length (data_type, 1, 255), -- "percentage", "length", "time", "weight"
-    default_unit TEXT NOT NULL CONSTRAINT parameter_types_default_unit_chk CHECK validate_length (default_unit, 1, 100), -- "%", "mm", "seconds", "kg"
+    "name" TEXT NOT NULL CONSTRAINT parameter_types_name_chk CHECK (validate_length ("name", 1, 255)), -- e.g., "Percentage", "Edge Depth"
+    data_type TEXT NOT NULL CONSTRAINT parameter_types_data_type_chk CHECK (validate_length (data_type, 1, 255)), -- "percentage", "length", "time", "weight"
+    default_unit TEXT NOT NULL CONSTRAINT parameter_types_default_unit_chk CHECK (validate_length (default_unit, 1, 100)), -- "%", "mm", "seconds", "kg"
     min_value FLOAT, -- e.g., 0 for percentages
     max_value FLOAT -- e.g., 100 for percentages
 );
 
-CREATE TABLE exercise_details (
+CREATE TABLE exercise_variations (
     id BIGSERIAL PRIMARY KEY,
     exercise_id BIGINT NOT NULL REFERENCES exercises (exercise_id),
     parameter_type_id BIGINT REFERENCES parameter_types (parameter_type_id)

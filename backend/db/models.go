@@ -18,21 +18,18 @@ type Category struct {
 }
 
 type Exercise struct {
-	ID             int64
-	Name           string
-	Description    string
-	UserID         pgtype.Int8
-	DefaultMetrics []byte
-	CreatedAt      pgtype.Timestamp
-	UpdatedAt      pgtype.Timestamp
+	ID          int64
+	Name        string
+	Description string
+	UserID      pgtype.Int8
+	CreatedAt   pgtype.Timestamp
+	UpdatedAt   pgtype.Timestamp
 }
 
 type ExerciseVariation struct {
-	ID         int64
-	Name       string
-	ExerciseID int64
-	Metrics    []byte
-	Notes      string
+	ID              int64
+	ExerciseID      int64
+	ParameterTypeID pgtype.Int8
 }
 
 type Group struct {
@@ -61,6 +58,15 @@ type IntervalGroupAssignment struct {
 	PlanIntervalID int64
 	GroupID        int64
 	Frequency      int32
+}
+
+type ParameterType struct {
+	ID          int64
+	Name        string
+	DataType    string
+	DefaultUnit string
+	MinValue    pgtype.Float8
+	MaxValue    pgtype.Float8
 }
 
 type Plan struct {
