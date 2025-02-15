@@ -1,0 +1,32 @@
+meta {
+  name: Exercises
+  type: http
+  seq: 4
+}
+
+# List Exercises by User ID
+GET {{hostname}}/api/exercises/user/{{userId}}
+query {
+  ~limit: 100
+}
+
+# Get Exercise by ID
+GET {{hostname}}/api/exercises/{{exerciseId}}
+
+# Create Exercise
+POST {{hostname}}/api/exercises
+{
+  "name": "string",
+  "description": "string",
+  "userId": 0
+}
+
+# Update Exercise
+PUT {{hostname}}/api/exercises/{{exerciseId}}
+{
+  "name": "string",
+  "description": "string"
+}
+
+# Delete Exercise
+DELETE {{hostname}}/api/exercises/{{exerciseId}}

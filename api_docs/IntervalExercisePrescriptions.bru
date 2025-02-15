@@ -1,0 +1,27 @@
+meta {
+  name: Interval Exercise Prescriptions
+  type: http
+  seq: 6
+}
+
+# List Prescriptions by Group ID
+GET {{hostname}}/api/interval-exercise-prescriptions/group/{{groupId}}
+
+# List Prescriptions by Plan Interval ID
+GET {{hostname}}/api/interval-exercise-prescriptions/interval/{{intervalId}}
+
+# Create Prescription
+POST {{hostname}}/api/interval-exercise-prescriptions
+{
+  "group_id": 0,
+  "exercise_variation_id": 0,
+  "plan_interval_id": 0,
+  "rpe": 0,
+  "sets": 0,
+  "reps": 0,
+  "duration": 0,
+  "rest": 0
+}
+
+# Delete Prescription
+DELETE {{hostname}}/api/interval-exercise-prescriptions/{{prescriptionId}}

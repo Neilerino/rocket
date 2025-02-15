@@ -1,0 +1,37 @@
+meta {
+  name: Groups
+  type: http
+  seq: 2
+}
+
+# List Groups by Plan ID
+GET {{hostname}}/api/groups/plan/{{planId}}
+query {
+  ~limit: 100
+}
+
+# Get Group by ID
+GET {{hostname}}/api/groups/{{groupId}}
+
+# Create Group
+POST {{hostname}}/api/groups
+{
+  "name": "string",
+  "description": "string"
+}
+
+# Update Group
+PUT {{hostname}}/api/groups/{{groupId}}
+{
+  "name": "string",
+  "description": "string"
+}
+
+# Delete Group
+DELETE {{hostname}}/api/groups/{{groupId}}
+
+# Assign Group to Interval
+POST {{hostname}}/api/groups/{{groupId}}/intervals/{{intervalId}}
+
+# Remove Group from Interval
+DELETE {{hostname}}/api/groups/{{groupId}}/intervals/{{intervalId}}

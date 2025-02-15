@@ -1,0 +1,23 @@
+meta {
+  name: Plan Intervals
+  type: http
+  seq: 3
+}
+
+# List Plan Intervals
+GET {{hostname}}/api/plan-intervals/plan/{{planId}}
+query {
+  ~limit: 100
+}
+
+# Create Plan Interval
+POST {{hostname}}/api/plan-intervals
+{
+  "planId": 0,
+  "duration": "string",
+  "name": "string",
+  "order": 0
+}
+
+# Delete Plan Interval
+DELETE {{hostname}}/api/plan-intervals/{{intervalId}}

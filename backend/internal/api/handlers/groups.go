@@ -133,6 +133,31 @@ func (h *GroupsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *GroupsHandler) GetById(w http.ResponseWriter, r *http.Request) {
+	id, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
+	if err != nil {
+		api_utils.WriteError(w, http.StatusBadRequest, "Invalid group ID")
+		return
+	}
+
+	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		group_repo := repository.GroupsRepository{Queries: queries}
+		group_service := service.NewGroupsService(&group_repo)
+
+		group, err := group_service.GetGroupById(r.Context(), id)
+		if err != nil {
+			return err
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		return json.NewEncoder(w).Encode(group)
+	})
+
+	if success {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func (h *GroupsHandler) AssignToInterval(w http.ResponseWriter, r *http.Request) {
 	groupId, err := api_utils.ParseBigInt(chi.URLParam(r, "groupId"))
 	if err != nil {
@@ -147,8 +172,8 @@ func (h *GroupsHandler) AssignToInterval(w http.ResponseWriter, r *http.Request)
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		group_repo := repository.GroupsRepository{Queries: queries}
-		interval_group_assignment_service := service.NewIntervalGroupAssignmentService(&group_repo)
+		interval_group_assignment_repo := repository.IntervalGroupAssignmentRepository{Queries: queries}
+		interval_group_assignment_service := service.NewIntervalGroupAssignmentService(&interval_group_assignment_repo)
 
 		err := interval_group_assignment_service.CreateIntervalGroupAssignment(r.Context(), planIntervalId, groupId)
 		if err != nil {
@@ -177,8 +202,8 @@ func (h *GroupsHandler) RemoveFromInterval(w http.ResponseWriter, r *http.Reques
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		group_repo := repository.GroupsRepository{Queries: queries}
-		interval_group_assignment_service := service.NewIntervalGroupAssignmentService(&group_repo)
+		group_interval_assign_repo := repository.IntervalGroupAssignmentRepository{Queries: queries}
+		interval_group_assignment_service := service.NewIntervalGroupAssignmentService(&group_interval_assign_repo)
 
 		err := interval_group_assignment_service.DeleteIntervalGroupAssignment(r.Context(), planIntervalId, groupId)
 		if err != nil {

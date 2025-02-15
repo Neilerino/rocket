@@ -9,7 +9,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from 'shad/components/ui/sidebar';
 import { useSidebarItems } from '@/components/shared/sidebar/useSidebar';
 import { Link } from '@tanstack/react-router';
@@ -18,23 +17,26 @@ const AppSideBar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
   const { mainMenuItems, footerMenuItems } = useSidebarItems();
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader />
+    <Sidebar collapsible="icon" {...props} className="bg-background">
       <SidebarContent>
         <SidebarGroup key="SidebarMain">
           <SidebarMenu>
             {mainMenuItems.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={item.isActive}>
-                  <Link to={item.url}>
-                    {item.icon && <item.icon />} {item.title}
+                <SidebarMenuButton
+                  asChild
+                  isActive={item.isActive}
+                  className="rounded-full hover:bg-accent hover:text-accent-foreground px-3"
+                >
+                  <Link to={item.url} className="flex items-center gap-3">
+                    {item.icon && <item.icon className="h-5 w-5" />}
+                    <span className="text-sm">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarGroup>
-        {/* <NavMain items={mainMenuItems} /> */}
       </SidebarContent>
       <SidebarFooter>
         <SidebarContent>
@@ -42,15 +44,22 @@ const AppSideBar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
             <SidebarMenu>
               {footerMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={item.isActive}></SidebarMenuButton>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={item.isActive}
+                    className="rounded-full hover:bg-accent hover:text-accent-foreground px-3"
+                  >
+                    <Link to={item.url} className="flex items-center gap-3">
+                      {item.icon && <item.icon className="h-5 w-5" />}
+                      <span className="text-sm">{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
-        {/* <NavUser user={data.user} /> */}
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 };

@@ -1,32 +1,20 @@
 import AppSidebar from '@/components/shared/sidebar/appSidebar';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from 'shad/components/ui/breadcrumb';
-import { Separator } from 'shad/components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from 'shad/components/ui/sidebar';
-import { useActivePage } from './useSidebar';
+import { SidebarInset, SidebarProvider } from 'shad/components/ui/sidebar';
 import { ReactNode } from 'react';
-import SidebarBreadcrumbs from './sidebarBreadcrumbs';
+import TopBar from '../topbar/topBar';
 
 const SidebarContainer = ({ children }: { children: ReactNode }) => {
-  const activePage = useActivePage();
-
   return (
     <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <SidebarBreadcrumbs activePage={activePage} />
+      <div className="flex min-h-screen w-full overflow-x-hidden">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col w-0 min-w-0">
+          <TopBar />
+          <div className="flex-1 w-full overflow-x-hidden">
+            {children}
           </div>
-        </header>
-        {children}
-      </SidebarInset>
+        </div>
+      </div>
     </SidebarProvider>
   );
 };

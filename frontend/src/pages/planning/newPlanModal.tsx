@@ -11,6 +11,13 @@ import { Input } from 'shad/components/ui/input';
 import { Textarea } from 'shad/components/ui/textarea';
 import { Label } from 'shad/components/ui/label';
 import { useHandlePlanCreation } from './useHandlePlanCreation';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from 'shad/components/ui/select';
 
 interface INewPlanModalProps {
   setShowNewPlanDialog: (show: boolean) => void;
@@ -21,9 +28,10 @@ const NewPlanModal: React.FC<INewPlanModalProps> = ({ setShowNewPlanDialog }) =>
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    duration: '',
+    durationValue: '',
+    durationUnit: 'weeks',
     schedule: '',
-    userId: 2,
+    userId: 1,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -34,8 +42,35 @@ const NewPlanModal: React.FC<INewPlanModalProps> = ({ setShowNewPlanDialog }) =>
     }));
   };
 
+  const handleDurationUnitChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      durationUnit: value,
+    }));
+  };
+
+  const convertToMicroseconds = (value: string, unit: string): number => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return 0;
+
+    const conversions: { [key: string]: number } = {
+      weeks: 7 * 24 * 60 * 60 * 1000000,
+      days: 24 * 60 * 60 * 1000000,
+      hours: 60 * 60 * 1000000,
+    };
+
+    return Math.floor(numValue * conversions[unit]);
+  };
+
   const handleSubmit = () => {
-    handlePlanCreation(formData);
+    const duration = convertToMicroseconds(formData.durationValue, formData.durationUnit);
+    handlePlanCreation({
+      name: formData.name,
+      description: formData.description,
+      duration,
+      schedule: formData.schedule,
+      userId: formData.userId,
+    });
     setShowNewPlanDialog(false);
   };
 
@@ -72,13 +107,28 @@ const NewPlanModal: React.FC<INewPlanModalProps> = ({ setShowNewPlanDialog }) =>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="duration">Duration</Label>
-              <Input
-                id="duration"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                placeholder="e.g., 8 weeks"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="durationValue"
+                  name="durationValue"
+                  type="number"
+                  min="1"
+                  value={formData.durationValue}
+                  onChange={handleInputChange}
+                  placeholder="Duration"
+                  className="w-full"
+                />
+                <Select value={formData.durationUnit} onValueChange={handleDurationUnitChange}>
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue placeholder="Unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weeks">Weeks</SelectItem>
+                    <SelectItem value="days">Days</SelectItem>
+                    <SelectItem value="hours">Hours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="schedule">Schedule</Label>

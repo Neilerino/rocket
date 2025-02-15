@@ -1,0 +1,32 @@
+meta {
+  name: Plans
+  type: http
+  seq: 1
+}
+
+# List Plans
+GET {{hostname}}/api/plans/user/{{userId}}
+query {
+  ~limit: 100
+}
+
+# Get Plan by ID
+GET {{hostname}}/api/plans/{{planId}}
+
+# Create Plan
+POST {{hostname}}/api/plans
+{
+  "name": "string",
+  "description": "string",
+  "userId": 0
+}
+
+# Update Plan
+PUT {{hostname}}/api/plans/{{planId}}
+{
+  "name": "string",
+  "description": "string"
+}
+
+# Delete Plan
+DELETE {{hostname}}/api/plans/{{planId}}

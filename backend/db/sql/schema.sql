@@ -64,8 +64,8 @@ CREATE TABLE IF NOT EXISTS categories (
     name TEXT NOT NULL CONSTRAINT category_name_chk CHECK (
         validate_length (name, 1, 255)
     ),
-    icon TEXT NOT NULL CONSTRAINT category_description_chk CHECK (
-        validate_length (description, 1, 255)
+    icon TEXT NOT NULL CONSTRAINT category_icon_chk CHECK (
+        validate_length (icon, 1, 255)
     ),
     user_id BIGINT REFERENCES users (id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -96,8 +96,8 @@ CREATE TABLE parameter_types (
 
 CREATE TABLE exercise_variations (
     id BIGSERIAL PRIMARY KEY,
-    exercise_id BIGINT NOT NULL REFERENCES exercises (exercise_id),
-    parameter_type_id BIGINT REFERENCES parameter_types (parameter_type_id)
+    exercise_id BIGINT NOT NULL REFERENCES exercises (id),
+    parameter_type_id BIGINT REFERENCES parameter_types (id)
 );
 
 CREATE TABLE IF NOT EXISTS interval_group_assignments (
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS interval_group_assignments (
 CREATE TABLE IF NOT EXISTS interval_exercise_prescriptions (
     id BIGSERIAL PRIMARY KEY,
     group_id BIGINT NOT NULL REFERENCES groups (id),
-    exercise_variation_id BIGINT NOT NULL REFERENCES exercise_variation (id),
+    exercise_variation_id BIGINT NOT NULL REFERENCES exercise_variations (id),
     plan_interval_id BIGINT NOT NULL REFERENCES plan_intervals (id),
     rpe INTEGER,
     sets INTEGER NOT NULL,

@@ -37,7 +37,7 @@ func intervalToString(interval pgtype.Interval) string {
 	return result
 }
 
-func (s *PlanIntervalsService) GetPlanIntervalByPlanId(ctx context.Context, planId int64, limit int32) ([]PlanInterval, error) {
+func (s *PlanIntervalsService) GetPlanIntervalByPlanId(ctx context.Context, planId int64, limit int32) ([]types.PlanInterval, error) {
 	planIntervals, err := s.repo.GetPlanIntervalsByPlanId(ctx, planId, limit)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (s *PlanIntervalsService) GetPlanIntervalByPlanId(ctx context.Context, plan
 		result = append(result, types.PlanInterval{
 			ID: planInterval.ID,
 			PlanID: planInterval.PlanID,
-			Duration: intervalToString(planInterval.Duration),
+			Duration: planInterval.Duration.Microseconds,
 			Name: planInterval.Name.String,
 			Order: planInterval.Order,
 		})
@@ -65,7 +65,7 @@ func (s *PlanIntervalsService) CreatePlanInterval(ctx context.Context, planId in
 	return &types.PlanInterval{
 		ID: planInterval.ID,
 		PlanID: planInterval.PlanID,
-		Duration: intervalToString(planInterval.Duration),
+		Duration: planInterval.Duration.Microseconds,
 		Name: planInterval.Name.String,
 		Order: planInterval.Order,
 	}, nil
@@ -80,7 +80,7 @@ func (s *PlanIntervalsService) DeletePlanInterval(ctx context.Context, id int64)
 	return &types.PlanInterval{
 		ID: planInterval.ID,
 		PlanID: planInterval.PlanID,
-		Duration: intervalToString(planInterval.Duration),
+		Duration: planInterval.Duration.Microseconds,
 		Name: planInterval.Name.String,
 		Order: planInterval.Order,
 	}, nil

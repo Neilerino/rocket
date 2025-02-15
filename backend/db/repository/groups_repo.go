@@ -17,6 +17,14 @@ func (r *GroupsRepository) GetByUserId(ctx context.Context, userId int64, limit 
 	return groups, nil
 }
 
+func (r *GroupsRepository) GetGroupById(ctx context.Context, id int64) (*db.Group, error) {
+	group, err := r.Queries.Groups_GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
+}
+
 func (r *GroupsRepository) GetByPlanId(ctx context.Context, planId int64, limit int) ([]db.Group, error) {
 	rows, err := r.Queries.Groups_GetByPlanId(ctx, db.Groups_GetByPlanIdParams{PlanID: planId, Limit: 100})
 	if err != nil {

@@ -81,3 +81,19 @@ func (s *GroupsService) DeleteGroup(ctx context.Context, id int64) (*types.Group
 		UpdatedAt:   group.UpdatedAt.Time.String(),
 	}, nil
 }
+
+func (s *GroupsService) GetGroupById(ctx context.Context, id int64) (*types.Group, error) {
+	group, err := s.repo.GetGroupById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.Group{
+		ID:          group.ID,
+		Name:        group.Name,
+		Description: group.Description,
+		UserID:      group.UserID,
+		CreatedAt:   group.CreatedAt.Time.String(),
+		UpdatedAt:   group.UpdatedAt.Time.String(),
+	}, nil
+}

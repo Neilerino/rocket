@@ -137,10 +137,10 @@ const PlanEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black/5">
+    <div className="min-h-screen w-full overflow-x-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
-        <div className="container mx-auto">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white w-full">
+        <div className="px-8 py-6">
           <div className="flex items-center gap-4">
             <Mountain className="w-8 h-8" />
             <div>
@@ -161,7 +161,7 @@ const PlanEditor = () => {
         </div>
       </div>
 
-      <div className="container mx-auto p-6">
+      <div className="p-6">
         {/* Training Days Section */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">

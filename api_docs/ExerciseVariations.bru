@@ -1,0 +1,26 @@
+meta {
+  name: Exercise Variations
+  type: http
+  seq: 5
+}
+
+# List Exercise Variations by Exercise ID
+GET {{hostname}}/api/exercise-variations/exercise/{{exerciseId}}
+
+# Get Exercise Variation by ID
+GET {{hostname}}/api/exercise-variations/{{variationId}}
+
+# Create Exercise Variation
+POST {{hostname}}/api/exercise-variations
+{
+  "exercise_id": 0,
+  "name": "string",
+  "data_type": "string",
+  "default_unit": "string",
+  "min_value": 0,
+  "max_value": 0,
+  "parameter_type_id": 0
+}
+
+# Delete Exercise Variation
+DELETE {{hostname}}/api/exercise-variations/{{variationId}}
