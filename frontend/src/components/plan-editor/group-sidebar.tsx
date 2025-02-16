@@ -15,7 +15,7 @@ const GroupSidebar = ({ group, onClose }: GroupSidebarProps) => {
 
   return (
     <Sheet open={!!group} onOpenChange={() => onClose()}>
-      <SheetContent className="w-96 pt-12 p-0 bg-background border-l border-border">
+      <SheetContent className="w-96 pt-12 p-0 bg-background border-l-4 border-l-gray-300 shadow-2xl">
         <div className="h-full flex flex-col">
           <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
