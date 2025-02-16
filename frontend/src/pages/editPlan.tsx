@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from 'shad/components/ui/card';
 import {
   Dialog,
@@ -138,8 +138,7 @@ const PlanEditor = () => {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white w-full">
+      <div className="bg-gradient-to-r from-gray-800 to-blue-950 text-white w-full shadow-[0_4px_6px_-1px_rgb(0,0,0,0.1),0_2px_4px_-2px_rgb(0,0,0,0.1)] relative z-10 border-b-2 border-gray-800/50">
         <div className="px-8 py-6">
           <div className="flex items-center gap-4">
             <Mountain className="w-8 h-8" />
