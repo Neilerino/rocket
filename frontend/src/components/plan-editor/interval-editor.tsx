@@ -1,13 +1,4 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronRight, Dumbbell, Plus, Copy } from 'lucide-react';
-import { Button } from 'shad/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from 'shad/components/ui/dropdown-menu';
+import { ChevronDown, ChevronRight, Dumbbell, Plus } from 'lucide-react';
 import { Group, Interval } from './types';
 
 interface IntervalEditorProps {
@@ -78,36 +69,16 @@ const IntervalEditor = ({
               </div>
             ))}
 
-            {/* Add Group Cards */}
-            <div className="space-y-3">
-              {/* Create New Group Card */}
-              <div
-                className="border-dotted border-2 rounded-lg p-4 flex items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors cursor-pointer h-[96px]"
-                onClick={() => onSelectGroup({ id: 'new', name: '', frequency: '', exercises: [] })}
-              >
-                <div className="text-center">
-                  <div className="w-6 h-6 mx-auto mb-2 text-gray-400">
-                    <Plus />
-                  </div>
-                  <span className="text-sm font-medium text-gray-600">Create New Group</span>
+            {/* Add Group Card */}
+            <div
+              className="border-dotted border-2 rounded-lg p-4 flex items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors cursor-pointer h-[96px]"
+              onClick={() => onSelectGroup({ id: 'new', name: '', frequency: '', exercises: [] })}
+            >
+              <div className="text-center">
+                <div className="w-6 h-6 mx-auto mb-2 text-gray-400">
+                  <Plus />
                 </div>
-              </div>
-
-              {/* Reuse Group Card */}
-              <div
-                className="border-dotted border-2 rounded-lg p-4 flex items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors cursor-pointer h-[96px]"
-                onClick={() => {
-                  if (availableGroups.length > 0) {
-                    onSelectGroup(availableGroups[0]);
-                  }
-                }}
-              >
-                <div className="text-center">
-                  <div className="w-6 h-6 mx-auto mb-2 text-gray-400">
-                    <Copy />
-                  </div>
-                  <span className="text-sm font-medium text-gray-600">Reuse Existing Group</span>
-                </div>
+                <span className="text-sm font-medium text-gray-600">Add Group</span>
               </div>
             </div>
           </div>

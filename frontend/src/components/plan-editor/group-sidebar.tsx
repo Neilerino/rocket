@@ -1,72 +1,89 @@
+import { useState } from 'react';
 import { Button } from 'shad/components/ui/button';
-import { Input } from 'shad/components/ui/input';
-import { Label } from 'shad/components/ui/label';
-import { Sheet, SheetContent } from 'shad/components/ui/sheet';
+import { Sheet, SheetContent, SheetClose } from 'shad/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from 'shad/components/ui/tabs';
+import { ScrollArea } from 'shad/components/ui/scroll-area';
 import { X as CloseIcon } from 'lucide-react';
 import { Group } from './types';
+import NewGroupTab from './new-group-tab';
+import ReuseGroupTab from './reuse-group-tab';
 
 interface GroupSidebarProps {
   group: Group | null;
   onClose: () => void;
+  allGroups?: Group[];
+  onUpdateGroup?: (group: Group) => void;
 }
 
-const GroupSidebar = ({ group, onClose }: GroupSidebarProps) => {
+const GroupSidebar = ({ group, onClose, allGroups = [], onUpdateGroup }: GroupSidebarProps) => {
+  const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('new');
+  const availableGroups = allGroups.filter(g => g.id !== group?.id);
+
   if (!group) return null;
 
+  const handleReuseGroup = (existingGroup: Group) => {
+    if (onUpdateGroup) {
+      onUpdateGroup({
+        ...existingGroup,
+        id: group.id, // Keep the current ID but use all other properties from existing group
+      });
+    }
+    setActiveTab('new'); // Switch back to new tab after reusing
+  };
+
+  const handleClose = () => {
+    // Wait for animation to complete before calling onClose
+    setTimeout(onClose, 300); // 300ms matches our animation duration
+  };
+
   return (
-    <Sheet open={!!group} onOpenChange={() => onClose()}>
-      <SheetContent className="w-96 pt-12 p-0 bg-background border-l-4 border-l-gray-300 shadow-2xl">
-        <div className="h-full flex flex-col">
-          <div className="p-6 border-b border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">{group.name}</h2>
-              <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground">
+    <Sheet open={!!group} onOpenChange={onClose}>
+      <SheetContent 
+        className="w-96 p-0 [&>button]:hidden"
+        side="right"
+        onWheel={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between p-6 border-b">
+            <h2 className="text-xl font-semibold">Add Group</h2>
+            <SheetClose asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8 p-0"
+              >
                 <CloseIcon className="h-4 w-4" />
               </Button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label>Group Name</Label>
-                <Input value={group.name} className="mt-1" />
-              </div>
-              <div>
-                <Label>Frequency</Label>
-                <Input value={group.frequency} className="mt-1" />
-              </div>
-            </div>
+            </SheetClose>
           </div>
 
-          <div className="flex-1 p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Exercises</h3>
-              <Button variant="outline" size="sm">
-                Add Exercise
-              </Button>
+          <ScrollArea className="flex-1">
+            <div className="px-6 py-4">
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'new' | 'reuse')} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="new">New Group</TabsTrigger>
+                  <TabsTrigger value="reuse">Reuse Group</TabsTrigger>
+                </TabsList>
+                <TabsContent value="new" className="space-y-4 mt-4">
+                  {group && onUpdateGroup && (
+                    <NewGroupTab 
+                      group={group} 
+                      onUpdateGroup={onUpdateGroup}
+                      allGroups={allGroups}
+                    />
+                  )}
+                </TabsContent>
+                <TabsContent value="reuse" className="mt-4">
+                  <ReuseGroupTab 
+                    availableGroups={availableGroups}
+                    onSelectGroup={handleReuseGroup}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
-            <div className="space-y-3">
-              {group.exercises.map((exercise) => (
-                <div
-                  key={exercise.id}
-                  className="border border-border rounded-lg p-4 hover:border-border/80 transition-colors bg-card"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{exercise.name}</h4>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        <div>Sets: {exercise.sets}</div>
-                        <div>RPE: {exercise.rpe}</div>
-                        <div>Reps: {exercise.reps}</div>
-                        <div>Rest: {exercise.rest}</div>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                      <CloseIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          </ScrollArea>
         </div>
       </SheetContent>
     </Sheet>

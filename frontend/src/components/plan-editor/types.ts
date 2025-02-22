@@ -1,30 +1,51 @@
 export interface Exercise {
-  id: number;
+  id: string;
   name: string;
   description: string;
-  variation: string;
+  userId?: string;
+}
+
+export interface ParameterType {
+  id: string;
+  name: string;
+  dataType: string;
+  defaultUnit: string;
+  minValue?: number;
+  maxValue?: number;
+}
+
+export interface ExerciseVariation {
+  id: string;
+  exerciseId: string;
+  parameterTypeId: string;
+}
+
+export interface ExercisePrescription {
+  id?: string;
+  exerciseId: string;
+  groupId: string;
+  planIntervalId: string;
+  rpe?: number;
   sets: number;
-  reps: string;
-  rest: string;
-  rpe: number;
+  reps?: number;
+  duration?: string; // interval
+  rest?: string; // interval
+  parameters: Record<string, number>; // parameter_type_id -> value
 }
 
 export interface Group {
-  id: number;
+  id: string;
   name: string;
-  frequency: string;
-  exercises: Exercise[];
+  description: string;
+  userId?: string;
+  exercises: ExercisePrescription[];
 }
 
-export interface Interval {
-  id: number;
+export interface PlanInterval {
+  id: string;
+  planId: string;
   name: string;
-  duration: string;
+  duration: string; // interval
   order: number;
   groups: Group[];
-}
-
-export interface Plan {
-  id: number;
-  intervals: Interval[];
 }

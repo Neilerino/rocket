@@ -107,6 +107,18 @@ const PlanEditor = () => {
     }
   };
 
+  const handleUpdateGroup = (updatedGroup: Group) => {
+    setPlan((prev) => ({
+      ...prev,
+      intervals: prev.intervals.map((interval) => ({
+        ...interval,
+        groups: interval.groups.map((group) =>
+          group.id === updatedGroup.id ? updatedGroup : group
+        ),
+      })),
+    }));
+  };
+
   return (
     <div className="relative">
       {/* Main content */}
@@ -124,7 +136,12 @@ const PlanEditor = () => {
       </div>
 
       {/* Group sidebar */}
-      <GroupSidebar group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+      <GroupSidebar
+        group={selectedGroup}
+        onClose={() => setSelectedGroup(null)}
+        allGroups={allGroups}
+        onUpdateGroup={handleUpdateGroup}
+      />
     </div>
   );
 };
