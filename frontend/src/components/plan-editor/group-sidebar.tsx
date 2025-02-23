@@ -17,7 +17,7 @@ interface GroupSidebarProps {
 
 const GroupSidebar = ({ group, onClose, allGroups = [], onUpdateGroup }: GroupSidebarProps) => {
   const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('new');
-  const availableGroups = allGroups.filter(g => g.id !== group?.id);
+  const availableGroups = allGroups.filter((g) => g.id !== group?.id);
 
   if (!group) return null;
 
@@ -31,14 +31,9 @@ const GroupSidebar = ({ group, onClose, allGroups = [], onUpdateGroup }: GroupSi
     setActiveTab('new'); // Switch back to new tab after reusing
   };
 
-  const handleClose = () => {
-    // Wait for animation to complete before calling onClose
-    setTimeout(onClose, 300); // 300ms matches our animation duration
-  };
-
   return (
     <Sheet open={!!group} onOpenChange={onClose}>
-      <SheetContent 
+      <SheetContent
         className="w-96 p-0 [&>button]:hidden"
         side="right"
         onWheel={(e) => {
@@ -49,11 +44,7 @@ const GroupSidebar = ({ group, onClose, allGroups = [], onUpdateGroup }: GroupSi
           <div className="flex items-center justify-between p-6 border-b">
             <h2 className="text-xl font-semibold">Add Group</h2>
             <SheetClose asChild>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 p-0"
-              >
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
                 <CloseIcon className="h-4 w-4" />
               </Button>
             </SheetClose>
@@ -61,22 +52,26 @@ const GroupSidebar = ({ group, onClose, allGroups = [], onUpdateGroup }: GroupSi
 
           <ScrollArea className="flex-1">
             <div className="px-6 py-4">
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'new' | 'reuse')} className="w-full">
+              <Tabs
+                value={activeTab}
+                onValueChange={(value) => setActiveTab(value as 'new' | 'reuse')}
+                className="w-full"
+              >
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="new">New Group</TabsTrigger>
                   <TabsTrigger value="reuse">Reuse Group</TabsTrigger>
                 </TabsList>
                 <TabsContent value="new" className="space-y-4 mt-4">
                   {group && onUpdateGroup && (
-                    <NewGroupTab 
-                      group={group} 
+                    <NewGroupTab
+                      group={group}
                       onUpdateGroup={onUpdateGroup}
                       allGroups={allGroups}
                     />
                   )}
                 </TabsContent>
                 <TabsContent value="reuse" className="mt-4">
-                  <ReuseGroupTab 
+                  <ReuseGroupTab
                     availableGroups={availableGroups}
                     onSelectGroup={handleReuseGroup}
                   />

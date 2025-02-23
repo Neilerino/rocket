@@ -29,6 +29,7 @@ export interface ExercisePrescription {
   sets: number;
   reps?: number;
   duration?: string; // interval
+  restInterval?: string; // interval
   rest?: string; // interval
   parameters: Record<string, number>; // parameter_type_id -> value
 }
