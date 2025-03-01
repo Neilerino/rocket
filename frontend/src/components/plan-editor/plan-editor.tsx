@@ -1,59 +1,25 @@
 import { useState } from 'react';
-import { Group, Plan } from './types';
-import GroupSidebar from './group-sidebar';
 import IntervalEditor from './interval-editor';
+import GroupSidebar from './group-sidebar';
+import { Interval, Group, Exercise, ExercisePrescription, ParameterType } from './types';
+import { sampleExercises, sampleParameterTypes, generateSamplePlanData } from './sample-data';
 
-const initialPlan: Plan = {
-  id: 1,
-  intervals: [
-    {
-      id: 1,
-      name: 'Week 1',
-      groups: [
-        {
-          id: '1',
-          name: 'Power Endurance',
-          frequency: '2x',
-          exercises: [
-            {
-              id: '1',
-              name: '4x4s on V3-V4',
-              sets: 1,
-              reps: '4 problems x 4 times',
-              rest: '1 min between problems',
-              rpe: 8,
-            },
-          ],
-        },
-        {
-          id: '2',
-          name: 'Finger Strength',
-          frequency: '1x',
-          exercises: [
-            {
-              id: '2',
-              name: 'Hangboard Repeaters',
-              sets: 6,
-              reps: '7 sec hang / 3 sec rest',
-              rest: '3 min between sets',
-              rpe: 7,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Week 2',
-      groups: [],
-    },
-  ],
-};
+interface PlanEditorProps {
+  planId?: string;
+}
 
-const PlanEditor = () => {
-  const [plan, setPlan] = useState<Plan>(initialPlan);
-  const [expandedIntervals, setExpandedIntervals] = useState<number[]>([1]);
+export default function PlanEditor({ planId }: PlanEditorProps) {
+  // State for plan data
+  const [plan, setPlan] = useState(generateSamplePlanData());
+  
+  // State for open/closed intervals
+  const [expandedIntervals, setExpandedIntervals] = useState<number[]>([0]); // Start with first interval expanded
+  
+  // State for sidebar (only for the GroupSidebar now)
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  
+  // Parameter types for exercise customization
+  const parameterTypes: ParameterType[] = sampleParameterTypes;
 
   // Get all unique groups across all intervals
   const allGroups = plan.intervals.reduce<Group[]>((acc, interval) => {
@@ -71,7 +37,9 @@ const PlanEditor = () => {
     );
   };
 
-  const handleSelectGroup = (intervalId: number, group: Group) => {
+  const handleSelectGroup = (group: Group) => {
+    console.log("handleSelectGroup called with:", { group });
+    
     if (group.id === 'new') {
       // Create a new group
       const newGroup: Group = {
@@ -82,32 +50,37 @@ const PlanEditor = () => {
       };
       setSelectedGroup(newGroup);
 
-      // Add it to the interval
-      setPlan((prev) => ({
-        ...prev,
-        intervals: prev.intervals.map((interval) =>
-          interval.id === intervalId
-            ? { ...interval, groups: [...interval.groups, newGroup] }
-            : interval,
-        ),
-      }));
+      // Find the interval this group belongs to - look for the clicked "Add Group" button
+      // This is a special case for new groups
+      // We'll determine which interval we're in based on the groups in that interval
+      const intervalForNewGroup = plan.intervals.find(interval => 
+        interval.groups.some(g => g._isAddingNewGroup === true)
+      );
+      
+      if (intervalForNewGroup) {
+        // Add it to the interval
+        setPlan((prev) => ({
+          ...prev,
+          intervals: prev.intervals.map((interval) => {
+            // Clear the flag and add the new group
+            if (interval.id === intervalForNewGroup.id) {
+              return {
+                ...interval, 
+                groups: [...interval.groups.map(g => ({ ...g, _isAddingNewGroup: undefined })), newGroup]
+              };
+            }
+            return interval;
+          }),
+        }));
+      }
     } else {
-      // Either edit existing group or reuse group from another interval
+      // Just select the group for editing
       setSelectedGroup(group);
-
-      // If the group isn't in this interval yet, add it
-      setPlan((prev) => ({
-        ...prev,
-        intervals: prev.intervals.map((interval) =>
-          interval.id === intervalId && !interval.groups.some((g) => g.id === group.id)
-            ? { ...interval, groups: [...interval.groups, group] }
-            : interval,
-        ),
-      }));
     }
   };
 
   const handleUpdateGroup = (updatedGroup: Group) => {
+    console.log("Updating group:", updatedGroup);
     setPlan((prev) => ({
       ...prev,
       intervals: prev.intervals.map((interval) => ({
@@ -130,20 +103,23 @@ const PlanEditor = () => {
             allGroups={allGroups}
             isExpanded={expandedIntervals.includes(interval.id)}
             onToggle={() => toggleInterval(interval.id)}
-            onSelectGroup={(group) => handleSelectGroup(interval.id, group)}
+            onSelectGroup={(group) => handleSelectGroup(group)}
+            parameterTypes={parameterTypes}
+            allExercises={sampleExercises}
+            onUpdateGroup={handleUpdateGroup}
           />
         ))}
       </div>
 
       {/* Group sidebar */}
-      <GroupSidebar
-        group={selectedGroup}
-        onClose={() => setSelectedGroup(null)}
-        allGroups={allGroups}
-        onUpdateGroup={handleUpdateGroup}
-      />
+      {selectedGroup && (
+        <GroupSidebar
+          group={selectedGroup}
+          onClose={() => setSelectedGroup(null)}
+          allGroups={allGroups}
+          onUpdateGroup={handleUpdateGroup}
+        />
+      )}
     </div>
   );
-};
-
-export default PlanEditor;
+}
