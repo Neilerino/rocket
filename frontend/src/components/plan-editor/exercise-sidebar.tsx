@@ -120,7 +120,7 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
         </div>
 
         {/* Content Area */}
-        <DrawerBody className="flex-1 overflow-auto p-6">
+        <DrawerBody className={`flex-1 ${activeTab === 'reuse' ? 'overflow-hidden p-6 pb-0' : 'overflow-auto p-6'}`}>
           {activeTab === 'new' && (
             <NewExerciseTab
               exercise={exercise}

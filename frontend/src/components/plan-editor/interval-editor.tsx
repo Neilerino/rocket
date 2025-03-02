@@ -4,7 +4,7 @@ import ExerciseCard from './exercise-card';
 import ExerciseSidebar from './exercise-sidebar';
 import GroupSidebar from './group-sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabItem } from '../ui/tabs';
 import { sampleExercises } from './sample-data';
 
@@ -16,6 +16,7 @@ interface IntervalEditorProps {
   parameterTypes: ParameterType[];
   allExercises: Exercise[];
   onUpdateGroup: (group: Group) => void;
+  onDeleteInterval?: (intervalId: number) => void;
 }
 
 const IntervalEditor: React.FC<IntervalEditorProps> = ({
@@ -26,6 +27,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
   parameterTypes,
   allExercises,
   onUpdateGroup,
+  onDeleteInterval,
 }) => {
   const [activeGroup, setActiveGroup] = useState<string | null>(interval.groups[0]?.id || null);
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
@@ -102,6 +104,14 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
     });
   };
 
+  // Handle delete interval
+  const handleDeleteInterval = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent toggling the interval
+    if (onDeleteInterval) {
+      onDeleteInterval(interval.id);
+    }
+  };
+
   return (
     <div className="border rounded-lg bg-white overflow-hidden shadow-sm">
       {/* Interval Header */}
@@ -121,6 +131,15 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
           </div>
           <h2 className="text-lg font-medium">{interval.name}</h2>
         </div>
+        
+        {/* Delete Interval Button */}
+        <button
+          className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition-colors duration-200"
+          onClick={handleDeleteInterval}
+          aria-label="Delete interval"
+        >
+          <Trash2 size={18} />
+        </button>
       </div>
 
       <AnimatePresence>
@@ -149,7 +168,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
                       onClick={handleAddGroup}
                     >
                       <Plus className="w-4 h-4 transform group-hover:scale-110 transition-transform duration-200" />
-                      <span className="relative transition-all duration-200 group-hover:translate-x-0.5">
+                      <span className="transform group-hover:scale-105 transition-transform duration-200">
                         Add Group
                       </span>
                     </button>
