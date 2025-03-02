@@ -1,15 +1,29 @@
 import { Button } from 'shad/components/ui/button';
-import { Exercise } from './types';
+import { Exercise, ExercisePrescription, ParameterType } from './types';
 import { useState } from 'react';
 import { Search } from 'lucide-react';
+import ExpandableExerciseCard from './expandable-exercise-card';
+
+interface ExerciseVariant {
+  id: string;
+  name?: string;
+  prescription: ExercisePrescription;
+}
 
 interface ReuseExerciseTabProps {
   exercises: Exercise[];
-  onSelect: (exercise: Exercise) => void;
+  exerciseVariants?: Record<string, ExerciseVariant[]>;
+  parameterTypes?: ParameterType[];
+  onSelect: (exercise: Exercise, variant?: ExerciseVariant) => void;
 }
 
-const ReuseExerciseTab = ({ exercises, onSelect }: ReuseExerciseTabProps) => {
-  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+const ReuseExerciseTab = ({ 
+  exercises, 
+  exerciseVariants = {}, 
+  parameterTypes = [],
+  onSelect 
+}: ReuseExerciseTabProps) => {
+  const [selectedVariant, setSelectedVariant] = useState<ExerciseVariant | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter exercises based on search term
@@ -19,25 +33,34 @@ const ReuseExerciseTab = ({ exercises, onSelect }: ReuseExerciseTabProps) => {
       (exercise.description && exercise.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Handle exercise selection
-  const handleExerciseClick = (exercise: Exercise) => {
-    setSelectedExercise(exercise.id);
+  // Handle variant selection
+  const handleVariantSelect = (variant: ExerciseVariant) => {
+    setSelectedVariant(variant);
   };
 
   // Handle use exercise button click
   const handleUseExercise = () => {
-    if (!selectedExercise) return;
+    if (!selectedVariant) return;
     
-    const exercise = exercises.find(e => e.id === selectedExercise);
+    // Find the parent exercise of the selected variant
+    const exerciseEntry = Object.entries(exerciseVariants).find(([_, variants]) => 
+      variants.some(v => v.id === selectedVariant.id)
+    );
+    
+    if (!exerciseEntry) return;
+    
+    const exerciseId = exerciseEntry[0];
+    const exercise = exercises.find(e => e.id === exerciseId);
+    
     if (!exercise) return;
     
-    onSelect(exercise);
+    onSelect(exercise, selectedVariant);
   };
 
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-500 mb-2">
-        Select an existing exercise to use in this group.
+        Select an exercise variant to use in this group.
       </div>
       
       {/* Search input */}
@@ -54,7 +77,7 @@ const ReuseExerciseTab = ({ exercises, onSelect }: ReuseExerciseTabProps) => {
         />
       </div>
       
-      <div className="space-y-2 overflow-y-auto pr-1">
+      <div className="space-y-3 overflow-y-auto pr-1 max-h-[calc(100vh-280px)]">
         {filteredExercises.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             {searchTerm 
@@ -63,31 +86,30 @@ const ReuseExerciseTab = ({ exercises, onSelect }: ReuseExerciseTabProps) => {
           </div>
         ) : (
           filteredExercises.map((exercise) => (
-            <div 
+            <ExpandableExerciseCard
               key={exercise.id}
-              className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                selectedExercise === exercise.id 
-                  ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' 
-                  : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-              }`}
-              onClick={() => handleExerciseClick(exercise)}
-            >
-              <h3 className="font-medium text-gray-900">{exercise.name}</h3>
-              {exercise.description && (
-                <p className="text-sm text-gray-500 mt-1">{exercise.description}</p>
-              )}
-            </div>
+              exercise={exercise}
+              variants={exerciseVariants[exercise.id] || []}
+              parameterTypes={parameterTypes}
+              onVariantSelect={handleVariantSelect}
+            />
           ))
         )}
       </div>
       
       <div className="pt-4 flex justify-end">
         <Button 
-          onClick={handleUseExercise} 
-          disabled={!selectedExercise}
-          className="w-full sm:w-auto"
+          variant="outline" 
+          className="mr-2"
+          onClick={() => setSelectedVariant(null)}
         >
-          Use Selected Exercise
+          Cancel
+        </Button>
+        <Button 
+          disabled={!selectedVariant}
+          onClick={handleUseExercise}
+        >
+          Use Selected Variant
         </Button>
       </div>
     </div>

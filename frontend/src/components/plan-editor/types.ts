@@ -33,6 +33,7 @@ export interface ExercisePrescription {
   rest?: string;
   rpe?: number;
   parameters: Record<string, number>;
+  lockedParameters?: Record<string, number>;
 }
 
 export interface Group {

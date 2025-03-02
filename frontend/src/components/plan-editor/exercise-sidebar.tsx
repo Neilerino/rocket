@@ -7,6 +7,7 @@ import { Tabs, TabItem } from '../ui/tabs';
 import { Button } from 'shad/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from '@heroui/drawer';
 import { useDisclosure } from '@heroui/react';
+import { sampleExerciseVariants, sampleParameterTypes, ExerciseVariant } from './sample-data';
 
 interface ExerciseSidebarProps {
   exercise?: Exercise;
@@ -60,6 +61,29 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
     onClose();
   };
 
+  // Handle selection of exercise with variant
+  const handleExerciseSelect = (selectedExercise: Exercise, variant?: ExerciseVariant) => {
+    if (variant) {
+      // If a variant was selected, use its prescription
+      setPrescription({
+        ...variant.prescription,
+        groupId: group?.id || '',
+        planIntervalId: intervalId || '',
+        id: undefined // We'll get a new ID when saving
+      });
+    } else {
+      // If just an exercise was selected without a variant
+      setPrescription({
+        ...prescription,
+        exerciseId: selectedExercise.id,
+        name: selectedExercise.name,
+        groupId: group?.id || '',
+        planIntervalId: intervalId || '',
+      });
+    }
+    setActiveTab('new');
+  };
+
   const drawerCloseButton = (
     <Button
       variant="ghost"
@@ -109,14 +133,9 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
           {activeTab === 'reuse' && (
             <ReuseExerciseTab
               exercises={allExercises}
-              onSelect={(selectedExercise) => {
-                setPrescription({
-                  ...prescription,
-                  exerciseId: selectedExercise.id,
-                  name: selectedExercise.name,
-                });
-                setActiveTab('new');
-              }}
+              exerciseVariants={sampleExerciseVariants}
+              parameterTypes={parameterTypes.length > 0 ? parameterTypes : sampleParameterTypes}
+              onSelect={handleExerciseSelect}
             />
           )}
         </DrawerBody>

@@ -7,6 +7,7 @@ import { Slider } from 'shad/components/ui/slider';
 import { Exercise, ParameterType, ExercisePrescription } from './types';
 import { ExerciseAccordion, AccordionItem } from './exercise-accordion';
 import { Info, Clock, Repeat, Settings } from 'lucide-react';
+import ParameterManager from './parameter-manager';
 
 interface NewExerciseTabProps {
   exercise?: Exercise;
@@ -29,6 +30,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
     sets: 3,
     reps: 10,
     parameters: {},
+    lockedParameters: {},
   };
 
   // Use the provided prescription or the default
@@ -70,16 +72,6 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
     });
   };
 
-  // Handle parameter change
-  const handleParameterChange = (paramId: string, value: string) => {
-    const newParameters = { ...prescription.parameters };
-    newParameters[paramId] = value;
-    handleChange({
-      ...prescription,
-      parameters: newParameters,
-    });
-  };
-
   // Format rest time from seconds to minutes and seconds
   const formatRestTime = (restSeconds?: string) => {
     if (!restSeconds) return { minutes: 0, seconds: 0 };
@@ -100,6 +92,18 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
     handleChange({
       ...prescription,
       rest: totalSeconds.toString(),
+    });
+  };
+
+  // Handle parameter changes from the parameter manager
+  const handleParameterChange = (
+    parameters: Record<string, number>,
+    lockedParameters: Record<string, number>
+  ) => {
+    handleChange({
+      ...prescription,
+      parameters,
+      lockedParameters,
     });
   };
 
@@ -283,36 +287,22 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
         </div>
       </div>
 
-      {/* Parameter Types Section */}
+      {/* Parameter Types Section - Now using our new ParameterManager component */}
       {parameterTypes.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center">
             <div className="mr-2 flex-shrink-0 text-gray-700">
               <Settings className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-medium text-gray-900">Additional Parameters</h3>
+            <h3 className="text-base font-medium text-gray-900">Exercise Parameters</h3>
           </div>
 
-          <div className="space-y-4">
-            {parameterTypes.map((param) => (
-              <div key={param.id} className="space-y-2">
-                <label
-                  htmlFor={`param-${param.id}`}
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {param.name}
-                </label>
-                <Input
-                  type={param.type === 'number' ? 'number' : 'text'}
-                  id={`param-${param.id}`}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder={param.placeholder || ''}
-                  value={prescription.parameters[param.id] || ''}
-                  onChange={(e) => handleParameterChange(param.id, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
+          <ParameterManager
+            parameterTypes={parameterTypes}
+            parameters={prescription.parameters || {}}
+            lockedParameters={prescription.lockedParameters || {}}
+            onChange={handleParameterChange}
+          />
         </div>
       )}
     </div>

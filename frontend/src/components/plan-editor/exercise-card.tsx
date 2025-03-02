@@ -1,4 +1,4 @@
-import { Dumbbell, Clock, BarChart, LayoutGrid, Repeat, Timer } from 'lucide-react';
+import { Dumbbell, Clock, BarChart, LayoutGrid, Repeat, Timer, Lock } from 'lucide-react';
 import { Exercise, ExercisePrescription, ParameterType } from './types';
 import { Card, CardHeader, CardBody, CardFooter } from '@heroui/card';
 import { Badge } from '@heroui/react';
@@ -176,30 +176,38 @@ const ExerciseCard = ({
           {compact && prescription && (
             <div className="flex flex-wrap gap-2">
               {prescription.reps && (
-                <Badge variant="soft" color="neutral" size="sm" className="flex items-center gap-1">
-                  <Repeat className="w-3 h-3" />
-                  {prescription.reps} reps
+                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                  <div className="flex items-center">
+                    <Repeat className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
+                    <span className="relative top-px">{prescription.reps} reps</span>
+                  </div>
                 </Badge>
               )}
 
               {prescription.rpe !== undefined && (
-                <Badge variant="soft" color="neutral" size="sm" className="flex items-center gap-1">
-                  <BarChart className="w-3 h-3" />
-                  RPE: {prescription.rpe}
+                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                  <div className="flex items-center">
+                    <BarChart className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
+                    <span className="relative top-px">RPE: {prescription.rpe}</span>
+                  </div>
                 </Badge>
               )}
 
               {prescription.duration && (
-                <Badge variant="soft" color="neutral" size="sm" className="flex items-center gap-1">
-                  <Timer className="w-3 h-3" />
-                  {formatTimeInterval(prescription.duration)}
+                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                  <div className="flex items-center">
+                    <Timer className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
+                    <span className="relative top-px">{formatTimeInterval(prescription.duration)}</span>
+                  </div>
                 </Badge>
               )}
 
               {prescription.rest && (
-                <Badge variant="soft" color="neutral" size="sm" className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Rest: {formatTimeInterval(prescription.rest)}
+                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                  <div className="flex items-center">
+                    <Clock className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
+                    <span className="relative top-px">Rest: {formatTimeInterval(prescription.rest)}</span>
+                  </div>
                 </Badge>
               )}
             </div>
@@ -211,29 +219,62 @@ const ExerciseCard = ({
       {shouldRenderParameters && !compact && (
         <CardFooter className="bg-gray-50 border-t p-4">
           <div className="w-full">
-            <div className="flex items-center mb-3">
-              <LayoutGrid className="w-4 h-4 mr-2 text-gray-500" />
-              <h4 className="font-medium text-sm text-gray-700">Parameters</h4>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(prescription!.parameters).map(([paramTypeId, value]) => {
-                const paramType = parameterTypes.find((pt) => pt.id === paramTypeId);
-                if (!paramType) return null;
-
-                return (
-                  <div
-                    key={paramTypeId}
-                    className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border"
-                  >
-                    <span className="text-gray-600 font-medium">{paramType.name}</span>
-                    <Badge variant="flat" color="primary">
-                      {value} {paramType.defaultUnit}
-                    </Badge>
+            {/* Locked Parameters Section */}
+            {prescription?.lockedParameters &&
+              Object.keys(prescription.lockedParameters).length > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center mb-3">
+                    <Lock className="w-4 h-4 mr-2 text-gray-500" />
+                    <h4 className="font-medium text-sm text-gray-700">Constant Parameters</h4>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(prescription.lockedParameters).map(([paramTypeId, value]) => {
+                      const paramType = parameterTypes.find((pt) => pt.id === paramTypeId);
+                      if (!paramType) return null;
+
+                      return (
+                        <div
+                          key={`locked-${paramTypeId}`}
+                          className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border"
+                        >
+                          <span className="text-gray-600 font-medium">{paramType.name}</span>
+                          <Badge variant="flat" color="neutral">
+                            {value} {paramType.defaultUnit}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            {/* Variable Parameters Section */}
+            {Object.keys(prescription?.parameters || {}).length > 0 && (
+              <div>
+                <div className="flex items-center mb-3">
+                  <LayoutGrid className="w-4 h-4 mr-2 text-gray-500" />
+                  <h4 className="font-medium text-sm text-gray-700">Variable Parameters</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(prescription!.parameters).map(([paramTypeId, value]) => {
+                    const paramType = parameterTypes.find((pt) => pt.id === paramTypeId);
+                    if (!paramType) return null;
+
+                    return (
+                      <div
+                        key={paramTypeId}
+                        className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border"
+                      >
+                        <span className="text-gray-600 font-medium">{paramType.name}</span>
+                        <Badge variant="flat" color="primary">
+                          {value} {paramType.defaultUnit}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </CardFooter>
       )}

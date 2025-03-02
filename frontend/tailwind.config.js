@@ -12,6 +12,26 @@ export default {
   theme: {
     extend: {
       keyframes: {
+        'fade-in-down': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(-10px)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+        'fade-out-up': {
+          '0%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+          '100%': {
+            opacity: '0',
+            transform: 'translateY(-10px)',
+          },
+        },
         'slide-in-from-right': {
           '0%': {
             transform: 'translateX(100%)',
@@ -76,8 +96,18 @@ export default {
             height: '0',
           },
         },
+        'height-transition': {
+          '0%': {
+            height: '0',
+          },
+          '100%': {
+            height: '100%',
+          },
+        },
       },
       animation: {
+        'fade-in-down': 'fade-in-down 0.4s ease-out',
+        'fade-out-up': 'fade-out-up 0.4s ease-out',
         'slide-in-right': 'slide-in-from-right 0.3s ease-out',
         'slide-out-right': 'slide-out-to-right 0.3s ease-out',
         'slide-in-left': 'slide-in-from-left 0.3s ease-out',
@@ -86,6 +116,7 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'height-transition': 'height-transition 0.2s ease-out',
       },
       borderRadius: {
         lg: 'var(--radius)',
