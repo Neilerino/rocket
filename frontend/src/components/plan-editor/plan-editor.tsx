@@ -118,6 +118,7 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
           onClose={() => setSelectedGroup(null)}
           allGroups={allGroups}
           onUpdateGroup={handleUpdateGroup}
+          isOpen={selectedGroup !== null}
         />
       )}
     </div>

@@ -4,7 +4,6 @@ import { Input } from 'shad/components/ui/input';
 import { Label } from 'shad/components/ui/label';
 import { X as CloseIcon, Plus } from 'lucide-react';
 import { Group, Exercise } from './types';
-import ExerciseSidebar from './exercise-sidebar';
 
 interface NewGroupTabProps {
   group: Group;
@@ -39,9 +38,9 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
 
   const handleSaveExercise = (exercise: Exercise) => {
     const isNew = !exercise.id;
-    const updatedExercises = isNew 
+    const updatedExercises = isNew
       ? [...group.exercises, { ...exercise, id: crypto.randomUUID() }]
-      : group.exercises.map(e => e.id === exercise.id ? exercise : e);
+      : group.exercises.map((e) => (e.id === exercise.id ? exercise : e));
 
     onUpdateGroup({
       ...group,
@@ -53,15 +52,15 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
   const handleDeleteExercise = (exerciseId: string) => {
     onUpdateGroup({
       ...group,
-      exercises: group.exercises.filter(e => e.id !== exerciseId),
+      exercises: group.exercises.filter((e) => e.id !== exerciseId),
     });
   };
 
   // Get all unique exercises from all groups
   const allExercises = useMemo(() => {
     const exerciseMap = new Map<string, Exercise>();
-    allGroups.forEach(g => {
-      g.exercises.forEach(e => {
+    allGroups.forEach((g) => {
+      g.exercises.forEach((e) => {
         if (!exerciseMap.has(e.id)) {
           exerciseMap.set(e.id, e);
         }
@@ -75,18 +74,18 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
       <div className="space-y-4">
         <div>
           <Label>Group Name</Label>
-          <Input 
-            value={group.name} 
+          <Input
+            value={group.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
-            className="mt-1" 
+            className="mt-1"
           />
         </div>
         <div>
           <Label>Frequency</Label>
-          <Input 
-            value={group.frequency} 
+          <Input
+            value={group.frequency}
             onChange={(e) => handleInputChange('frequency', e.target.value)}
-            className="mt-1" 
+            className="mt-1"
           />
         </div>
       </div>
@@ -109,9 +108,9 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
                     <div>Rest: {exercise.rest}</div>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleDeleteExercise(exercise.id)}
                   className="text-muted-foreground hover:text-foreground"
                 >
@@ -120,8 +119,8 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
               </div>
             </div>
           ))}
-          
-          <div 
+
+          <div
             className="border-dotted border-2 rounded-lg p-4 flex items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors cursor-pointer"
             onClick={handleAddExercise}
           >
@@ -134,13 +133,6 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
           </div>
         </div>
       </div>
-
-      <ExerciseSidebar
-        exercise={selectedExercise}
-        onClose={() => setSelectedExercise(null)}
-        onSave={handleSaveExercise}
-        allExercises={allExercises}
-      />
     </div>
   );
 };

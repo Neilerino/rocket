@@ -32,6 +32,8 @@ export const sampleExercises: Exercise[] = [
 export const generateSamplePlanData = (): Plan => {
   return {
     id: 1,
+    name: 'Sample Training Plan',
+    description: 'A sample training plan for demonstration',
     intervals: [
       {
         id: 1,
@@ -44,7 +46,7 @@ export const generateSamplePlanData = (): Plan => {
             id: '1',
             name: 'Power Endurance',
             frequency: '2x',
-            description: '',
+            description: 'Focus on building power endurance with high-intensity exercises',
             exercises: [
               {
                 id: '1',
@@ -62,7 +64,7 @@ export const generateSamplePlanData = (): Plan => {
             id: '2',
             name: 'Finger Strength',
             frequency: '1x',
-            description: '',
+            description: 'Focus on building finger strength with hangboard exercises',
             exercises: [
               {
                 id: '2',

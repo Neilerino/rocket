@@ -38,11 +38,10 @@ export interface ExercisePrescription {
 export interface Group {
   id: string;
   name: string;
-  frequency?: string;
-  description?: string;
-  userId?: string;
+  frequency: string;
   exercises: ExercisePrescription[];
-  _isAddingNewGroup?: boolean; // Flag to track which interval is adding a new group
+  description?: string;
+  _isAddingNewGroup?: boolean;
 }
 
 export interface PlanInterval {

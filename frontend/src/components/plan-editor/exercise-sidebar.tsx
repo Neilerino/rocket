@@ -1,178 +1,134 @@
-import { useState, useRef, useEffect } from 'react';
-import { Button } from 'shad/components/ui/button';
-import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from '@heroui/drawer';
-import { ScrollArea } from 'shad/components/ui/scroll-area';
-import { X as CloseIcon } from 'lucide-react';
-import { Exercise, ParameterType, Group } from './types';
+import React, { useState } from 'react';
+import { Exercise, ExercisePrescription, Group, ParameterType } from './types';
+import { X } from 'lucide-react';
 import NewExerciseTab from './new-exercise-tab';
 import ReuseExerciseTab from './reuse-exercise-tab';
-import { ExercisePrescription } from './types';
+import { Tabs, TabItem } from '../ui/tabs';
+import { Button } from 'shad/components/ui/button';
+import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from '@heroui/drawer';
+import { useDisclosure } from '@heroui/react';
 
 interface ExerciseSidebarProps {
   exercise?: Exercise;
-  onClose: () => void;
-  onSave?: (prescription: ExercisePrescription) => void;
-  allExercises?: Exercise[];
-  group: Group | null;
-  intervalId: number | null;
+  group?: Group | null;
+  intervalId?: string;
   parameterTypes?: ParameterType[];
+  allExercises?: Exercise[];
+  onClose: () => void;
+  onSave: (prescription: ExercisePrescription) => void;
+  isOpen: boolean;
 }
 
-const ExerciseSidebar = ({
+const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
   exercise,
-  onClose,
-  onSave,
-  allExercises = [],
   group,
   intervalId,
   parameterTypes = [],
-}: ExerciseSidebarProps) => {
-  console.log("ExerciseSidebar rendered with:", { exercise, group, intervalId });
+  allExercises = [],
+  onClose,
+  onSave,
+  isOpen,
+}) => {
+  const {
+    isOpen: isDrawerOpen,
+    onOpenChange,
+    onClose: onCloseDrawer,
+  } = useDisclosure({ isOpen, onClose });
+
   const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('new');
   const [prescription, setPrescription] = useState<ExercisePrescription>({
     exerciseId: exercise?.id,
-    groupId: group?.id || '',
-    planIntervalId: intervalId?.toString() || '',
+    name: exercise?.name || '',
     sets: 3,
-    rpe: 5,
-    rest: '00:02:00', // 2 minutes default
+    reps: 10,
     parameters: {},
   });
 
-  // References for tabs and indicator
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const indicatorRef = useRef<HTMLDivElement>(null);
+  // Define the tab items
+  const tabItems: TabItem[] = [
+    { id: 'new', label: 'New Exercise' },
+    { id: 'reuse', label: 'Reuse Exercise' },
+  ];
+
+  // Handle tab change
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId as 'new' | 'reuse');
+  };
 
   const handleSave = () => {
-    if (onSave) {
-      onSave(prescription);
-    }
+    onSave(prescription);
     onClose();
   };
 
-  const isDrawerOpen = !!exercise && !!group;
-  console.log("Drawer open state:", isDrawerOpen, "Exercise:", exercise, "Group:", group);
-
-  // Update indicator position when active tab changes
-  useEffect(() => {
-    if (!indicatorRef.current || !tabsRef.current) return;
-
-    const indicator = indicatorRef.current;
-    
-    if (activeTab === 'new') {
-      indicator.style.left = '0';
-    } else {
-      indicator.style.left = '50%';
-    }
-    
-    indicator.style.opacity = '1';
-  }, [activeTab]);
+  const drawerCloseButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="rounded-full hover:bg-gray-100 absolute right-4 top-4 z-10"
+    >
+      <X className="h-5 w-5" />
+    </Button>
+  );
 
   return (
-    <Drawer 
-      isOpen={isDrawerOpen} 
-      onClose={onClose}
-      onOpenChange={(isOpen) => {
-        console.log("Drawer onOpenChange:", isOpen);
-        if (!isOpen) onClose();
-      }}
+    <Drawer
+      isOpen={isDrawerOpen}
+      onOpenChange={onOpenChange}
+      onClose={onCloseDrawer}
       placement="right"
       size="lg"
+      closeButton={drawerCloseButton}
     >
-      <DrawerContent>
-        <DrawerHeader>
+      <DrawerContent className="flex flex-col h-full">
+        {/* Header */}
+        <DrawerHeader className="border-b px-4 py-4">
           <h2 className="text-xl font-semibold">Add Exercise</h2>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute right-4 top-4"
-            onClick={onClose}
-          >
-            <CloseIcon className="h-4 w-4" />
-          </Button>
         </DrawerHeader>
-        
-        <DrawerBody>
-          {/* Custom tabs implementation - each tab gets 50% width */}
-          <div className="border-b flex items-center justify-between bg-white mb-4">
-            <div className="flex-grow relative">
-              <div ref={tabsRef} className="grid grid-cols-2 relative">
-                {/* New Exercise Tab */}
-                <div
-                  data-tab-id="new"
-                  className={`px-4 py-2 cursor-pointer transition-colors text-center ${
-                    activeTab === 'new'
-                      ? 'font-medium text-primary'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setActiveTab('new')}
-                >
-                  <span className="whitespace-nowrap">New Exercise</span>
-                </div>
 
-                {/* Reuse Exercise Tab */}
-                <div
-                  data-tab-id="reuse"
-                  className={`px-4 py-2 cursor-pointer transition-colors text-center ${
-                    activeTab === 'reuse'
-                      ? 'font-medium text-primary'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setActiveTab('reuse')}
-                >
-                  <span className="whitespace-nowrap">Reuse Exercise</span>
-                </div>
+        {/* Tabs */}
+        <div className="border-b">
+          <Tabs
+            tabs={tabItems}
+            activeTabId={activeTab}
+            onTabChange={handleTabChange}
+            equalWidth={true}
+          />
+        </div>
 
-                {/* Animated indicator - modified for even width tabs */}
-                <div
-                  ref={indicatorRef}
-                  className="absolute bottom-0 h-0.5 bg-primary transition-all duration-300 opacity-0"
-                  style={{ 
-                    height: '2px', 
-                    width: '50%',
-                    left: '0'
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+        {/* Content Area */}
+        <DrawerBody className="flex-1 overflow-auto p-6">
+          {activeTab === 'new' && (
+            <NewExerciseTab
+              exercise={exercise}
+              parameterTypes={parameterTypes}
+              prescription={prescription}
+              onChange={setPrescription}
+            />
+          )}
 
-          <ScrollArea className="h-[calc(100vh-250px)]">
-            {/* Tab Content */}
-            {activeTab === 'new' && (
-              <div className="mt-0">
-                <NewExerciseTab
-                  prescription={prescription}
-                  onChange={setPrescription}
-                  parameterTypes={parameterTypes}
-                />
-              </div>
-            )}
-
-            {activeTab === 'reuse' && (
-              <div className="mt-0">
-                <ReuseExerciseTab
-                  exercises={allExercises}
-                  onSelect={(exercise) => {
-                    setPrescription({
-                      ...prescription,
-                      exerciseId: exercise.id,
-                    });
-                    setActiveTab('new');
-                  }}
-                />
-              </div>
-            )}
-          </ScrollArea>
+          {activeTab === 'reuse' && (
+            <ReuseExerciseTab
+              exercises={allExercises}
+              onSelect={(selectedExercise) => {
+                setPrescription({
+                  ...prescription,
+                  exerciseId: selectedExercise.id,
+                  name: selectedExercise.name,
+                });
+                setActiveTab('new');
+              }}
+            />
+          )}
         </DrawerBody>
 
-        <DrawerFooter className="flex flex-row justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>
-            Save
-          </Button>
+        {/* Footer with Action Buttons */}
+        <DrawerFooter className="border-t p-4 bg-gray-50">
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>Save</Button>
+          </div>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

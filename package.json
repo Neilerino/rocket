@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "@heroui/input": "^2.4.15",
     "@heroui/react": "^2.7.4",
-    "framer-motion": "^12.4.7"
+    "@heroui/system": "^2.4.11",
+    "@heroui/theme": "^2.4.11",
+    "framer-motion": "^12.4.7",
+    "tailwindcss": "^4.0.9"
   }
 }

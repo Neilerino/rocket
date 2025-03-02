@@ -24,13 +24,13 @@ const ExerciseCard = ({
   // Helper function to format time intervals (like "00:01:30" to "1:30")
   const formatTimeInterval = (interval?: string): string => {
     if (!interval) return '';
-    
+
     // Remove leading zeros and potentially the hour part if it's 0
-    const parts = interval.split(':').map(part => parseInt(part, 10));
+    const parts = interval.split(':').map((part) => parseInt(part, 10));
     if (parts.length !== 3) return interval;
-    
+
     const [hours, minutes, seconds] = parts;
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     } else {
@@ -39,8 +39,9 @@ const ExerciseCard = ({
   };
 
   // Determine if we should render parameter details
-  const shouldRenderParameters = prescription?.parameters && 
-    Object.keys(prescription.parameters).length > 0 && 
+  const shouldRenderParameters =
+    prescription?.parameters &&
+    Object.keys(prescription.parameters).length > 0 &&
     parameterTypes.length > 0;
 
   // Generate handler for card click
@@ -52,33 +53,39 @@ const ExerciseCard = ({
 
   // Use different styling based on whether this is a detailed or compact view
   return (
-    <Card 
+    <Card
       className={`
-        overflow-hidden transition-all
-        ${onClick ? 'cursor-pointer hover:shadow-md' : ''}
-        ${selected ? 'ring-2 ring-primary' : ''}
+        overflow-hidden transition-all shadow-sm border border-gray-200
+        ${onClick ? 'cursor-pointer hover:shadow-sm hover:border-gray-300' : ''}
+        ${selected ? 'ring-2 ring-primary border-transparent' : ''}
       `}
-      onClick={onClick ? handleClick : undefined}
+      onPress={onClick ? handleClick : undefined}
     >
-      <CardHeader className={`flex flex-row items-center justify-between ${compact ? 'py-3 px-4' : 'p-4'} bg-gradient-to-r from-gray-50 to-white`}>
+      <CardHeader
+        className={`flex flex-row items-center justify-between ${compact ? 'py-3 px-4' : 'p-4'} bg-gradient-to-r from-gray-50 to-white`}
+      >
         <div className="flex items-center gap-2">
-          <div className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-primary flex-shrink-0 rounded-full bg-primary/10 p-0.5`}>
+          <div
+            className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-primary flex-shrink-0 rounded-full bg-primary/10 p-0.5`}
+          >
             <Dumbbell className="w-full h-full" />
           </div>
           <div>
-            <h3 className={`font-medium ${compact ? 'text-base' : 'text-lg'} text-gray-800`}>{exercise.name}</h3>
+            <h3 className={`font-medium ${compact ? 'text-base' : 'text-lg'} text-gray-800`}>
+              {exercise.name}
+            </h3>
             {!compact && exercise.description && (
               <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{exercise.description}</p>
             )}
           </div>
         </div>
-        
+
         {/* Sets Chip - Always show if available */}
         {prescription?.sets && (
-          <Chip 
-            color="primary" 
-            variant="filled" 
-            size={compact ? "sm" : "md"}
+          <Chip
+            color="primary"
+            variant="filled"
+            size={compact ? 'sm' : 'md'}
             className="font-medium bg-primary text-white"
           >
             {prescription.sets} sets
@@ -104,7 +111,7 @@ const ExerciseCard = ({
                   </div>
                 </div>
               )}
-              
+
               {/* Reps */}
               {prescription.reps !== undefined && (
                 <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2.5 border border-gray-100">
@@ -117,7 +124,7 @@ const ExerciseCard = ({
                   </div>
                 </div>
               )}
-              
+
               {/* Duration */}
               {prescription.duration && (
                 <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2.5 border border-gray-100">
@@ -126,11 +133,13 @@ const ExerciseCard = ({
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 font-medium">Duration</div>
-                    <div className="font-semibold text-gray-800">{formatTimeInterval(prescription.duration)}</div>
+                    <div className="font-semibold text-gray-800">
+                      {formatTimeInterval(prescription.duration)}
+                    </div>
                   </div>
                 </div>
               )}
-              
+
               {/* Rest Time */}
               {prescription.rest && (
                 <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2.5 border border-gray-100">
@@ -139,11 +148,13 @@ const ExerciseCard = ({
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 font-medium">Rest</div>
-                    <div className="font-semibold text-gray-800">{formatTimeInterval(prescription.rest)}</div>
+                    <div className="font-semibold text-gray-800">
+                      {formatTimeInterval(prescription.rest)}
+                    </div>
                   </div>
                 </div>
               )}
-              
+
               {/* Rest Interval (for repeaters) */}
               {prescription.restInterval && (
                 <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2.5 border border-gray-100">
@@ -152,13 +163,15 @@ const ExerciseCard = ({
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 font-medium">Rest Interval</div>
-                    <div className="font-semibold text-gray-800">{formatTimeInterval(prescription.restInterval)}</div>
+                    <div className="font-semibold text-gray-800">
+                      {formatTimeInterval(prescription.restInterval)}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           )}
-          
+
           {/* Compact View - Secondary Details Row */}
           {compact && prescription && (
             <div className="flex flex-wrap gap-2">
@@ -168,21 +181,21 @@ const ExerciseCard = ({
                   {prescription.reps} reps
                 </Badge>
               )}
-              
+
               {prescription.rpe !== undefined && (
                 <Badge variant="soft" color="neutral" size="sm" className="flex items-center gap-1">
                   <BarChart className="w-3 h-3" />
                   RPE: {prescription.rpe}
                 </Badge>
               )}
-              
+
               {prescription.duration && (
                 <Badge variant="soft" color="neutral" size="sm" className="flex items-center gap-1">
                   <Timer className="w-3 h-3" />
                   {formatTimeInterval(prescription.duration)}
                 </Badge>
               )}
-              
+
               {prescription.rest && (
                 <Badge variant="soft" color="neutral" size="sm" className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
@@ -193,7 +206,7 @@ const ExerciseCard = ({
           )}
         </CardBody>
       )}
-      
+
       {/* Parameters Section - Only in detailed view with parameters */}
       {shouldRenderParameters && !compact && (
         <CardFooter className="bg-gray-50 border-t p-4">
@@ -202,14 +215,17 @@ const ExerciseCard = ({
               <LayoutGrid className="w-4 h-4 mr-2 text-gray-500" />
               <h4 className="font-medium text-sm text-gray-700">Parameters</h4>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(prescription!.parameters).map(([paramTypeId, value]) => {
-                const paramType = parameterTypes.find(pt => pt.id === paramTypeId);
+                const paramType = parameterTypes.find((pt) => pt.id === paramTypeId);
                 if (!paramType) return null;
-                
+
                 return (
-                  <div key={paramTypeId} className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border">
+                  <div
+                    key={paramTypeId}
+                    className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border"
+                  >
                     <span className="text-gray-600 font-medium">{paramType.name}</span>
                     <Badge variant="flat" color="primary">
                       {value} {paramType.defaultUnit}
