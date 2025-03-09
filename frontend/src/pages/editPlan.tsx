@@ -1,4 +1,3 @@
-
 import { Mountain, Timer, CalendarDays } from 'lucide-react';
 import { PlanEditor } from '@/components/plan-editor';
 import { useParams } from '@tanstack/react-router';
@@ -10,7 +9,7 @@ const EditPlan = () => {
     from: `${ROUTES.PLANNING.path}${ROUTES.PLANNING.children.EDIT_PLAN.path}`,
   });
 
-  const { data: plans } = usePlans({ id: Number(planId) });
+  const { data: plans } = usePlans({ id: planId });
   const plan = plans && plans.length > 0 ? plans[0] : null;
 
   return (

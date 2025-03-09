@@ -31,13 +31,14 @@ type ApiErrorResponse struct {
 
 type PlanInterval struct {
 	ID          int64  `json:"id"`
-	PlanID      int64  `json:"plan_id"`
-	Duration    int64  `json:"duration"`
+	PlanID      int64  `json:"planId"`
+	Duration    string `json:"duration"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Order       int32  `json:"order"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+	GroupCount  int    `json:"groupCount"`
 }
 
 type Group struct {

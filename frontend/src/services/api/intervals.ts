@@ -2,7 +2,7 @@ import apiClient from './client';
 import { ApiResponse } from './errorHandler';
 import { PlanInterval, CreatePlanIntervalDto } from '../types';
 
-interface IntervalFilters {
+export interface IntervalFilters {
   planId?: number;
   id?: number;
 }

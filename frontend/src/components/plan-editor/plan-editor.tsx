@@ -14,7 +14,7 @@ import {
 } from '../../services/hooks/intervals/useIntervalMutations';
 
 interface PlanEditorProps {
-  planId?: string;
+  planId?: number;
 }
 
 export default function PlanEditor({ planId }: PlanEditorProps) {
@@ -24,19 +24,22 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
   // API hooks
   const { data: intervals, isLoading } = useIntervalsByPlanId(Number(planId));
   const { mutate: createInterval } = useCreateInterval();
-  const { mutate: deleteInterval } = useDeleteInterval();
+  const { mutate: deleteInterval } = useDeleteInterval(Number(planId));
+
+  console.log('intervals', intervals);
 
   // Update local intervals when API data changes
   useEffect(() => {
     if (intervals) {
       // Convert API intervals to local format
       const convertedIntervals: LocalPlanInterval[] = intervals.map((apiInterval) => ({
-        id: apiInterval.id.toString(),
-        planId: apiInterval.planId.toString(),
+        id: apiInterval.id,
+        planId: apiInterval.planId,
         name: apiInterval.name,
-        description: apiInterval.description || '',
-        duration: apiInterval.duration.toString(),
+        description: apiInterval.description,
+        duration: apiInterval.duration,
         order: apiInterval.order,
+        groupCount: apiInterval.groupCount,
         groups: [], // We'll need to implement group fetching separately
       }));
       setLocalIntervals(convertedIntervals);

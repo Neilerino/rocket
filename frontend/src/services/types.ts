@@ -49,8 +49,11 @@ export interface PlanInterval extends BaseEntity {
   planId: number;
   name: string;
   description: string;
-  duration: number;
+  duration: string;
   order: number;
+  createdAt: string;
+  updatedAt: string;
+  groupCount: number;
 }
 
 export interface CreatePlanIntervalDto {

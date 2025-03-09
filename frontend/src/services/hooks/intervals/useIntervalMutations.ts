@@ -2,12 +2,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { IntervalService } from '../../api/intervals';
 import { isApiError } from '../../api/errorHandler';
 import { PlanInterval, CreatePlanIntervalDto } from '../../types';
+import { createCacheKey } from './utils';
 
 const QUERY_KEY = 'intervals';
 
 export const useCreateInterval = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (intervalData: CreatePlanIntervalDto) => {
       const response = await IntervalService.createInterval(intervalData);
@@ -17,13 +18,10 @@ export const useCreateInterval = () => {
       return response.data as PlanInterval;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEY, 'plan', variables.planId] 
+      queryClient.invalidateQueries({
+        queryKey: [createCacheKey({ planId: variables.planId })],
       });
-      queryClient.invalidateQueries({ 
-        queryKey: ['plans', variables.planId]
-      });
-    }
+    },
   });
 };
 
@@ -39,34 +37,40 @@ export const useUpdateInterval = () => {
       return response.data as PlanInterval;
     },
     onMutate: async (updatedInterval) => {
-      await queryClient.cancelQueries({ queryKey: [QUERY_KEY, updatedInterval.id] });
-      const previousInterval = queryClient.getQueryData([QUERY_KEY, updatedInterval.id]);
-      
-      queryClient.setQueryData([QUERY_KEY, updatedInterval.id], 
-        (old: PlanInterval | undefined) => old ? { ...old, ...updatedInterval } : undefined);
-        
+      await queryClient.cancelQueries({
+        queryKey: [createCacheKey({ intervalId: updatedInterval.id })],
+      });
+      const previousInterval = queryClient.getQueryData([
+        createCacheKey({ intervalId: updatedInterval.id }),
+      ]);
+
+      queryClient.setQueryData(
+        [createCacheKey({ intervalId: updatedInterval.id })],
+        (old: PlanInterval | undefined) => (old ? { ...old, ...updatedInterval } : undefined),
+      );
+
       return { previousInterval };
     },
     onError: (_err, variables, context) => {
       if (context?.previousInterval) {
         queryClient.setQueryData(
-          [QUERY_KEY, variables.id],
-          context.previousInterval
+          [createCacheKey({ intervalId: variables.id })],
+          context.previousInterval,
         );
       }
     },
     onSettled: (data) => {
       if (data) {
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEY, 'plan', data.planId] });
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEY, data.id] });
+        queryClient.invalidateQueries({ queryKey: [createCacheKey({ planId: data.planId })] });
+        queryClient.invalidateQueries({ queryKey: [createCacheKey({ intervalId: data.id })] });
       }
-    }
+    },
   });
 };
 
-export const useDeleteInterval = () => {
+export const useDeleteInterval = (planId: number) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await IntervalService.deleteInterval(id);
@@ -76,14 +80,14 @@ export const useDeleteInterval = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-    }
+      queryClient.invalidateQueries({ queryKey: [createCacheKey({ planId: planId })] });
+    },
   });
 };
 
 export const useReorderIntervals = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ planId, intervalIds }: { planId: number; intervalIds: number[] }) => {
       const response = await IntervalService.reorderIntervals(planId, intervalIds);
@@ -93,9 +97,9 @@ export const useReorderIntervals = () => {
       return response.data as PlanInterval[];
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEY, 'plan', variables.planId] 
+      queryClient.invalidateQueries({
+        queryKey: [createCacheKey({ planId: variables.planId })],
       });
-    }
+    },
   });
 };

@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS plans (
         validate_length (name, 1, 255)
     ),
     description TEXT NOT NULL CONSTRAINT plans_description_chk CHECK (
-        validate_length (description, 1, 255)
+        validate_length (description, 0, 255)
     ),
     user_id BIGINT NOT NULL REFERENCES users (id),
     is_template BOOLEAN NOT NULL DEFAULT FALSE,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS plan_intervals (
         validate_length (name, 1, 255)
     ),
     description TEXT CONSTRAINT plan_intervals_description CHECK (
-        validate_length (description, 1, 10000)
+        validate_length (description, 0, 10000)
     ),
     duration INTERVAL NOT NULL DEFAULT '1 week',
     "order" INTEGER NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS groups (
         validate_length (name, 1, 255)
     ),
     description TEXT NOT NULL CONSTRAINT groups_description_chk CHECK (
-        validate_length (description, 1, 255)
+        validate_length (description, 0, 255)
     ),
     user_id BIGINT NOT NULL REFERENCES users (id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS exercises (
         validate_length (name, 1, 255)
     ),
     description TEXT NOT NULL CONSTRAINT exercise_description_chk CHECK (
-        validate_length (description, 1, 10000)
+        validate_length (description, 0, 10000)
     ),
     user_id BIGINT REFERENCES users (id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

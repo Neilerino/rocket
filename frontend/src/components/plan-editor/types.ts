@@ -46,11 +46,12 @@ export interface Group {
 }
 
 export interface PlanInterval {
-  id: string;
-  planId: string;
+  id: number;
+  planId: number;
   name: string;
   description?: string;
   duration: string; // interval
   order: number;
   groups: Group[];
+  groupCount: number;
 }

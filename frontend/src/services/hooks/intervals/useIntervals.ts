@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IntervalService } from '../../api/intervals';
 import { isApiError } from '../../api/errorHandler';
 import { PlanInterval } from '../../types';
-
-const QUERY_KEY = 'intervals';
+import { createCacheKey } from './utils';
 
 /**
  * Hook to fetch intervals with flexible filtering
@@ -12,7 +11,7 @@ const QUERY_KEY = 'intervals';
  */
 export const useIntervals = (filters = {}, options = {}) => {
   return useQuery({
-    queryKey: [QUERY_KEY, filters],
+    queryKey: [createCacheKey({ filters })],
     queryFn: async () => {
       const response = await IntervalService.getIntervals(filters);
       if (isApiError(response)) {
@@ -20,7 +19,6 @@ export const useIntervals = (filters = {}, options = {}) => {
       }
       return response.data as PlanInterval[];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
     ...options,
   });
 };
@@ -36,7 +34,7 @@ export const useIntervalsByPlanId = (planId: number, options = {}) => {
     {
       enabled: !!planId,
       ...options,
-    }
+    },
   );
 };
 
@@ -47,7 +45,7 @@ export const useIntervalsByPlanId = (planId: number, options = {}) => {
  */
 export const useIntervalById = (intervalId: number, options = {}) => {
   return useQuery({
-    queryKey: [QUERY_KEY, intervalId],
+    queryKey: [createCacheKey({ intervalId })],
     queryFn: async () => {
       const response = await IntervalService.getIntervals({ id: intervalId });
       if (isApiError(response)) {

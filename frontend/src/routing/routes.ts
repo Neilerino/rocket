@@ -30,6 +30,12 @@ const editPlanRoute = createRoute({
   getParentRoute: () => rootRoot,
   path: `${ROUTES.PLANNING.path}${ROUTES.PLANNING.children.EDIT_PLAN.path}`,
   component: PlanEditor,
+  params: {
+    parse: (params) => ({
+      ...params,
+      planId: Number(params.planId),
+    }),
+  },
 });
 
 const logBookRoute = createRoute({

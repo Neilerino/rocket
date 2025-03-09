@@ -32,7 +32,7 @@ type CreatePlanIntervalApiArgs struct {
 	Duration    string `json:"duration"`
 	Name        string `json:"name"`
 	Order       int32  `json:"order"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty" default:""`
 }
 
 // handleListPlanIntervals is a shared handler function for both List and GetById endpoints

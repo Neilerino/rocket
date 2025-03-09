@@ -1177,12 +1177,21 @@ func (q *Queries) PlanIntervals_DeleteById(ctx context.Context, id int64) (PlanI
 }
 
 const planIntervals_List = `-- name: PlanIntervals_List :many
-SELECT id, plan_id, name, description, duration, "order", created_at, updated_at
-FROM plan_intervals
+SELECT 
+    pi.id, pi.plan_id, pi.name, pi.description, pi.duration, pi."order", pi.created_at, pi.updated_at,
+    COALESCE(group_counts.count, 0) AS group_count
+FROM plan_intervals pi
+LEFT JOIN (
+    SELECT 
+        plan_interval_id, 
+        COUNT(DISTINCT group_id) AS count
+    FROM interval_group_assignments
+    GROUP BY plan_interval_id
+) AS group_counts ON pi.id = group_counts.plan_interval_id
 WHERE
-    (plan_id = $1 OR $2 = 0) -- Filter by plan_id if provided (non-zero)
-    AND (id = $3 OR $4 = 0) -- Filter by interval_id if provided (non-zero)
-ORDER BY "order"
+    (pi.plan_id = $1 OR $2 = 0) -- Filter by plan_id if provided (non-zero)
+    AND (pi.id = $3 OR $4 = 0) -- Filter by interval_id if provided (non-zero)
+ORDER BY pi."order"
 LIMIT $5
 `
 
@@ -1194,7 +1203,19 @@ type PlanIntervals_ListParams struct {
 	Limit   int32
 }
 
-func (q *Queries) PlanIntervals_List(ctx context.Context, arg PlanIntervals_ListParams) ([]PlanInterval, error) {
+type PlanIntervals_ListRow struct {
+	ID          int64
+	PlanID      int64
+	Name        pgtype.Text
+	Description pgtype.Text
+	Duration    pgtype.Interval
+	Order       int32
+	CreatedAt   pgtype.Timestamp
+	UpdatedAt   pgtype.Timestamp
+	GroupCount  int64
+}
+
+func (q *Queries) PlanIntervals_List(ctx context.Context, arg PlanIntervals_ListParams) ([]PlanIntervals_ListRow, error) {
 	rows, err := q.db.Query(ctx, planIntervals_List,
 		arg.PlanID,
 		arg.Column2,
@@ -1206,9 +1227,9 @@ func (q *Queries) PlanIntervals_List(ctx context.Context, arg PlanIntervals_List
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PlanInterval
+	var items []PlanIntervals_ListRow
 	for rows.Next() {
-		var i PlanInterval
+		var i PlanIntervals_ListRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.PlanID,
@@ -1218,6 +1239,7 @@ func (q *Queries) PlanIntervals_List(ctx context.Context, arg PlanIntervals_List
 			&i.Order,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.GroupCount,
 		); err != nil {
 			return nil, err
 		}
@@ -1232,7 +1254,7 @@ func (q *Queries) PlanIntervals_List(ctx context.Context, arg PlanIntervals_List
 const planIntervals_UpdateOrderByValues = `-- name: PlanIntervals_UpdateOrderByValues :many
 UPDATE plan_intervals as p_i
 SET
-    "order" = v.new_order
+    "order" = v.new_orders[array_position(v.ids, p_i.id)]
 FROM (
         VALUES (
                 $1::bigint[], $2::int[]

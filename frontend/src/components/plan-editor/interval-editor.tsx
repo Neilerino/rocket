@@ -19,7 +19,7 @@ interface IntervalEditorProps {
   interval: Interval;
   isExpanded: boolean;
   onToggle: () => void;
-  onSelectGroup?: (group: Group) => void;
+  onSelectGroup: (group: Group) => void;
   parameterTypes: ParameterType[];
   allExercises: Exercise[];
   onUpdateGroup: (group: Group) => void;
@@ -64,15 +64,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
 
     setCurrentGroup(newGroup);
     setGroupDrawerOpen(true);
-  };
-
-  // Handle edit group (for the Add Exercises button)
-  const handleEditGroup = (e: React.MouseEvent, group: Group) => {
-    e.stopPropagation(); // Prevent tab selection
-    console.log('Edit group clicked for group:', group);
-
-    setCurrentGroup(group);
-    setExerciseDrawerOpen(true);
   };
 
   // Handle exercise save
@@ -160,7 +151,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
               <div className="flex space-x-4 text-sm">
                 <span className="text-gray-500">{interval.duration}</span>
                 <span className="text-gray-500">
-                  {interval.groups.length} {interval.groups.length === 1 ? 'session' : 'sessions'}
+                  {interval.groupCount} {interval.groupCount === 1 ? 'session' : 'sessions'}
                 </span>
               </div>
             </div>

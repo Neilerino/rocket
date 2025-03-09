@@ -3,6 +3,7 @@ package repository
 import (
 	"backend/db"
 	"backend/internal/types"
+	"backend/internal/utils"
 	"context"
 )
 
@@ -54,7 +55,7 @@ func (r *IntervalGroupAssignmentsRepository) GetByGroupId(ctx context.Context, g
 				ID:        row.PiID,
 				PlanID:    row.PiPlanID,
 				Name:      row.PiName.String,
-				Duration:  row.PiDuration.Microseconds,
+				Duration:  utils.IntervalToString(row.PiDuration),
 				Order:     row.PiOrder,
 				CreatedAt: row.PiCreatedAt.Time.String(),
 				UpdatedAt: row.PiUpdatedAt.Time.String(),

@@ -28,18 +28,27 @@ WHERE id = $5
 RETURNING *;
 
 -- name: PlanIntervals_List :many
-SELECT *
-FROM plan_intervals
+SELECT 
+    pi.*,
+    COALESCE(group_counts.count, 0) AS group_count
+FROM plan_intervals pi
+LEFT JOIN (
+    SELECT 
+        plan_interval_id, 
+        COUNT(DISTINCT group_id) AS count
+    FROM interval_group_assignments
+    GROUP BY plan_interval_id
+) AS group_counts ON pi.id = group_counts.plan_interval_id
 WHERE
-    (plan_id = $1 OR $2 = 0) -- Filter by plan_id if provided (non-zero)
-    AND (id = $3 OR $4 = 0) -- Filter by interval_id if provided (non-zero)
-ORDER BY "order"
+    (pi.plan_id = $1 OR $2 = 0) -- Filter by plan_id if provided (non-zero)
+    AND (pi.id = $3 OR $4 = 0) -- Filter by interval_id if provided (non-zero)
+ORDER BY pi."order"
 LIMIT $5;
 
 -- name: PlanIntervals_UpdateOrderByValues :many
 UPDATE plan_intervals as p_i
 SET
-    "order" = v.new_order
+    "order" = v.new_orders[array_position(v.ids, p_i.id)]
 FROM (
         VALUES (
                 sqlc.arg ('interval_ids')::bigint[], sqlc.arg ('new_orders')::int[]
