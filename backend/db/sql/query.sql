@@ -27,13 +27,14 @@ SET
 WHERE id = $5 
 RETURNING *;
 
--- name: PlanIntervals_GetByPlanId :many
+-- name: PlanIntervals_List :many
 SELECT *
 FROM plan_intervals
 WHERE
-    plan_id = $1
-order by "order"
-limit $2;
+    (plan_id = $1 OR $2 = 0) -- Filter by plan_id if provided (non-zero)
+    AND (id = $3 OR $4 = 0) -- Filter by interval_id if provided (non-zero)
+ORDER BY "order"
+LIMIT $5;
 
 -- name: PlanIntervals_UpdateOrderByValues :many
 UPDATE plan_intervals as p_i
@@ -54,10 +55,11 @@ INSERT INTO
     plan_intervals (
         plan_id,
         name,
+        description,
         duration,
         "order"
     )
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING
     *;
 

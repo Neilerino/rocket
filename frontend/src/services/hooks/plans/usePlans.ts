@@ -24,11 +24,17 @@ export const usePlanById = (planId: number, options = {}) => {
   return useQuery({
     queryKey: [QUERY_KEY, planId],
     queryFn: async () => {
-      const response = await PlanService.getPlanById(planId);
+      const response = await PlanService.getPlans({ id: planId });
       if (isApiError(response)) {
         throw response.error;
       }
-      return response.data as Plan;
+
+      // Check if data exists and has at least one element
+      if (!response.data || response.data.length === 0) {
+        throw new Error(`Plan with ID ${planId} not found`);
+      }
+
+      return response.data[0] as Plan;
     },
     enabled: !!planId,
     ...options,
@@ -39,7 +45,7 @@ export const usePlansByUserId = (userId: number, options = {}) => {
   return useQuery({
     queryKey: [QUERY_KEY, 'user', userId],
     queryFn: async () => {
-      const response = await PlanService.getPlansByUserId(userId);
+      const response = await PlanService.getPlans({ userId });
       if (isApiError(response)) {
         throw response.error;
       }

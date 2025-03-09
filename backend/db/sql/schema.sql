@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS plan_intervals (
     name TEXT CONSTRAINT plan_intervals_name_chk CHECK (
         validate_length (name, 1, 255)
     ),
+    description TEXT CONSTRAINT plan_intervals_description CHECK (
+        validate_length (description, 1, 10000)
+    ),
     duration INTERVAL NOT NULL DEFAULT '1 week',
     "order" INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -87,7 +90,7 @@ CREATE TABLE IF NOT EXISTS exercises (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE parameter_types (
+CREATE TABLE IF NOT EXISTS parameter_types (
     id BIGSERIAL PRIMARY KEY,
     "name" TEXT NOT NULL CONSTRAINT parameter_types_name_chk CHECK (validate_length ("name", 1, 255)), -- e.g., "Percentage", "Edge Depth"
     data_type TEXT NOT NULL CONSTRAINT parameter_types_data_type_chk CHECK (validate_length (data_type, 1, 255)), -- "percentage", "length", "time", "weight"
@@ -96,7 +99,7 @@ CREATE TABLE parameter_types (
     max_value FLOAT -- e.g., 100 for percentages
 );
 
-CREATE TABLE exercise_variations (
+CREATE TABLE IF NOT EXISTS exercise_variations (
     id BIGSERIAL PRIMARY KEY,
     exercise_id BIGINT NOT NULL REFERENCES exercises (id),
     parameter_type_id BIGINT REFERENCES parameter_types (id)

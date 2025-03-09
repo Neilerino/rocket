@@ -13,8 +13,23 @@ type PlanIntervalsRepository struct {
 }
 
 
-func (r *PlanIntervalsRepository) GetPlanIntervalsByPlanId(ctx context.Context, planId int64, limit int32) ([]db.PlanInterval, error) {
-	plan_intervals, err := r.Queries.PlanIntervals_GetByPlanId(ctx, db.PlanIntervals_GetByPlanIdParams{PlanID: planId, Limit: 100})
+func (r *PlanIntervalsRepository) ListPlanIntervals(ctx context.Context, planId int64, intervalId int64, limit int32) ([]db.PlanInterval, error) {
+	// Convert boolean conditions to integers (0 or 1)
+	var usePlanIdFilter, useIntervalIdFilter int32
+	if planId != 0 {
+		usePlanIdFilter = 1
+	}
+	if intervalId != 0 {
+		useIntervalIdFilter = 1
+	}
+
+	plan_intervals, err := r.Queries.PlanIntervals_List(ctx, db.PlanIntervals_ListParams{
+		PlanID: planId,
+		Column2: usePlanIdFilter, // Use plan_id filter if non-zero (1 = true, 0 = false)
+		ID: intervalId,
+		Column4: useIntervalIdFilter, // Use interval_id filter if non-zero (1 = true, 0 = false)
+		Limit: limit,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -32,8 +47,8 @@ func stringToInterval(duration string) (pgtype.Interval, error) {
 	return pgtype.Interval{Months: int32(months), Days: int32(days), Microseconds: int64(microseconds)}, nil
 }
 
-func (r *PlanIntervalsRepository) CreatePlanInterval(ctx context.Context, planId int64, duration string, name string, order int32) (*db.PlanInterval, error) {
-	plan_intervals, err := r.GetPlanIntervalsByPlanId(ctx, planId, 100)
+func (r *PlanIntervalsRepository) CreatePlanInterval(ctx context.Context, planId int64, duration string, name string, order int32, description string) (*db.PlanInterval, error) {
+	plan_intervals, err := r.ListPlanIntervals(ctx, planId, 0, 100)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +75,7 @@ func (r *PlanIntervalsRepository) CreatePlanInterval(ctx context.Context, planId
 		return nil, err
 	}
 
-	plan_interval, err := r.Queries.PlanIntervals_CreateOne(ctx, db.PlanIntervals_CreateOneParams{PlanID: planId, Duration: pg_duration, Name: pgtype.Text{String: name, Valid: true}, Order: order})
+	plan_interval, err := r.Queries.PlanIntervals_CreateOne(ctx, db.PlanIntervals_CreateOneParams{PlanID: planId, Duration: pg_duration, Name: pgtype.Text{String: name, Valid: true}, Order: order, Description: pgtype.Text{String: description, Valid: true}})
 	if err != nil {
 		return nil, err
 	}

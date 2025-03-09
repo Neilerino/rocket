@@ -123,6 +123,25 @@ func (fp *FilterParser) GetBoolFilter(paramName string) *bool {
 	return result
 }
 
+// GetBoolFilterWithDefault extracts and parses a boolean filter parameter
+// Returns the parsed value if the parameter exists and is valid, otherwise returns the default value
+func (fp *FilterParser) GetBoolFilterWithDefault(paramName string, defaultValue bool) bool {
+	result := fp.GetBoolFilter(paramName)
+	if result == nil {
+		if fp.Logger {
+			log.Printf("Using default value for %s filter: %v", paramName, defaultValue)
+		}
+		return defaultValue
+	}
+	return *result
+}
+
+// GetBoolFilterOrFalse extracts and parses a boolean filter parameter
+// Returns the parsed value if the parameter exists and is valid, otherwise returns false
+func (fp *FilterParser) GetBoolFilterOrFalse(paramName string) bool {
+	return fp.GetBoolFilterWithDefault(paramName, false)
+}
+
 // GetStringFilter extracts a string filter parameter
 // Returns the string value if the parameter exists, empty string otherwise
 func (fp *FilterParser) GetStringFilter(paramName string) string {
@@ -137,6 +156,19 @@ func (fp *FilterParser) GetStringFilter(paramName string) string {
 	}
 	
 	return paramValue
+}
+
+// GetStringFilterWithDefault extracts a string filter parameter
+// Returns the string value if the parameter exists and is not empty, otherwise returns the default value
+func (fp *FilterParser) GetStringFilterWithDefault(paramName string, defaultValue string) string {
+	result := fp.GetStringFilter(paramName)
+	if result == "" {
+		if fp.Logger {
+			log.Printf("Using default value for %s filter: %s", paramName, defaultValue)
+		}
+		return defaultValue
+	}
+	return result
 }
 
 // GetIntFilter extracts and parses an integer filter parameter
@@ -166,6 +198,25 @@ func (fp *FilterParser) GetIntFilter(paramName string) *int64 {
 	return result
 }
 
+// GetIntFilterWithDefault extracts and parses an integer filter parameter
+// Returns the parsed value if the parameter exists and is valid, otherwise returns the default value
+func (fp *FilterParser) GetIntFilterWithDefault(paramName string, defaultValue int64) int64 {
+	result := fp.GetIntFilter(paramName)
+	if result == nil {
+		if fp.Logger {
+			log.Printf("Using default value for %s filter: %d", paramName, defaultValue)
+		}
+		return defaultValue
+	}
+	return *result
+}
+
+// GetIntFilterOrZero extracts and parses an integer filter parameter
+// Returns the parsed value if the parameter exists and is valid, otherwise returns 0
+func (fp *FilterParser) GetIntFilterOrZero(paramName string) int64 {
+	return fp.GetIntFilterWithDefault(paramName, 0)
+}
+
 // ErrMissingParameter creates an error for a missing required parameter
 func ErrMissingParameter(paramName string) error {
 	return &FilterError{
@@ -190,4 +241,15 @@ type FilterError struct {
 
 func (e *FilterError) Error() string {
 	return e.Message
+}
+
+// HasFilter checks if a parameter exists in the request
+func (fp *FilterParser) HasFilter(paramName string) bool {
+	// Try both filter format and regular format
+	paramValue := fp.Request.URL.Query().Get("filters[" + paramName + "]")
+	if paramValue == "" {
+		paramValue = fp.Request.URL.Query().Get(paramName)
+	}
+	
+	return paramValue != ""
 }

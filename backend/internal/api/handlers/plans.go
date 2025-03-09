@@ -23,21 +23,21 @@ type ListPlansResponse struct {
 }
 
 type ListPlanApiArgs struct {
-	UserId     int64    `json:"userId"`
-	Limit      *int32   `json:"limit,omitempty"`
-	Cursor     *string  `json:"cursor,omitempty"`
-	IsTemplate *bool    `json:"isTemplate,omitempty"`
-	IsPublic   *bool    `json:"isPublic,omitempty"`
+	UserId     *int64  `json:"userId,omitempty"`
+	Id         *int64  `json:"id,omitempty"`
+	Limit      *int32  `json:"limit,omitempty"`
+	Cursor     *string `json:"cursor,omitempty"`
+	IsTemplate *bool   `json:"isTemplate,omitempty"`
+	IsPublic   *bool   `json:"isPublic,omitempty"`
 }
 
 type CreatePlanApiArgs struct {
-	Name          string   `json:"name"`
-	Description   string   `json:"description"`
-	UserId        int64    `json:"userId"`
-	IsTemplate    bool     `json:"isTemplate"`
-	IsPublic      bool     `json:"isPublic"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	UserId      int64  `json:"userId"`
+	IsTemplate  bool   `json:"isTemplate"`
+	IsPublic    bool   `json:"isPublic"`
 }
-	
 
 func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 	// Log the incoming request for debugging
@@ -47,9 +47,13 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 	// Create a filter parser with logging enabled
 	filterParser := api_utils.NewFilterParser(r, true)
 
+	// Get filters from query params
 	userId := filterParser.GetIntFilter("userId")
-	if userId == nil {
-		api_utils.WriteError(w, http.StatusBadRequest, "Missing required field: userId")
+	planId := filterParser.GetIntFilter("id")
+
+	// Require at least one filter (userId or planId)
+	if userId == nil && planId == nil {
+		api_utils.WriteError(w, http.StatusBadRequest, "Missing required filter: either userId or planId must be provided")
 		return
 	}
 
@@ -73,10 +77,23 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Filtering plans by isPublic=%v", *isPublic)
 		}
 
-		log.Printf("Calling service.GetPlanByUserId with userId=%d, limit=%d, offset=%d", *userId, int(limit), offset)
-		plans, err := plan_service.GetPlanByUserId(r.Context(), *userId, int(limit), offset, isTemplate, isPublic)
+		// Use the more flexible GetPlans method that can handle both userId and planId filters
+		log.Printf("Filtering plans with userId=%v, planId=%v, limit=%d, offset=%d", userId, planId, int(limit), offset)
+
+		// Prepare the arguments for the service call
+		args := service.ListPlanArgs{
+			UserId:     userId,
+			PlanId:     planId,
+			Limit:      limit,
+			Offset:     int32(offset),
+			IsTemplate: isTemplate,
+			IsPublic:   isPublic,
+		}
+
+		// Call the service to get plans based on the provided filters
+		plans, err := plan_service.GetPlans(r.Context(), args)
 		if err != nil {
-			log.Printf("Error from GetPlanByUserId: %v", err)
+			log.Printf("Error from GetPlans: %v", err)
 			return err
 		}
 
@@ -117,7 +134,7 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Creating plan with name=%s, userId=%d, isTemplate=%v, isPublic=%v", 
+	log.Printf("Creating plan with name=%s, userId=%d, isTemplate=%v, isPublic=%v",
 		args.Name, args.UserId, args.IsTemplate, args.IsPublic)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
@@ -126,11 +143,11 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 		// Call service to create plan
 		plan, err := plan_service.CreatePlan(
-			r.Context(), 
-			args.Name, 
-			args.Description, 
-			args.UserId, 
-			args.IsTemplate, 
+			r.Context(),
+			args.Name,
+			args.Description,
+			args.UserId,
+			args.IsTemplate,
 			args.IsPublic,
 		)
 		if err != nil {
@@ -150,6 +167,8 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetById is kept for backward compatibility with existing clients
+// New clients should use the List endpoint with planId parameter
 func (h *PlanHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	id, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
 	if err != nil {
@@ -203,7 +222,7 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Updating plan with name=%s, isTemplate=%v, isPublic=%v", 
+	log.Printf("Updating plan with name=%s, isTemplate=%v, isPublic=%v",
 		args.Name, args.IsTemplate, args.IsPublic)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
@@ -212,11 +231,11 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 
 		// Call service to update plan
 		plan, err := plan_service.UpdatePlan(
-			r.Context(), 
-			id, 
-			args.Name, 
-			args.Description, 
-			args.IsTemplate, 
+			r.Context(),
+			id,
+			args.Name,
+			args.Description,
+			args.IsTemplate,
 			args.IsPublic,
 		)
 		if err != nil {

@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { Exercise, ExercisePrescription, Group, PlanInterval as Interval, ParameterType } from './types';
+import {
+  Exercise,
+  ExercisePrescription,
+  Group,
+  PlanInterval as Interval,
+  ParameterType,
+} from './types';
 import ExerciseCard from './exercise-card';
 import ExerciseSidebar from './exercise-sidebar';
 import GroupSidebar from './group-sidebar';
@@ -13,7 +19,7 @@ interface IntervalEditorProps {
   interval: Interval;
   isExpanded: boolean;
   onToggle: () => void;
-  onSelectGroup: (group: Group) => void;
+  onSelectGroup?: (group: Group) => void;
   parameterTypes: ParameterType[];
   allExercises: Exercise[];
   onUpdateGroup: (group: Group) => void;
@@ -25,7 +31,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
   interval,
   isExpanded,
   onToggle,
-  onSelectGroup,
   parameterTypes,
   allExercises,
   onUpdateGroup,
@@ -154,12 +159,14 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
               )}
               <div className="flex space-x-4 text-sm">
                 <span className="text-gray-500">{interval.duration}</span>
-                <span className="text-gray-500">{interval.groups.length} {interval.groups.length === 1 ? 'session' : 'sessions'}</span>
+                <span className="text-gray-500">
+                  {interval.groups.length} {interval.groups.length === 1 ? 'session' : 'sessions'}
+                </span>
               </div>
             </div>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="flex space-x-2">
           {/* Edit Interval Button */}
@@ -170,7 +177,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
           >
             <Edit size={18} />
           </button>
-          
+
           {/* Delete Interval Button */}
           <button
             className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition-colors duration-200"

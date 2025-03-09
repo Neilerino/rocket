@@ -81,13 +81,14 @@ type Plan struct {
 }
 
 type PlanInterval struct {
-	ID        int64
-	PlanID    int64
-	Name      pgtype.Text
-	Duration  pgtype.Interval
-	Order     int32
-	CreatedAt pgtype.Timestamp
-	UpdatedAt pgtype.Timestamp
+	ID          int64
+	PlanID      int64
+	Name        pgtype.Text
+	Description pgtype.Text
+	Duration    pgtype.Interval
+	Order       int32
+	CreatedAt   pgtype.Timestamp
+	UpdatedAt   pgtype.Timestamp
 }
 
 type User struct {

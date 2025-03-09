@@ -5,32 +5,62 @@ import { PlanInterval } from '../../types';
 
 const QUERY_KEY = 'intervals';
 
-export const useIntervalsByPlanId = (planId: number, options = {}) => {
+/**
+ * Hook to fetch intervals with flexible filtering
+ * @param filters Filter criteria (planId, id, etc.)
+ * @param options Additional react-query options
+ */
+export const useIntervals = (filters = {}, options = {}) => {
   return useQuery({
-    queryKey: [QUERY_KEY, 'plan', planId],
+    queryKey: [QUERY_KEY, filters],
     queryFn: async () => {
-      const response = await IntervalService.getIntervalsByPlanId(planId);
+      const response = await IntervalService.getIntervals(filters);
       if (isApiError(response)) {
         throw response.error;
       }
       return response.data as PlanInterval[];
     },
-    enabled: !!planId,
-    ...options
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options,
   });
 };
 
+/**
+ * Hook to fetch intervals for a specific plan
+ * @param planId The ID of the plan
+ * @param options Additional react-query options
+ */
+export const useIntervalsByPlanId = (planId: number, options = {}) => {
+  return useIntervals(
+    { planId },
+    {
+      enabled: !!planId,
+      ...options,
+    }
+  );
+};
+
+/**
+ * Hook to fetch a specific interval by ID
+ * @param intervalId The ID of the interval
+ * @param options Additional react-query options
+ */
 export const useIntervalById = (intervalId: number, options = {}) => {
   return useQuery({
     queryKey: [QUERY_KEY, intervalId],
     queryFn: async () => {
-      const response = await IntervalService.getIntervalById(intervalId);
+      const response = await IntervalService.getIntervals({ id: intervalId });
       if (isApiError(response)) {
         throw response.error;
       }
-      return response.data as PlanInterval;
+      // Since we're querying by ID, we expect a single result
+      const intervals = response.data as PlanInterval[];
+      if (intervals && intervals.length > 0) {
+        return intervals[0];
+      }
+      throw new Error(`Interval with ID ${intervalId} not found`);
     },
     enabled: !!intervalId,
-    ...options
+    ...options,
   });
 };

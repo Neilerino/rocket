@@ -3,6 +3,7 @@ import { ApiResponse } from './errorHandler';
 import { Plan, CreatePlanDto, UpdatePlanDto } from '../types';
 
 interface PlanFilters {
+  id?: number;
   userId?: number;
 }
 
@@ -12,12 +13,15 @@ interface PaginationParams {
 }
 
 export const PlanService = {
-  async getPlans(filters: PlanFilters, pagination: PaginationParams = { limit: 20, offset: 0 }): Promise<ApiResponse<Plan[]>> {
+  async getPlans(
+    filters: PlanFilters,
+    pagination: PaginationParams = { limit: 20, offset: 0 },
+  ): Promise<ApiResponse<Plan[]>> {
     return apiClient.get('/plans', {
       params: {
         ...filters,
-        ...pagination
-      }
+        ...pagination,
+      },
     });
   },
 
@@ -39,5 +43,5 @@ export const PlanService = {
 
   async deletePlan(id: number): Promise<ApiResponse<void>> {
     return apiClient.delete(`/plans/${id}`);
-  }
+  },
 };

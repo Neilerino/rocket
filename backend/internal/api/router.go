@@ -20,7 +20,6 @@ func NewRouter(db *db.Database) http.Handler {
 	
 	// Setup CORS - must be before our response middleware
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins: []string{"https://*", "http://*"},
 		AllowedOrigins:   []string{"http://dev.rocket:5173", "http://localhost:5173", "http://127.0.0.1:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -43,6 +42,15 @@ func NewRouter(db *db.Database) http.Handler {
 			r.Put("/{id}", plans_handler.Edit)
 			r.Delete("/{id}", plans_handler.Delete)
 			r.Get("/user/{userId}", plans_handler.List)  // Keep old route for backward compatibility
+		})
+
+		// Plan Intervals
+		interval_handler := &handlers.PlanIntervalHandler{Db: db}
+		r.Route("/intervals", func(r chi.Router) {
+			r.Get("/", interval_handler.List)
+			r.Post("/", interval_handler.Create)
+			r.Put("/{id}", interval_handler.Update)
+			r.Delete("/{id}", interval_handler.Delete)
 		})
 
 		// Groups

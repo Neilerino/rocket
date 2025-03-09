@@ -15,5 +15,8 @@
   },
   "[sql]": {
     "editor.defaultFormatter": "cweijan.vscode-postgresql-client2"
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go"
   }
 }

@@ -1117,25 +1117,28 @@ INSERT INTO
     plan_intervals (
         plan_id,
         name,
+        description,
         duration,
         "order"
     )
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING
-    id, plan_id, name, duration, "order", created_at, updated_at
+    id, plan_id, name, description, duration, "order", created_at, updated_at
 `
 
 type PlanIntervals_CreateOneParams struct {
-	PlanID   int64
-	Name     pgtype.Text
-	Duration pgtype.Interval
-	Order    int32
+	PlanID      int64
+	Name        pgtype.Text
+	Description pgtype.Text
+	Duration    pgtype.Interval
+	Order       int32
 }
 
 func (q *Queries) PlanIntervals_CreateOne(ctx context.Context, arg PlanIntervals_CreateOneParams) (PlanInterval, error) {
 	row := q.db.QueryRow(ctx, planIntervals_CreateOne,
 		arg.PlanID,
 		arg.Name,
+		arg.Description,
 		arg.Duration,
 		arg.Order,
 	)
@@ -1144,6 +1147,7 @@ func (q *Queries) PlanIntervals_CreateOne(ctx context.Context, arg PlanIntervals
 		&i.ID,
 		&i.PlanID,
 		&i.Name,
+		&i.Description,
 		&i.Duration,
 		&i.Order,
 		&i.CreatedAt,
@@ -1153,7 +1157,7 @@ func (q *Queries) PlanIntervals_CreateOne(ctx context.Context, arg PlanIntervals
 }
 
 const planIntervals_DeleteById = `-- name: PlanIntervals_DeleteById :one
-DELETE FROM plan_intervals WHERE id = $1 RETURNING id, plan_id, name, duration, "order", created_at, updated_at
+DELETE FROM plan_intervals WHERE id = $1 RETURNING id, plan_id, name, description, duration, "order", created_at, updated_at
 `
 
 func (q *Queries) PlanIntervals_DeleteById(ctx context.Context, id int64) (PlanInterval, error) {
@@ -1163,6 +1167,7 @@ func (q *Queries) PlanIntervals_DeleteById(ctx context.Context, id int64) (PlanI
 		&i.ID,
 		&i.PlanID,
 		&i.Name,
+		&i.Description,
 		&i.Duration,
 		&i.Order,
 		&i.CreatedAt,
@@ -1171,22 +1176,32 @@ func (q *Queries) PlanIntervals_DeleteById(ctx context.Context, id int64) (PlanI
 	return i, err
 }
 
-const planIntervals_GetByPlanId = `-- name: PlanIntervals_GetByPlanId :many
-SELECT id, plan_id, name, duration, "order", created_at, updated_at
+const planIntervals_List = `-- name: PlanIntervals_List :many
+SELECT id, plan_id, name, description, duration, "order", created_at, updated_at
 FROM plan_intervals
 WHERE
-    plan_id = $1
-order by "order"
-limit $2
+    (plan_id = $1 OR $2 = 0) -- Filter by plan_id if provided (non-zero)
+    AND (id = $3 OR $4 = 0) -- Filter by interval_id if provided (non-zero)
+ORDER BY "order"
+LIMIT $5
 `
 
-type PlanIntervals_GetByPlanIdParams struct {
-	PlanID int64
-	Limit  int32
+type PlanIntervals_ListParams struct {
+	PlanID  int64
+	Column2 interface{}
+	ID      int64
+	Column4 interface{}
+	Limit   int32
 }
 
-func (q *Queries) PlanIntervals_GetByPlanId(ctx context.Context, arg PlanIntervals_GetByPlanIdParams) ([]PlanInterval, error) {
-	rows, err := q.db.Query(ctx, planIntervals_GetByPlanId, arg.PlanID, arg.Limit)
+func (q *Queries) PlanIntervals_List(ctx context.Context, arg PlanIntervals_ListParams) ([]PlanInterval, error) {
+	rows, err := q.db.Query(ctx, planIntervals_List,
+		arg.PlanID,
+		arg.Column2,
+		arg.ID,
+		arg.Column4,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1198,6 +1213,7 @@ func (q *Queries) PlanIntervals_GetByPlanId(ctx context.Context, arg PlanInterva
 			&i.ID,
 			&i.PlanID,
 			&i.Name,
+			&i.Description,
 			&i.Duration,
 			&i.Order,
 			&i.CreatedAt,
@@ -1225,7 +1241,7 @@ FROM (
 WHERE
     p_i.id = ANY (v.ids)
 RETURNING
-    id, plan_id, name, duration, "order", created_at, updated_at
+    id, plan_id, name, description, duration, "order", created_at, updated_at
 `
 
 type PlanIntervals_UpdateOrderByValuesParams struct {
@@ -1246,6 +1262,7 @@ func (q *Queries) PlanIntervals_UpdateOrderByValues(ctx context.Context, arg Pla
 			&i.ID,
 			&i.PlanID,
 			&i.Name,
+			&i.Description,
 			&i.Duration,
 			&i.Order,
 			&i.CreatedAt,
