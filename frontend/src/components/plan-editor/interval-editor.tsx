@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Exercise, ExercisePrescription, Group, Interval, ParameterType } from './types';
+import { Exercise, ExercisePrescription, Group, PlanInterval as Interval, ParameterType } from './types';
 import ExerciseCard from './exercise-card';
 import ExerciseSidebar from './exercise-sidebar';
 import GroupSidebar from './group-sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Trash2, Edit } from 'lucide-react';
 import { Tabs, TabItem } from '../ui/tabs';
 import { sampleExercises } from './sample-data';
+import IntervalEditDialog from './interval-edit-dialog';
 
 interface IntervalEditorProps {
   interval: Interval;
@@ -17,6 +18,7 @@ interface IntervalEditorProps {
   allExercises: Exercise[];
   onUpdateGroup: (group: Group) => void;
   onDeleteInterval?: (intervalId: number) => void;
+  onUpdateInterval?: (updatedInterval: Interval) => void;
 }
 
 const IntervalEditor: React.FC<IntervalEditorProps> = ({
@@ -28,12 +30,14 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
   allExercises,
   onUpdateGroup,
   onDeleteInterval,
+  onUpdateInterval,
 }) => {
   const [activeGroup, setActiveGroup] = useState<string | null>(interval.groups[0]?.id || null);
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   // Handle tab selection
   const handleSelectKey = (key: string) => {
@@ -112,6 +116,19 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
     }
   };
 
+  // Handle edit interval
+  const handleEditInterval = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent toggling the interval
+    setShowEditDialog(true);
+  };
+
+  // Handle save interval
+  const handleSaveInterval = (updatedInterval: Interval) => {
+    if (onUpdateInterval) {
+      onUpdateInterval(updatedInterval);
+    }
+  };
+
   return (
     <div className="border rounded-lg bg-white overflow-hidden shadow-sm">
       {/* Interval Header */}
@@ -122,25 +139,56 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
         `}
         onClick={onToggle}
       >
-        <div className="flex items-center">
+        <div className="flex items-start flex-1">
           <div
-            className="w-5 h-5 mr-2 text-gray-500 transition-transform duration-200"
+            className="w-5 h-5 mr-2 text-gray-500 transition-transform duration-200 mt-1"
             style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
           >
             <ChevronRight className="w-full h-full" />
           </div>
-          <h2 className="text-lg font-medium">{interval.name}</h2>
+          <div className="flex-1">
+            <h2 className="text-lg font-medium">{interval.name}</h2>
+            <div className="mt-1 space-y-1">
+              {interval.description && (
+                <p className="text-sm text-gray-500">{interval.description}</p>
+              )}
+              <div className="flex space-x-4 text-sm">
+                <span className="text-gray-500">{interval.duration}</span>
+                <span className="text-gray-500">{interval.groups.length} {interval.groups.length === 1 ? 'session' : 'sessions'}</span>
+              </div>
+            </div>
+          </div>
         </div>
         
-        {/* Delete Interval Button */}
-        <button
-          className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition-colors duration-200"
-          onClick={handleDeleteInterval}
-          aria-label="Delete interval"
-        >
-          <Trash2 size={18} />
-        </button>
+        {/* Action Buttons */}
+        <div className="flex space-x-2">
+          {/* Edit Interval Button */}
+          <button
+            className="p-1.5 text-gray-400 hover:text-blue-500 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            onClick={handleEditInterval}
+            aria-label="Edit interval"
+          >
+            <Edit size={18} />
+          </button>
+          
+          {/* Delete Interval Button */}
+          <button
+            className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            onClick={handleDeleteInterval}
+            aria-label="Delete interval"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
       </div>
+
+      {/* Edit Interval Dialog */}
+      <IntervalEditDialog
+        isOpen={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        interval={interval}
+        onSave={handleSaveInterval}
+      />
 
       <AnimatePresence>
         {isExpanded && (

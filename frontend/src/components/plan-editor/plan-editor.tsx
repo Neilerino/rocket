@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import IntervalEditor from './interval-editor';
 import GroupSidebar from './group-sidebar';
-import { Interval, Group, Exercise, ExercisePrescription, ParameterType } from './types';
+import { Interval, Group, Exercise, ExercisePrescription, ParameterType, PlanInterval } from './types';
 import { sampleExercises, sampleParameterTypes, generateSamplePlanData } from './sample-data';
 import { Button } from '@heroui/button';
 import { Plus, Copy } from 'lucide-react';
@@ -201,6 +201,16 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
     }));
   };
 
+  // Function to update an interval
+  const handleUpdateInterval = (updatedInterval: PlanInterval) => {
+    setPlan((prev) => ({
+      ...prev,
+      intervals: prev.intervals.map((interval) => 
+        interval.id === updatedInterval.id ? updatedInterval : interval
+      ),
+    }));
+  };
+
   return (
     <div className="relative">
       {/* Main content */}
@@ -217,6 +227,7 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
             allExercises={sampleExercises}
             onUpdateGroup={handleUpdateGroup}
             onDeleteInterval={handleDeleteInterval}
+            onUpdateInterval={handleUpdateInterval}
           />
         ))}
 

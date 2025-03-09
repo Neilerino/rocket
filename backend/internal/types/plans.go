@@ -1,12 +1,32 @@
 package types
 
 type Plan struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	UserID      int64  `json:"user_id"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	ID            int64    `json:"id"`
+	Name          string   `json:"name"`
+	Description   string   `json:"description,omitempty"`
+	UserID        int64    `json:"userId"`
+	CreatedAt     string   `json:"createdAt"`
+	UpdatedAt     string   `json:"updatedAt"`
+	IsTemplate    bool     `json:"isTemplate"`
+	IsPublic      bool     `json:"isPublic"`
+	Intervals     []PlanInterval `json:"intervals,omitempty"`
+}
+
+// Standard API response structure for success
+type ApiSuccessResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+	Meta    interface{} `json:"meta,omitempty"`
+}
+
+// Standard API response structure for error
+type ApiErrorResponse struct {
+	Success bool `json:"success"`
+	Error   struct {
+		Code    string      `json:"code"`
+		Message string      `json:"message"`
+		Details interface{} `json:"details,omitempty"`
+	} `json:"error"`
 }
 
 type PlanInterval struct {

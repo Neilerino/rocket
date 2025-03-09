@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS plans (
         validate_length (description, 1, 255)
     ),
     user_id BIGINT NOT NULL REFERENCES users (id),
+    is_template BOOLEAN NOT NULL DEFAULT FALSE,
+    is_public BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

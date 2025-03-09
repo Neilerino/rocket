@@ -5,13 +5,13 @@ import { Button } from 'shad/components/ui/button';
 import { ScrollArea } from 'shad/components/ui/scroll-area';
 import { Calendar, Clock, Dumbbell, Plus } from 'lucide-react';
 import NewPlanModal from '@/pages/planning/newPlanModal';
-import { usePlans } from '@/services/usePlans';
+import { usePlans } from '@/services/hooks';
 import { SkeletonCard } from '@/components/ui/skeletonCard';
 import { useNavigate } from '@tanstack/react-router';
 import { ROUTES } from '@/routing/routeConstants';
 
 const TrainingPlanner = () => {
-  const query = usePlans(1);
+  const query = usePlans({ filters: { userId: 1 } });
   const [showNewPlanDialog, setShowNewPlanDialog] = useState(false);
   const navigate = useNavigate({ from: ROUTES.PLANNING.path });
 

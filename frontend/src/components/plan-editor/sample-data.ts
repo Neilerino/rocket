@@ -174,6 +174,7 @@ export const generateSamplePlanData = (): Plan => {
         id: 1,
         name: 'Week 1',
         planId: '1',
+        description: 'Base building with progressive intensity',
         duration: '7 days',
         order: 1,
         groups: [
@@ -219,6 +220,7 @@ export const generateSamplePlanData = (): Plan => {
         id: 2,
         name: 'Week 2',
         planId: '1',
+        description: 'Increasing volume with focus on technique',
         duration: '7 days',
         order: 2,
         groups: [],

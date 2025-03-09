@@ -1263,26 +1263,36 @@ func (q *Queries) PlanIntervals_UpdateOrderByValues(ctx context.Context, arg Pla
 
 const plans_CreateOne = `-- name: Plans_CreateOne :one
 INSERT INTO
-    plans (name, description, user_id)
-VALUES ($1, $2, $3)
+    plans (name, description, user_id, is_template, is_public)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING
-    id, name, description, user_id, created_at, updated_at
+    id, name, description, user_id, is_template, is_public, created_at, updated_at
 `
 
 type Plans_CreateOneParams struct {
 	Name        string
 	Description string
 	UserID      int64
+	IsTemplate  bool
+	IsPublic    bool
 }
 
 func (q *Queries) Plans_CreateOne(ctx context.Context, arg Plans_CreateOneParams) (Plan, error) {
-	row := q.db.QueryRow(ctx, plans_CreateOne, arg.Name, arg.Description, arg.UserID)
+	row := q.db.QueryRow(ctx, plans_CreateOne,
+		arg.Name,
+		arg.Description,
+		arg.UserID,
+		arg.IsTemplate,
+		arg.IsPublic,
+	)
 	var i Plan
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
 		&i.UserID,
+		&i.IsTemplate,
+		&i.IsPublic,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -1290,7 +1300,7 @@ func (q *Queries) Plans_CreateOne(ctx context.Context, arg Plans_CreateOneParams
 }
 
 const plans_DeleteById = `-- name: Plans_DeleteById :one
-DELETE FROM plans WHERE id = $1 RETURNING id, name, description, user_id, created_at, updated_at
+DELETE FROM plans WHERE id = $1 RETURNING id, name, description, user_id, is_template, is_public, created_at, updated_at
 `
 
 func (q *Queries) Plans_DeleteById(ctx context.Context, id int64) (Plan, error) {
@@ -1301,6 +1311,8 @@ func (q *Queries) Plans_DeleteById(ctx context.Context, id int64) (Plan, error) 
 		&i.Name,
 		&i.Description,
 		&i.UserID,
+		&i.IsTemplate,
+		&i.IsPublic,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -1308,7 +1320,7 @@ func (q *Queries) Plans_DeleteById(ctx context.Context, id int64) (Plan, error) 
 }
 
 const plans_GetByPlanId = `-- name: Plans_GetByPlanId :one
-SELECT id, name, description, user_id, created_at, updated_at FROM plans WHERE id = $1 LIMIT 1
+SELECT id, name, description, user_id, is_template, is_public, created_at, updated_at FROM plans WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) Plans_GetByPlanId(ctx context.Context, id int64) (Plan, error) {
@@ -1319,6 +1331,8 @@ func (q *Queries) Plans_GetByPlanId(ctx context.Context, id int64) (Plan, error)
 		&i.Name,
 		&i.Description,
 		&i.UserID,
+		&i.IsTemplate,
+		&i.IsPublic,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -1326,16 +1340,34 @@ func (q *Queries) Plans_GetByPlanId(ctx context.Context, id int64) (Plan, error)
 }
 
 const plans_GetByUserId = `-- name: Plans_GetByUserId :many
-SELECT id, name, description, user_id, created_at, updated_at FROM plans WHERE user_id = $1 ORDER BY created_at LIMIT $2
+SELECT id, name, description, user_id, is_template, is_public, created_at, updated_at FROM plans 
+WHERE user_id = $1
+  AND (is_template = $2 OR $3 = false)
+  AND (is_public = $4 OR $5 = false)
+ORDER BY updated_at DESC 
+LIMIT $6 OFFSET $7
 `
 
 type Plans_GetByUserIdParams struct {
-	UserID int64
-	Limit  int32
+	UserID     int64
+	IsTemplate bool
+	Column3    interface{}
+	IsPublic   bool
+	Column5    interface{}
+	Limit      int32
+	Offset     int32
 }
 
 func (q *Queries) Plans_GetByUserId(ctx context.Context, arg Plans_GetByUserIdParams) ([]Plan, error) {
-	rows, err := q.db.Query(ctx, plans_GetByUserId, arg.UserID, arg.Limit)
+	rows, err := q.db.Query(ctx, plans_GetByUserId,
+		arg.UserID,
+		arg.IsTemplate,
+		arg.Column3,
+		arg.IsPublic,
+		arg.Column5,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1348,6 +1380,8 @@ func (q *Queries) Plans_GetByUserId(ctx context.Context, arg Plans_GetByUserIdPa
 			&i.Name,
 			&i.Description,
 			&i.UserID,
+			&i.IsTemplate,
+			&i.IsPublic,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -1366,25 +1400,37 @@ UPDATE plans
 SET 
     name = $1,
     description = $2,
+    is_template = $3,
+    is_public = $4,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $3 
-RETURNING id, name, description, user_id, created_at, updated_at
+WHERE id = $5 
+RETURNING id, name, description, user_id, is_template, is_public, created_at, updated_at
 `
 
 type Plans_UpdateOneParams struct {
 	Name        string
 	Description string
+	IsTemplate  bool
+	IsPublic    bool
 	ID          int64
 }
 
 func (q *Queries) Plans_UpdateOne(ctx context.Context, arg Plans_UpdateOneParams) (Plan, error) {
-	row := q.db.QueryRow(ctx, plans_UpdateOne, arg.Name, arg.Description, arg.ID)
+	row := q.db.QueryRow(ctx, plans_UpdateOne,
+		arg.Name,
+		arg.Description,
+		arg.IsTemplate,
+		arg.IsPublic,
+		arg.ID,
+	)
 	var i Plan
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
 		&i.UserID,
+		&i.IsTemplate,
+		&i.IsPublic,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

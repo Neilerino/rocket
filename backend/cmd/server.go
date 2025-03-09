@@ -31,7 +31,14 @@ func Server() {
 	log.Printf("Starting server on port %s", cfg.Port)
 
 	handler := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://*.rocket:5173"}}).Handler(router)
+		AllowedOrigins:   []string{"http://dev.rocket:5173", "http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Api-Version", "x-api-version"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+		Debug:            true, // Enable debugging for troubleshooting
+	}).Handler(router)
 
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,

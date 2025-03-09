@@ -74,6 +74,8 @@ type Plan struct {
 	Name        string
 	Description string
 	UserID      int64
+	IsTemplate  bool
+	IsPublic    bool
 	CreatedAt   pgtype.Timestamp
 	UpdatedAt   pgtype.Timestamp
 }

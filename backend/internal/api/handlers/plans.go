@@ -6,6 +6,7 @@ import (
 	api_utils "backend/internal/api/utils"
 	"backend/internal/service"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,21 +16,40 @@ type PlanHandler struct {
 	Db *db.Database
 }
 
+type ListPlansResponse struct {
+	Items      []interface{} `json:"items"`
+	TotalCount int           `json:"totalCount"`
+	NextCursor string        `json:"nextCursor,omitempty"`
+}
+
 type ListPlanApiArgs struct {
-	UserId int64
+	UserId     int64    `json:"userId"`
+	Limit      *int32   `json:"limit,omitempty"`
+	Cursor     *string  `json:"cursor,omitempty"`
+	IsTemplate *bool    `json:"isTemplate,omitempty"`
+	IsPublic   *bool    `json:"isPublic,omitempty"`
 }
 
 type CreatePlanApiArgs struct {
-	Name        string
-	Description string
-	UserId      int64
+	Name          string   `json:"name"`
+	Description   string   `json:"description"`
+	UserId        int64    `json:"userId"`
+	IsTemplate    bool     `json:"isTemplate"`
+	IsPublic      bool     `json:"isPublic"`
 }
 	
 
 func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
-	userId, err := api_utils.ParseBigInt(chi.URLParam(r, "userId"))
-	if err != nil {
-		api_utils.WriteError(w, http.StatusBadRequest, "Invalid user ID")
+	// Log the incoming request for debugging
+	log.Printf("Handling plans List request: %s %s", r.Method, r.URL.String())
+	log.Printf("Query params: %v", r.URL.Query())
+
+	// Create a filter parser with logging enabled
+	filterParser := api_utils.NewFilterParser(r, true)
+
+	userId := filterParser.GetIntFilter("userId")
+	if userId == nil {
+		api_utils.WriteError(w, http.StatusBadRequest, "Missing required field: userId")
 		return
 	}
 
@@ -37,9 +57,31 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 		plan_repo := repository.PlansRepository{Queries: queries}
 		plan_service := service.NewPlansService(&plan_repo)
 
-		plans, err := plan_service.GetPlanByUserId(r.Context(), userId, 100)
+		// Get limit and offset from query params
+		limit := filterParser.GetLimit(100)
+		offset := filterParser.GetOffset(0)
+
+		// Get boolean filters
+		isTemplate := filterParser.GetBoolFilter("isTemplate")
+		isPublic := filterParser.GetBoolFilter("isPublic")
+
+		// Log the filters being applied
+		if isTemplate != nil {
+			log.Printf("Filtering plans by isTemplate=%v", *isTemplate)
+		}
+		if isPublic != nil {
+			log.Printf("Filtering plans by isPublic=%v", *isPublic)
+		}
+
+		log.Printf("Calling service.GetPlanByUserId with userId=%d, limit=%d, offset=%d", *userId, int(limit), offset)
+		plans, err := plan_service.GetPlanByUserId(r.Context(), *userId, int(limit), offset, isTemplate, isPublic)
 		if err != nil {
+			log.Printf("Error from GetPlanByUserId: %v", err)
 			return err
+		}
+
+		if plans != nil {
+			log.Printf("Successfully retrieved plans, count: %d", len(*plans))
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -52,27 +94,59 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
+	// Log the incoming request for debugging
+	log.Printf("Handling plans Create request: %s %s", r.Method, r.URL.String())
+
 	var args CreatePlanApiArgs
 	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+		log.Printf("Error decoding request body: %v", err)
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	// Validate required fields
+	if args.Name == "" {
+		log.Printf("Error: Missing name parameter")
+		api_utils.WriteError(w, http.StatusBadRequest, "Missing required field: name")
+		return
+	}
+
+	if args.UserId <= 0 {
+		log.Printf("Error: Invalid or missing userId parameter: %d", args.UserId)
+		api_utils.WriteError(w, http.StatusBadRequest, "Invalid or missing userId")
+		return
+	}
+
+	log.Printf("Creating plan with name=%s, userId=%d, isTemplate=%v, isPublic=%v", 
+		args.Name, args.UserId, args.IsTemplate, args.IsPublic)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		plan_repo := repository.PlansRepository{Queries: queries}
 		plan_service := service.NewPlansService(&plan_repo)
 
-		plan, err := plan_service.CreatePlan(r.Context(), args.Name, args.Description, args.UserId)
+		// Call service to create plan
+		plan, err := plan_service.CreatePlan(
+			r.Context(), 
+			args.Name, 
+			args.Description, 
+			args.UserId, 
+			args.IsTemplate, 
+			args.IsPublic,
+		)
 		if err != nil {
+			log.Printf("Error creating plan: %v", err)
 			return err
 		}
 
+		log.Printf("Successfully created plan with ID: %d", plan.ID)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
 		return json.NewEncoder(w).Encode(plan)
 	})
 
-	if success {
-		w.WriteHeader(http.StatusOK)
+	if !success {
+		// Error already handled by WithTransaction
+		return
 	}
 }
 
@@ -93,60 +167,97 @@ func (h *PlanHandler) GetById(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(plan)
 	})
 
-	if success {
-		w.WriteHeader(http.StatusOK)
+	if !success {
+		// Error already handled by WithTransaction
+		return
 	}
 }
 
 func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
+	// Log the incoming request for debugging
+	log.Printf("Handling plans Edit request: %s %s", r.Method, r.URL.String())
+
 	id, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
 	if err != nil {
+		log.Printf("Error parsing plan ID: %v", err)
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid plan ID")
 		return
 	}
+	log.Printf("Editing plan with ID: %d", id)
 
 	var args CreatePlanApiArgs
 	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+		log.Printf("Error decoding request body: %v", err)
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	// Validate required fields
+	if args.Name == "" {
+		log.Printf("Error: Missing name parameter")
+		api_utils.WriteError(w, http.StatusBadRequest, "Missing required field: name")
+		return
+	}
+
+	log.Printf("Updating plan with name=%s, isTemplate=%v, isPublic=%v", 
+		args.Name, args.IsTemplate, args.IsPublic)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		plan_repo := repository.PlansRepository{Queries: queries}
 		plan_service := service.NewPlansService(&plan_repo)
 
-		plan, err := plan_service.UpdatePlan(r.Context(), id, args.Name, args.Description)
+		// Call service to update plan
+		plan, err := plan_service.UpdatePlan(
+			r.Context(), 
+			id, 
+			args.Name, 
+			args.Description, 
+			args.IsTemplate, 
+			args.IsPublic,
+		)
 		if err != nil {
+			log.Printf("Error updating plan: %v", err)
 			return err
 		}
 
+		log.Printf("Successfully updated plan with ID: %d", plan.ID)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(plan)
 	})
 
-	if success {
-		w.WriteHeader(http.StatusOK)
+	if !success {
+		// Error already handled by WithTransaction
+		return
 	}
 }
 
 func (h *PlanHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	// Log the incoming request for debugging
+	log.Printf("Handling plans Delete request: %s %s", r.Method, r.URL.String())
+
 	id, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
 	if err != nil {
+		log.Printf("Error parsing plan ID: %v", err)
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid plan ID")
 		return
 	}
+	log.Printf("Deleting plan with ID: %d", id)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		plan_repo := repository.PlansRepository{Queries: queries}
 		plan_service := service.NewPlansService(&plan_repo)
 
 		if err := plan_service.DeletePlan(r.Context(), id); err != nil {
+			log.Printf("Error deleting plan: %v", err)
 			return err
 		}
 
+		log.Printf("Successfully deleted plan with ID: %d", id)
 		return nil
 	})
 

@@ -3,27 +3,46 @@ package api
 import (
 	"backend/db"
 	"backend/internal/api/handlers"
+	"backend/internal/api/middleware"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func NewRouter(db *db.Database) http.Handler {
 	r := chi.NewRouter()
 
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	// Basic middleware
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
+	
+	// Setup CORS - must be before our response middleware
+	r.Use(cors.Handler(cors.Options{
+		// AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedOrigins:   []string{"http://dev.rocket:5173", "http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
+	// Add our response middleware to standardize all API responses
+	// This must be after CORS middleware to avoid header duplication
+	r.Use(middleware.ResponseMiddleware)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Plans
 		plans_handler := &handlers.PlanHandler{Db: db}
 		r.Route("/plans", func(r chi.Router) {
+			r.Get("/", plans_handler.List)  // Updated to match frontend expectations
 			r.Post("/", plans_handler.Create)
 			r.Get("/{id}", plans_handler.GetById)
 			r.Put("/{id}", plans_handler.Edit)
 			r.Delete("/{id}", plans_handler.Delete)
-			r.Get("/user/{userId}", plans_handler.List)
+			r.Get("/user/{userId}", plans_handler.List)  // Keep old route for backward compatibility
 		})
 
 		// Groups

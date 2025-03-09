@@ -49,6 +49,7 @@ export interface PlanInterval {
   id: string;
   planId: string;
   name: string;
+  description?: string;
   duration: string; // interval
   order: number;
   groups: Group[];
