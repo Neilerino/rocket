@@ -4,8 +4,6 @@ import { isApiError } from '../../api/errorHandler';
 import { PlanInterval, CreatePlanIntervalDto } from '../../types';
 import { createCacheKey } from './utils';
 
-const QUERY_KEY = 'intervals';
-
 export const useCreateInterval = () => {
   const queryClient = useQueryClient();
 

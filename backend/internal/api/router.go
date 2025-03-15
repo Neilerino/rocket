@@ -17,7 +17,7 @@ func NewRouter(db *db.Database) http.Handler {
 	// Basic middleware
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.Recoverer)
-	
+
 	// Setup CORS - must be before our response middleware
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://dev.rocket:5173", "http://localhost:5173", "http://127.0.0.1:5173"},
@@ -36,12 +36,12 @@ func NewRouter(db *db.Database) http.Handler {
 		// Plans
 		plans_handler := &handlers.PlanHandler{Db: db}
 		r.Route("/plans", func(r chi.Router) {
-			r.Get("/", plans_handler.List)  // Updated to match frontend expectations
+			r.Get("/", plans_handler.List) // Updated to match frontend expectations
 			r.Post("/", plans_handler.Create)
 			r.Get("/{id}", plans_handler.GetById)
 			r.Put("/{id}", plans_handler.Edit)
 			r.Delete("/{id}", plans_handler.Delete)
-			r.Get("/user/{userId}", plans_handler.List)  // Keep old route for backward compatibility
+			r.Get("/user/{userId}", plans_handler.List) // Keep old route for backward compatibility
 		})
 
 		// Plan Intervals
@@ -56,9 +56,8 @@ func NewRouter(db *db.Database) http.Handler {
 		// Groups
 		groups_handler := &handlers.GroupsHandler{Db: db}
 		r.Route("/groups", func(r chi.Router) {
-			r.Get("/plan/{planId}", groups_handler.ListByPlanId)
+			r.Get("/", groups_handler.List)
 			r.Post("/", groups_handler.Create)
-			r.Get("/{id}", groups_handler.GetById)
 			r.Put("/{id}", groups_handler.Update)
 			r.Delete("/{id}", groups_handler.Delete)
 			// Group interval assignment

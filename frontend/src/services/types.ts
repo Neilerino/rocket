@@ -40,8 +40,8 @@ export interface CreateGroupDto {
 }
 
 export interface UpdateGroupDto {
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
 }
 
 // Plan Interval Types

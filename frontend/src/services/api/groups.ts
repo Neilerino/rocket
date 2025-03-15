@@ -2,7 +2,30 @@ import apiClient from './client';
 import { ApiResponse } from './errorHandler';
 import { Group, CreateGroupDto, UpdateGroupDto } from '../types';
 
+export interface GroupFilters {
+  planId?: number;
+  id?: number;
+  intervalId?: number;
+}
+
+interface PaginationParams {
+  limit?: number;
+  offset?: number;
+}
+
 export const GroupService = {
+  async getGroups(
+    filters: GroupFilters,
+    pagination: PaginationParams = { limit: 20, offset: 0 },
+  ): Promise<ApiResponse<Group[]>> {
+    return apiClient.get('/groups', {
+      params: {
+        ...filters,
+        ...pagination,
+      },
+    });
+  },
+
   async getGroupsByPlanId(planId: number): Promise<ApiResponse<Group[]>> {
     return apiClient.get(`/groups/plan/${planId}`);
   },
@@ -29,5 +52,5 @@ export const GroupService = {
 
   async removeGroupFromInterval(groupId: number, intervalId: number): Promise<ApiResponse<void>> {
     return apiClient.delete(`/groups/${groupId}/intervals/${intervalId}`);
-  }
+  },
 };

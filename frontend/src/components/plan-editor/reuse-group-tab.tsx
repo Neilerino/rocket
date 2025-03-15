@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Group, Exercise } from './types';
+import { Exercise } from './types';
 import GroupCard from './group-card';
 import { Button } from 'shad/components/ui/button';
 import { Search } from 'lucide-react';
+import { Group } from '@/services/types';
 
 interface ReuseGroupTabProps {
   availableGroups: Group[];
@@ -15,7 +16,7 @@ const ReuseGroupTab = ({
   onSelectGroup,
   allExercises = [],
 }: ReuseGroupTabProps) => {
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter groups based on search term

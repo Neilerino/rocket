@@ -1,13 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GroupService } from '../../api/groups';
+import { GroupFilters, GroupService } from '../../api/groups';
 import { isApiError } from '../../api/errorHandler';
 import { Group, CreateGroupDto, UpdateGroupDto } from '../../types';
+import { createGroupCacheKey } from './utils';
 
-const QUERY_KEY = 'groups';
-
-export const useCreateGroup = () => {
+export const useCreateGroup = (args: { filters: GroupFilters }) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (groupData: CreateGroupDto) => {
       const response = await GroupService.createGroup(groupData);
@@ -16,15 +15,27 @@ export const useCreateGroup = () => {
       }
       return response.data as Group;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-    }
+    onSuccess: async (group) => {
+      if (args.filters.intervalId) {
+        const response = await GroupService.assignGroupToInterval(
+          group.id,
+          args.filters.intervalId,
+        );
+        if (isApiError(response)) {
+          throw response.error;
+        }
+      }
+
+      queryClient.setQueryData(createGroupCacheKey(args), (old: Group[] | undefined) =>
+        old ? [...old, group] : [group],
+      );
+    },
   });
 };
 
-export const useUpdateGroup = () => {
+export const useUpdateGroup = (args: { filters: GroupFilters }) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, ...data }: UpdateGroupDto & { id: number }) => {
       const response = await GroupService.updateGroup(id, data);
@@ -34,32 +45,28 @@ export const useUpdateGroup = () => {
       return response.data as Group;
     },
     onMutate: async (updatedGroup) => {
-      await queryClient.cancelQueries({ queryKey: [QUERY_KEY, updatedGroup.id] });
-      const previousGroup = queryClient.getQueryData([QUERY_KEY, updatedGroup.id]);
-      
-      queryClient.setQueryData([QUERY_KEY, updatedGroup.id], 
-        (old: Group | undefined) => old ? { ...old, ...updatedGroup } : undefined);
-        
+      await queryClient.cancelQueries({ queryKey: createGroupCacheKey(args) });
+      const previousGroup = queryClient.getQueryData(createGroupCacheKey(args));
+
+      queryClient.setQueryData(createGroupCacheKey(args), (old: Group[] | undefined) =>
+        old
+          ? old.map((g) => (g.id === updatedGroup.id ? { ...g, ...updatedGroup } : g))
+          : undefined,
+      );
+
       return { previousGroup };
     },
-    onError: (_err, variables, context) => {
+    onError: (_err, _variables, context) => {
       if (context?.previousGroup) {
-        queryClient.setQueryData(
-          [QUERY_KEY, variables.id],
-          context.previousGroup
-        );
+        queryClient.setQueryData(createGroupCacheKey(args), context.previousGroup);
       }
     },
-    onSettled: (_, __, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.id] });
-    }
   });
 };
 
-export const useDeleteGroup = () => {
+export const useDeleteGroup = (args: { filters: GroupFilters }) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await GroupService.deleteGroup(id);
@@ -69,15 +76,19 @@ export const useDeleteGroup = () => {
       return id;
     },
     onSuccess: (id) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      queryClient.removeQueries({ queryKey: [QUERY_KEY, id] });
-    }
+      queryClient.setQueryData(createGroupCacheKey(args), (old: Group[] | undefined) =>
+        old ? old.filter((g) => g.id !== id) : undefined,
+      );
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: createGroupCacheKey(args) });
+    },
   });
 };
 
 export const useAssignGroupToInterval = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ groupId, intervalId }: { groupId: number; intervalId: number }) => {
       const response = await GroupService.assignGroupToInterval(groupId, intervalId);
@@ -87,16 +98,18 @@ export const useAssignGroupToInterval = () => {
       return { groupId, intervalId };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.groupId] });
-      queryClient.invalidateQueries({ queryKey: ['intervals', variables.intervalId] });
-    }
+      queryClient.setQueryData(
+        createGroupCacheKey({ intervalId: variables.intervalId }),
+        (old: Group[] | undefined) =>
+          old ? [...old, { id: variables.groupId }] : [{ id: variables.groupId }],
+      );
+    },
   });
 };
 
 export const useRemoveGroupFromInterval = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ groupId, intervalId }: { groupId: number; intervalId: number }) => {
       const response = await GroupService.removeGroupFromInterval(groupId, intervalId);
@@ -106,9 +119,11 @@ export const useRemoveGroupFromInterval = () => {
       return { groupId, intervalId };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.groupId] });
-      queryClient.invalidateQueries({ queryKey: ['intervals', variables.intervalId] });
-    }
+      queryClient.setQueryData(
+        createGroupCacheKey({ intervalId: variables.intervalId }),
+        (old: Group[] | undefined) =>
+          old ? old.filter((g) => g.id !== variables.groupId) : undefined,
+      );
+    },
   });
 };

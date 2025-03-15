@@ -14,8 +14,8 @@ func NewGroupsService(repo *repository.GroupsRepository) *GroupsService {
 	return &GroupsService{repo: repo}
 }
 
-func (s *GroupsService) GetGroupsByPlanId(ctx context.Context, userId int64, limit int) (*[]types.Group, error) {
-	groups, err := s.repo.GetByUserId(ctx, userId, limit)
+func (s *GroupsService) ListGroups(ctx context.Context, planId int64, groupId int64, intervalId int64, limit int32) ([]types.Group, error) {
+	groups, err := s.repo.GetByPlanId(ctx, planId, groupId, intervalId, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (s *GroupsService) GetGroupsByPlanId(ctx context.Context, userId int64, lim
 			UpdatedAt:   group.UpdatedAt.Time.String(),
 		})
 	}
-	return &result, nil
+	return result, nil
 }
 
 func (s *GroupsService) CreateGroup(ctx context.Context, name string, description string, userId int64) (*types.Group, error) {

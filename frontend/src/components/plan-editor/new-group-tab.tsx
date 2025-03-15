@@ -3,71 +3,77 @@ import { Button } from 'shad/components/ui/button';
 import { Input } from 'shad/components/ui/input';
 import { Label } from 'shad/components/ui/label';
 import { X as CloseIcon, Plus } from 'lucide-react';
-import { Group, Exercise } from './types';
+import { Exercise } from './types';
+import { Group } from '@/services/types';
 
-interface NewGroupTabProps {
-  group: Group;
-  onUpdateGroup: (group: Group) => void;
-  allGroups?: Group[];
+interface GroupFormData {
+  id: number | undefined;
+  name: string;
+  description: string;
 }
 
-const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps) => {
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+interface NewGroupTabProps {
+  groupFormData: GroupFormData;
+  onUpdateGroup: (group: GroupFormData) => void;
+}
+
+const NewGroupTab = ({ groupFormData, onUpdateGroup }: NewGroupTabProps) => {
+  // const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
   const handleInputChange = (field: keyof Group, value: string) => {
     onUpdateGroup({
-      ...group,
+      ...groupFormData,
       [field]: value,
     });
   };
 
-  const handleAddExercise = () => {
-    setSelectedExercise({
-      id: '', // Will be set when saved
-      name: '',
-      sets: 3,
-      rpe: 8,
-      reps: 8,
-      rest: 90,
-    });
-  };
+  // const handleAddExercise = () => {
+  //   setSelectedExercise({
+  //     id: '', // Will be set when saved
+  //     name: '',
+  //     sets: 3,
+  //     rpe: 8,
+  //     reps: 8,
+  //     rest: 90,
+  //   });
+  // };
 
-  const handleEditExercise = (exercise: Exercise) => {
-    setSelectedExercise(exercise);
-  };
+  // const handleEditExercise = (exercise: Exercise) => {
+  //   setSelectedExercise(exercise);
+  // };
 
-  const handleSaveExercise = (exercise: Exercise) => {
-    const isNew = !exercise.id;
-    const updatedExercises = isNew
-      ? [...group.exercises, { ...exercise, id: crypto.randomUUID() }]
-      : group.exercises.map((e) => (e.id === exercise.id ? exercise : e));
+  // const handleSaveExercise = (exercise: Exercise) => {
+  //   const isNew = !exercise.id;
+  //   const updatedExercises = isNew
+  //     ? [...group.exercises, { ...exercise, id: crypto.randomUUID() }]
+  //     : group.exercises.map((e) => (e.id === exercise.id ? exercise : e));
 
-    onUpdateGroup({
-      ...group,
-      exercises: updatedExercises,
-    });
-    setSelectedExercise(null);
-  };
+  //   onUpdateGroup({
+  //     ...group,
+  //     exercises: updatedExercises,
+  //   });
+  //   setSelectedExercise(null);
+  // };
 
-  const handleDeleteExercise = (exerciseId: string) => {
-    onUpdateGroup({
-      ...group,
-      exercises: group.exercises.filter((e) => e.id !== exerciseId),
-    });
-  };
+  // const handleDeleteExercise = (exerciseId: string) => {
+  //   onUpdateGroup({
+  //     ...group,
+  //     exercises: group.exercises.filter((e) => e.id !== exerciseId),
+  //   });
+  // };
 
-  // Get all unique exercises from all groups
-  const allExercises = useMemo(() => {
-    const exerciseMap = new Map<string, Exercise>();
-    allGroups.forEach((g) => {
-      g.exercises.forEach((e) => {
-        if (!exerciseMap.has(e.id)) {
-          exerciseMap.set(e.id, e);
-        }
-      });
-    });
-    return Array.from(exerciseMap.values());
-  }, [allGroups]);
+  // // Get all unique exercises from all groups
+  // const allExercises = useMemo(() => {
+  //   const exerciseMap = new Map<string, Exercise>();
+  //   allGroups.forEach((g) => {
+  //     g.exercises.forEach((e) => {
+  //       if (!exerciseMap.has(e.id)) {
+  //         exerciseMap.set(e.id, e);
+  //       }
+  //     });
+  //   });
+  //   return Array.from(exerciseMap.values());
+  // }, [allGroups]);
 
   return (
     <div className="flex flex-col h-full">
@@ -75,22 +81,28 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
         <div>
           <Label>Group Name</Label>
           <Input
-            value={group.name}
+            value={groupFormData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
             className="mt-1"
           />
         </div>
-        <div>
+        <Label>Group Description</Label>
+        <Input
+          value={groupFormData.description}
+          onChange={(e) => handleInputChange('description', e.target.value)}
+          className="mt-1"
+        />
+        {/* <div>
           <Label>Frequency</Label>
           <Input
             value={group.frequency}
             onChange={(e) => handleInputChange('frequency', e.target.value)}
             className="mt-1"
           />
-        </div>
+        </div> */}
       </div>
 
-      <div className="mt-6 flex-1">
+      {/* <div className="mt-6 flex-1">
         <h3 className="text-lg font-medium mb-4">Exercises</h3>
         <div className="space-y-3">
           {group.exercises.map((exercise) => (
@@ -132,7 +144,7 @@ const NewGroupTab = ({ group, onUpdateGroup, allGroups = [] }: NewGroupTabProps)
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

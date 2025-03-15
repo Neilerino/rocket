@@ -12,12 +12,12 @@ import (
 )
 
 const exerciseVariations_CreateOne = `-- name: ExerciseVariations_CreateOne :one
-INSERT INTO exercise_variations (
-    exercise_id,
-    parameter_type_id
-) VALUES (
-    $1, $2
-) RETURNING id, exercise_id, parameter_type_id
+INSERT INTO
+    exercise_variations (
+        exercise_id,
+        parameter_type_id
+    )
+VALUES ($1, $2) RETURNING id, exercise_id, parameter_type_id
 `
 
 type ExerciseVariations_CreateOneParams struct {
@@ -33,15 +33,16 @@ func (q *Queries) ExerciseVariations_CreateOne(ctx context.Context, arg Exercise
 }
 
 const exerciseVariations_CreateOneWithDetails = `-- name: ExerciseVariations_CreateOneWithDetails :one
-WITH created_variation AS (
-    INSERT INTO exercise_variations (
-        exercise_id,
-        parameter_type_id
-    ) VALUES (
-        $1, $2
-    ) RETURNING id, exercise_id, parameter_type_id
-)
-SELECT 
+WITH
+    created_variation AS (
+        INSERT INTO
+            exercise_variations (
+                exercise_id,
+                parameter_type_id
+            )
+        VALUES ($1, $2) RETURNING id, exercise_id, parameter_type_id
+    )
+SELECT
     ev.id,
     ev.exercise_id,
     ev.parameter_type_id,
@@ -57,9 +58,10 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM created_variation ev
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+FROM
+    created_variation ev
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
 `
 
 type ExerciseVariations_CreateOneWithDetailsParams struct {
@@ -109,8 +111,7 @@ func (q *Queries) ExerciseVariations_CreateOneWithDetails(ctx context.Context, a
 }
 
 const exerciseVariations_DeleteOne = `-- name: ExerciseVariations_DeleteOne :exec
-DELETE FROM exercise_variations 
-WHERE id = $1
+DELETE FROM exercise_variations WHERE id = $1
 `
 
 func (q *Queries) ExerciseVariations_DeleteOne(ctx context.Context, id int64) error {
@@ -119,7 +120,7 @@ func (q *Queries) ExerciseVariations_DeleteOne(ctx context.Context, id int64) er
 }
 
 const exerciseVariations_GetByExerciseIdWithDetails = `-- name: ExerciseVariations_GetByExerciseIdWithDetails :many
-SELECT 
+SELECT
     ev.id,
     ev.exercise_id,
     ev.parameter_type_id,
@@ -135,10 +136,12 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM exercise_variations ev
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE ev.exercise_id = $1
+FROM
+    exercise_variations ev
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    ev.exercise_id = $1
 `
 
 type ExerciseVariations_GetByExerciseIdWithDetailsRow struct {
@@ -196,7 +199,7 @@ func (q *Queries) ExerciseVariations_GetByExerciseIdWithDetails(ctx context.Cont
 }
 
 const exerciseVariations_GetByIdWithDetails = `-- name: ExerciseVariations_GetByIdWithDetails :one
-SELECT 
+SELECT
     ev.id,
     ev.exercise_id,
     ev.parameter_type_id,
@@ -212,10 +215,12 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM exercise_variations ev
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE ev.id = $1
+FROM
+    exercise_variations ev
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    ev.id = $1
 `
 
 type ExerciseVariations_GetByIdWithDetailsRow struct {
@@ -260,13 +265,9 @@ func (q *Queries) ExerciseVariations_GetByIdWithDetails(ctx context.Context, id 
 }
 
 const exercises_CreateOne = `-- name: Exercises_CreateOne :one
-INSERT INTO exercises (
-    name, 
-    description, 
-    user_id
-) VALUES (
-    $1, $2, $3
-) RETURNING id, name, description, user_id, created_at, updated_at
+INSERT INTO
+    exercises (name, description, user_id)
+VALUES ($1, $2, $3) RETURNING id, name, description, user_id, created_at, updated_at
 `
 
 type Exercises_CreateOneParams struct {
@@ -290,8 +291,7 @@ func (q *Queries) Exercises_CreateOne(ctx context.Context, arg Exercises_CreateO
 }
 
 const exercises_DeleteOne = `-- name: Exercises_DeleteOne :exec
-DELETE FROM exercises 
-WHERE id = $1
+DELETE FROM exercises WHERE id = $1
 `
 
 func (q *Queries) Exercises_DeleteOne(ctx context.Context, id int64) error {
@@ -300,9 +300,7 @@ func (q *Queries) Exercises_DeleteOne(ctx context.Context, id int64) error {
 }
 
 const exercises_GetById = `-- name: Exercises_GetById :one
-SELECT id, name, description, user_id, created_at, updated_at FROM exercises 
-WHERE id = $1 
-LIMIT 1
+SELECT id, name, description, user_id, created_at, updated_at FROM exercises WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) Exercises_GetById(ctx context.Context, id int64) (Exercise, error) {
@@ -365,9 +363,11 @@ func (q *Queries) Exercises_GetByPlanId(ctx context.Context, arg Exercises_GetBy
 }
 
 const exercises_GetByUserId = `-- name: Exercises_GetByUserId :many
-SELECT id, name, description, user_id, created_at, updated_at FROM exercises 
-WHERE user_id = $1 
-ORDER BY created_at 
+SELECT id, name, description, user_id, created_at, updated_at
+FROM exercises
+WHERE
+    user_id = $1
+ORDER BY created_at
 LIMIT $2
 `
 
@@ -404,13 +404,13 @@ func (q *Queries) Exercises_GetByUserId(ctx context.Context, arg Exercises_GetBy
 }
 
 const exercises_UpdateOne = `-- name: Exercises_UpdateOne :one
-UPDATE exercises 
-SET 
+UPDATE exercises
+SET
     name = $1,
     description = $2,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $3 
-RETURNING id, name, description, user_id, created_at, updated_at
+WHERE
+    id = $3 RETURNING id, name, description, user_id, created_at, updated_at
 `
 
 type Exercises_UpdateOneParams struct {
@@ -433,12 +433,62 @@ func (q *Queries) Exercises_UpdateOne(ctx context.Context, arg Exercises_UpdateO
 	return i, err
 }
 
+const groupsJoinPlan_List = `-- name: GroupsJoinPlan_List :many
+SELECT groups.id, groups.name, groups.description, groups.user_id, groups.created_at, groups.updated_at from groups 
+JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id AND (interval_group_assignments.plan_interval_id = $1::BIGINT or $1::bigint = 0)
+JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id AND (plan_intervals.plan_id = $2::BIGINT or $2::bigint = 0)
+WHERE 
+    (id = $3::BIGINT or $3::bigint = 0) 
+ORDER BY groups.created_at DESC
+LIMIT $5::int
+OFFSET $4::int
+`
+
+type GroupsJoinPlan_ListParams struct {
+	IntervalID int64
+	PlanID     int64
+	GroupID    int64
+	Offset     int32
+	Limit      int32
+}
+
+func (q *Queries) GroupsJoinPlan_List(ctx context.Context, arg GroupsJoinPlan_ListParams) ([]Group, error) {
+	rows, err := q.db.Query(ctx, groupsJoinPlan_List,
+		arg.IntervalID,
+		arg.PlanID,
+		arg.GroupID,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const groups_CreateOne = `-- name: Groups_CreateOne :one
 INSERT INTO
     groups (name, description, user_id)
-VALUES ($1, $2, $3)
-RETURNING
-    id, name, description, user_id, created_at, updated_at
+VALUES ($1, $2, $3) RETURNING id, name, description, user_id, created_at, updated_at
 `
 
 type Groups_CreateOneParams struct {
@@ -589,15 +639,55 @@ func (q *Queries) Groups_GetByUserId(ctx context.Context, arg Groups_GetByUserId
 	return items, nil
 }
 
+const groups_List = `-- name: Groups_List :many
+SELECT id, name, description, user_id, created_at, updated_at from groups 
+WHERE 
+    (id = $1::BIGINT or $1::bigint = 0) 
+ORDER BY created_at DESC
+LIMIT $3::int
+OFFSET $2::int
+`
+
+type Groups_ListParams struct {
+	GroupID int64
+	Offset  int32
+	Limit   int32
+}
+
+func (q *Queries) Groups_List(ctx context.Context, arg Groups_ListParams) ([]Group, error) {
+	rows, err := q.db.Query(ctx, groups_List, arg.GroupID, arg.Offset, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Group
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const groups_UpdateOne = `-- name: Groups_UpdateOne :one
 UPDATE "groups"
 SET
     name = $1,
     description = $2
 WHERE
-    id = $3
-RETURNING
-    id, name, description, user_id, created_at, updated_at
+    id = $3 RETURNING id, name, description, user_id, created_at, updated_at
 `
 
 type Groups_UpdateOneParams struct {
@@ -621,18 +711,27 @@ func (q *Queries) Groups_UpdateOne(ctx context.Context, arg Groups_UpdateOnePara
 }
 
 const intervalExercisePrescriptions_CreateOne = `-- name: IntervalExercisePrescriptions_CreateOne :one
-INSERT INTO interval_exercise_prescriptions (
-    group_id,
-    exercise_variation_id,
-    plan_interval_id,
-    rpe,
-    sets,
-    reps,
-    duration,
-    rest
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, group_id, exercise_variation_id, plan_interval_id, rpe, sets, reps, duration, rest
+INSERT INTO
+    interval_exercise_prescriptions (
+        group_id,
+        exercise_variation_id,
+        plan_interval_id,
+        rpe,
+        sets,
+        reps,
+        duration,
+        rest
+    )
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8
+    ) RETURNING id, group_id, exercise_variation_id, plan_interval_id, rpe, sets, reps, duration, rest
 `
 
 type IntervalExercisePrescriptions_CreateOneParams struct {
@@ -682,7 +781,7 @@ func (q *Queries) IntervalExercisePrescriptions_DeleteOne(ctx context.Context, i
 }
 
 const intervalExercisePrescriptions_GetByGroupId = `-- name: IntervalExercisePrescriptions_GetByGroupId :many
-SELECT 
+SELECT
     iep.id,
     iep.group_id,
     iep.exercise_variation_id,
@@ -707,11 +806,13 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM interval_exercise_prescriptions iep
-JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE iep.group_id = $1
+FROM
+    interval_exercise_prescriptions iep
+    JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    iep.group_id = $1
 `
 
 type IntervalExercisePrescriptions_GetByGroupIdRow struct {
@@ -787,7 +888,7 @@ func (q *Queries) IntervalExercisePrescriptions_GetByGroupId(ctx context.Context
 }
 
 const intervalExercisePrescriptions_GetByPlanIntervalId = `-- name: IntervalExercisePrescriptions_GetByPlanIntervalId :many
-SELECT 
+SELECT
     iep.id,
     iep.group_id,
     iep.exercise_variation_id,
@@ -812,11 +913,13 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM interval_exercise_prescriptions iep
-JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE iep.plan_interval_id = $1
+FROM
+    interval_exercise_prescriptions iep
+    JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    iep.plan_interval_id = $1
 `
 
 type IntervalExercisePrescriptions_GetByPlanIntervalIdRow struct {
@@ -892,13 +995,13 @@ func (q *Queries) IntervalExercisePrescriptions_GetByPlanIntervalId(ctx context.
 }
 
 const intervalGroupAssignments_Create = `-- name: IntervalGroupAssignments_Create :one
-INSERT INTO interval_group_assignments (
-    plan_interval_id,
-    group_id,
-    frequency
-) VALUES (
-    $1, $2, $3
-) RETURNING id, plan_interval_id, group_id, frequency
+INSERT INTO
+    interval_group_assignments (
+        plan_interval_id,
+        group_id,
+        frequency
+    )
+VALUES ($1, $2, $3) RETURNING id, plan_interval_id, group_id, frequency
 `
 
 type IntervalGroupAssignments_CreateParams struct {
@@ -920,8 +1023,10 @@ func (q *Queries) IntervalGroupAssignments_Create(ctx context.Context, arg Inter
 }
 
 const intervalGroupAssignments_Delete = `-- name: IntervalGroupAssignments_Delete :exec
-DELETE FROM interval_group_assignments 
-WHERE plan_interval_id = $1 AND group_id = $2
+DELETE FROM interval_group_assignments
+WHERE
+    plan_interval_id = $1
+    AND group_id = $2
 `
 
 type IntervalGroupAssignments_DeleteParams struct {
@@ -935,7 +1040,7 @@ func (q *Queries) IntervalGroupAssignments_Delete(ctx context.Context, arg Inter
 }
 
 const intervalGroupAssignments_GetByGroupId = `-- name: IntervalGroupAssignments_GetByGroupId :many
-SELECT 
+SELECT
     iga.id, iga.plan_interval_id, iga.group_id, iga.frequency,
     pi.id as pi_id,
     pi.plan_id as pi_plan_id,
@@ -944,9 +1049,11 @@ SELECT
     pi.order as pi_order,
     pi.created_at as pi_created_at,
     pi.updated_at as pi_updated_at
-FROM interval_group_assignments iga
-JOIN plan_intervals pi ON pi.id = iga.plan_interval_id
-WHERE iga.group_id = $1
+FROM
+    interval_group_assignments iga
+    JOIN plan_intervals pi ON pi.id = iga.plan_interval_id
+WHERE
+    iga.group_id = $1
 `
 
 type IntervalGroupAssignments_GetByGroupIdRow struct {
@@ -996,7 +1103,7 @@ func (q *Queries) IntervalGroupAssignments_GetByGroupId(ctx context.Context, gro
 }
 
 const intervalGroupAssignments_GetByIntervalId = `-- name: IntervalGroupAssignments_GetByIntervalId :many
-SELECT 
+SELECT
     iga.id, iga.plan_interval_id, iga.group_id, iga.frequency,
     g.id as g_id,
     g.name as g_name,
@@ -1004,9 +1111,11 @@ SELECT
     g.user_id as g_user_id,
     g.created_at as g_created_at,
     g.updated_at as g_updated_at
-FROM interval_group_assignments iga
-JOIN groups g ON g.id = iga.group_id
-WHERE iga.plan_interval_id = $1
+FROM
+    interval_group_assignments iga
+    JOIN groups g ON g.id = iga.group_id
+WHERE
+    iga.plan_interval_id = $1
 `
 
 type IntervalGroupAssignments_GetByIntervalIdRow struct {
@@ -1054,15 +1163,15 @@ func (q *Queries) IntervalGroupAssignments_GetByIntervalId(ctx context.Context, 
 }
 
 const parameterTypes_CreateOne = `-- name: ParameterTypes_CreateOne :one
-INSERT INTO parameter_types (
-    name,
-    data_type,
-    default_unit,
-    min_value,
-    max_value
-) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, name, data_type, default_unit, min_value, max_value
+INSERT INTO
+    parameter_types (
+        name,
+        data_type,
+        default_unit,
+        min_value,
+        max_value
+    )
+VALUES ($1, $2, $3, $4, $5) RETURNING id, name, data_type, default_unit, min_value, max_value
 `
 
 type ParameterTypes_CreateOneParams struct {
@@ -1094,8 +1203,7 @@ func (q *Queries) ParameterTypes_CreateOne(ctx context.Context, arg ParameterTyp
 }
 
 const parameterTypes_GetById = `-- name: ParameterTypes_GetById :one
-SELECT id, name, data_type, default_unit, min_value, max_value FROM parameter_types 
-WHERE id = $1
+SELECT id, name, data_type, default_unit, min_value, max_value FROM parameter_types WHERE id = $1
 `
 
 func (q *Queries) ParameterTypes_GetById(ctx context.Context, id int64) (ParameterType, error) {
@@ -1121,9 +1229,7 @@ INSERT INTO
         duration,
         "order"
     )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING
-    id, plan_id, name, description, duration, "order", created_at, updated_at
+VALUES ($1, $2, $3, $4, $5) RETURNING id, plan_id, name, description, duration, "order", created_at, updated_at
 `
 
 type PlanIntervals_CreateOneParams struct {
@@ -1302,10 +1408,14 @@ func (q *Queries) PlanIntervals_UpdateOrderByValues(ctx context.Context, arg Pla
 
 const plans_CreateOne = `-- name: Plans_CreateOne :one
 INSERT INTO
-    plans (name, description, user_id, is_template, is_public)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING
-    id, name, description, user_id, is_template, is_public, created_at, updated_at
+    plans (
+        name,
+        description,
+        user_id,
+        is_template,
+        is_public
+    )
+VALUES ($1, $2, $3, $4, $5) RETURNING id, name, description, user_id, is_template, is_public, created_at, updated_at
 `
 
 type Plans_CreateOneParams struct {
@@ -1379,12 +1489,22 @@ func (q *Queries) Plans_GetByPlanId(ctx context.Context, id int64) (Plan, error)
 }
 
 const plans_GetByUserId = `-- name: Plans_GetByUserId :many
-SELECT id, name, description, user_id, is_template, is_public, created_at, updated_at FROM plans 
-WHERE user_id = $1
-  AND (is_template = $2 OR $3 = false)
-  AND (is_public = $4 OR $5 = false)
-ORDER BY updated_at DESC 
-LIMIT $6 OFFSET $7
+SELECT id, name, description, user_id, is_template, is_public, created_at, updated_at
+FROM plans
+WHERE
+    user_id = $1
+    AND (
+        is_template = $2
+        OR $3 = false
+    )
+    AND (
+        is_public = $4
+        OR $5 = false
+    )
+ORDER BY updated_at DESC
+LIMIT $6
+OFFSET
+    $7
 `
 
 type Plans_GetByUserIdParams struct {
@@ -1435,15 +1555,15 @@ func (q *Queries) Plans_GetByUserId(ctx context.Context, arg Plans_GetByUserIdPa
 }
 
 const plans_UpdateOne = `-- name: Plans_UpdateOne :one
-UPDATE plans 
-SET 
+UPDATE plans
+SET
     name = $1,
     description = $2,
     is_template = $3,
     is_public = $4,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $5 
-RETURNING id, name, description, user_id, is_template, is_public, created_at, updated_at
+WHERE
+    id = $5 RETURNING id, name, description, user_id, is_template, is_public, created_at, updated_at
 `
 
 type Plans_UpdateOneParams struct {

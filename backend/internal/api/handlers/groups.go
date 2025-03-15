@@ -7,6 +7,7 @@ import (
 	"backend/internal/service"
 
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -25,20 +26,46 @@ type CreateGroupApiArgs struct {
 	Description string
 }
 
-func (h *GroupsHandler) ListByPlanId(w http.ResponseWriter, r *http.Request) {
-	planId, err := api_utils.ParseBigInt(chi.URLParam(r, "planId"))
-	if err != nil {
-		api_utils.WriteError(w, http.StatusBadRequest, "Invalid plan ID")
+type ListGroupApiArgs struct {
+	PlanId     int64 `json:"planId,omitempty"`
+	IntervalId int64 `json:"intervalId,omitempty"`
+	Id         int64 `json:"id,omitempty"`
+}
+
+func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
+	filterParser := api_utils.NewFilterParser(r, true)
+
+	planId := filterParser.GetIntFilterOrZero("planId")
+	intervalId := filterParser.GetIntFilterOrZero("intervalId")
+	groupId := filterParser.GetIntFilterOrZero("id")
+
+	if planId == 0 && groupId == 0 && intervalId == 0 {
+		api_utils.WriteError(w, http.StatusBadRequest, "Missing required field: planId, id, or intervalId")
 		return
 	}
+
+	limit := filterParser.GetLimit(100)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		group_repo := repository.GroupsRepository{Queries: queries}
 		group_service := service.NewGroupsService(&group_repo)
 
-		groups, err := group_service.GetGroupsByPlanId(r.Context(), planId, 100)
+		log.Printf("Calling service.ListGroups with planId=%d, groupId=%d, intervalId=%d, limit=%d", planId, groupId, intervalId, limit)
+		groups, err := group_service.ListGroups(r.Context(), planId, groupId, intervalId, int32(limit))
 		if err != nil {
+			log.Printf("Error from ListGroups: %v", err)
 			return err
+		}
+
+		if groups != nil {
+			log.Printf("Successfully retrieved groups, count: %d", len(groups))
+		}
+
+		// If we're expecting a single result but got none, return a 404
+		if len(groups) == 0 {
+			log.Printf("Group not found")
+			api_utils.WriteError(w, http.StatusNotFound, "Group not found")
+			return nil
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -49,9 +76,6 @@ func (h *GroupsHandler) ListByPlanId(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 }
-
-// TODO: Get by PlanIntervalId
-
 
 func (h *GroupsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var args CreateGroupApiArgs

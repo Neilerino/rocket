@@ -14,12 +14,12 @@ import { ChevronDown, ChevronRight, Plus, Trash2, Edit } from 'lucide-react';
 import { Tabs, TabItem } from '../ui/tabs';
 import { sampleExercises } from './sample-data';
 import IntervalEditDialog from './interval-edit-dialog';
+import { useGroups, useUpdateGroup, useDeleteGroup } from '@/services/hooks';
 
 interface IntervalEditorProps {
   interval: Interval;
   isExpanded: boolean;
   onToggle: () => void;
-  onSelectGroup: (group: Group) => void;
   parameterTypes: ParameterType[];
   allExercises: Exercise[];
   onUpdateGroup: (group: Group) => void;
@@ -37,6 +37,12 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
   onDeleteInterval,
   onUpdateInterval,
 }) => {
+  const groupContext = { intervalId: interval.id, planId: interval.planId };
+
+  const { data: groups, isLoading } = useGroups(groupContext);
+  const deleteGroup = useDeleteGroup({ filters: groupContext });
+  const updateGroup = useUpdateGroup({ filters: groupContext });
+
   const [activeGroup, setActiveGroup] = useState<string | null>(interval.groups[0]?.id || null);
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
@@ -47,61 +53,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
   // Handle tab selection
   const handleSelectKey = (key: string) => {
     setActiveGroup(key);
-  };
-
-  // Handle group actions
-  const handleAddGroup = () => {
-    // Mark the current interval as the one adding a new group
-    // by setting a flag on all groups in the interval
-    // Create a new dummy group with ID 'new' to signal we want to create a new group
-    const newGroup: Group = {
-      id: 'new',
-      name: 'New Group',
-      frequency: '1x',
-      exercises: [],
-      _isAddingNewGroup: true,
-    };
-
-    setCurrentGroup(newGroup);
-    setGroupDrawerOpen(true);
-  };
-
-  // Handle exercise save
-  const handleSaveExercise = (prescription: ExercisePrescription) => {
-    if (!currentGroup) return;
-
-    // Create a new prescription with a unique ID if none exists
-    const newPrescription = {
-      ...prescription,
-      id: prescription.id || Date.now().toString(),
-    };
-
-    // Clone the current group and add the new exercise prescription
-    const updatedGroup = {
-      ...currentGroup,
-      exercises: [...currentGroup.exercises, newPrescription],
-    };
-
-    // Update the group via the parent component
-    onUpdateGroup(updatedGroup);
-
-    // Close the exercise sidebar
-    setSelectedExercise(null);
-    setCurrentGroup(null);
-  };
-
-  const handleSaveGroupName = (groupId: string, newName: string) => {
-    if (!newName.trim()) return;
-
-    setInterval((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        groups: prev.groups.map((group) =>
-          group.id === groupId ? { ...group, name: newName } : group,
-        ),
-      };
-    });
   };
 
   // Handle delete interval
@@ -199,19 +150,21 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
           >
             {/* Custom Tabs Container */}
             <div className="border-b bg-white">
-              {interval.groups.length > 0 && (
+              {groups && groups.length > 0 && (
                 <Tabs
-                  tabs={interval.groups.map((group) => ({
-                    id: group.id,
+                  tabs={groups.map((group) => ({
+                    id: String(group.id),
                     label: <span className="whitespace-nowrap">{group.name}</span>,
                   }))}
                   activeTabId={activeGroup || ''}
                   onTabChange={handleSelectKey}
-                  onSave={handleSaveGroupName}
+                  onSave={(id, name) => {
+                    updateGroup.mutate({ id: Number(id), name });
+                  }}
                   actionButton={
                     <button
                       className="group h-full w-full px-6 py-2 text-sm text-gray-600 hover:text-gray-800 active:text-gray-900 hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2 transition-all duration-150 outline-none focus:outline-none hover:shadow-sm"
-                      onClick={handleAddGroup}
+                      onClick={() => setGroupDrawerOpen(true)}
                     >
                       <Plus className="w-4 h-4 transform group-hover:scale-110 transition-transform duration-200" />
                       <span className="transform group-hover:scale-105 transition-transform duration-200">
@@ -222,11 +175,11 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
                 />
               )}
 
-              {interval.groups.length === 0 && (
+              {!isLoading && (!groups || groups.length === 0) && (
                 <div className="p-4 text-center">
                   <button
                     className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-                    onClick={handleAddGroup}
+                    onClick={() => setGroupDrawerOpen(true)}
                   >
                     <Plus className="w-4 h-4 inline mr-2" />
                     Add First Group
@@ -330,8 +283,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
           setCurrentGroup(null);
           setGroupDrawerOpen(false);
         }}
-        allGroups={interval.groups}
-        sampleExercises={sampleExercises}
+        context={groupContext}
       />
     </div>
   );

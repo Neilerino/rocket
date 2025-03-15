@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import IntervalEditor from './interval-editor';
-import GroupSidebar from './group-sidebar';
 import { Group, ParameterType, PlanInterval as LocalPlanInterval } from './types';
 import { CreatePlanIntervalDto } from '../../services/types';
 import { sampleExercises, sampleParameterTypes } from './sample-data';
@@ -14,7 +13,7 @@ import {
 } from '../../services/hooks/intervals/useIntervalMutations';
 
 interface PlanEditorProps {
-  planId?: number;
+  planId: number;
 }
 
 export default function PlanEditor({ planId }: PlanEditorProps) {
@@ -22,16 +21,13 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
   const [localIntervals, setLocalIntervals] = useState<LocalPlanInterval[]>([]);
 
   // API hooks
-  const { data: intervals, isLoading } = useIntervalsByPlanId(Number(planId));
+  const { data: intervals, isLoading } = useIntervalsByPlanId(planId);
   const { mutate: createInterval } = useCreateInterval();
-  const { mutate: deleteInterval } = useDeleteInterval(Number(planId));
-
-  console.log('intervals', intervals);
+  const { mutate: deleteInterval } = useDeleteInterval(planId);
 
   // Update local intervals when API data changes
   useEffect(() => {
     if (intervals) {
-      // Convert API intervals to local format
       const convertedIntervals: LocalPlanInterval[] = intervals.map((apiInterval) => ({
         id: apiInterval.id,
         planId: apiInterval.planId,
@@ -49,9 +45,6 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
   // State for open/closed intervals
   const [expandedIntervals, setExpandedIntervals] = useState<number[]>([0]); // Start with first interval expanded
 
-  // State for sidebar (only for the GroupSidebar now)
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-
   // Parameter types for exercise customization
   const parameterTypes: ParameterType[] = sampleParameterTypes;
 
@@ -67,11 +60,6 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
     message: '',
     onConfirm: () => {},
   });
-
-  // Function to handle selecting a group for editing
-  const handleSelectGroup = (group: Group) => {
-    setSelectedGroup(group);
-  };
 
   const toggleInterval = (intervalId: number) => {
     setExpandedIntervals((prev) =>
@@ -199,7 +187,6 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
               interval={interval}
               isExpanded={expandedIntervals.includes(Number(interval.id))}
               onToggle={() => toggleInterval(Number(interval.id))}
-              onSelectGroup={handleSelectGroup}
               parameterTypes={parameterTypes}
               allExercises={sampleExercises}
               onUpdateGroup={handleUpdateGroup}
@@ -237,16 +224,6 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
           </Button>
         </div>
       </div>
-
-      {/* Group sidebar */}
-      {selectedGroup && (
-        <GroupSidebar
-          group={selectedGroup}
-          onClose={() => setSelectedGroup(null)}
-          onUpdateGroup={handleUpdateGroup}
-          isOpen={selectedGroup !== null}
-        />
-      )}
 
       {/* Confirmation Modal */}
       <ConfirmationModal

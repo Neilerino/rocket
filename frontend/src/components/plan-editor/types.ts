@@ -36,15 +36,6 @@ export interface ExercisePrescription {
   lockedParameters?: Record<string, number>;
 }
 
-export interface Group {
-  id: string;
-  name: string;
-  frequency: string;
-  exercises: ExercisePrescription[];
-  description?: string;
-  _isAddingNewGroup?: boolean;
-}
-
 export interface PlanInterval {
   id: number;
   planId: number;
@@ -52,6 +43,5 @@ export interface PlanInterval {
   description?: string;
   duration: string; // interval
   order: number;
-  groups: Group[];
   groupCount: number;
 }

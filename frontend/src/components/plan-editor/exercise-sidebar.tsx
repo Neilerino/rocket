@@ -12,7 +12,7 @@ import { sampleExerciseVariants, sampleParameterTypes, ExerciseVariant } from '.
 interface ExerciseSidebarProps {
   exercise?: Exercise;
   group?: Group | null;
-  intervalId?: string;
+  intervalId?: number;
   parameterTypes?: ParameterType[];
   allExercises?: Exercise[];
   onClose: () => void;
@@ -69,7 +69,7 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
         ...variant.prescription,
         groupId: group?.id || '',
         planIntervalId: intervalId || '',
-        id: undefined // We'll get a new ID when saving
+        id: undefined, // We'll get a new ID when saving
       });
     } else {
       // If just an exercise was selected without a variant
@@ -120,7 +120,9 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
         </div>
 
         {/* Content Area */}
-        <DrawerBody className={`flex-1 ${activeTab === 'reuse' ? 'overflow-hidden p-6 pb-0' : 'overflow-auto p-6'}`}>
+        <DrawerBody
+          className={`flex-1 ${activeTab === 'reuse' ? 'overflow-hidden p-6 pb-0' : 'overflow-auto p-6'}`}
+        >
           {activeTab === 'new' && (
             <NewExerciseTab
               exercise={exercise}

@@ -37,7 +37,6 @@ type CreatePlanIntervalApiArgs struct {
 
 // handleListPlanIntervals is a shared handler function for both List and GetById endpoints
 func (h *PlanIntervalHandler) List(w http.ResponseWriter, r *http.Request) {
-	// Create a filter parser with logging enabled
 	filterParser := api_utils.NewFilterParser(r, true)
 
 	// Use the new non-nullable filter methods with default values

@@ -1,36 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
-import { GroupService } from '../../api/groups';
+import { GroupFilters, GroupService } from '../../api/groups';
 import { isApiError } from '../../api/errorHandler';
 import { Group } from '../../types';
+import { createGroupCacheKey } from './utils';
 
-const QUERY_KEY = 'groups';
-
-export const useGroupsByPlanId = (planId: number, options = {}) => {
+/**
+ * Hook to fetch groups with flexible filtering
+ * @param filters Filter criteria (planId, id, etc.)
+ * @param options Additional react-query options
+ */
+export const useGroups = (filters: GroupFilters = {}, options = {}) => {
   return useQuery({
-    queryKey: [QUERY_KEY, 'plan', planId],
+    queryKey: [createGroupCacheKey({ filters })],
     queryFn: async () => {
-      const response = await GroupService.getGroupsByPlanId(planId);
+      const response = await GroupService.getGroups(filters);
       if (isApiError(response)) {
         throw response.error;
       }
       return response.data as Group[];
     },
-    enabled: !!planId,
-    ...options
-  });
-};
-
-export const useGroupById = (id: number, options = {}) => {
-  return useQuery({
-    queryKey: [QUERY_KEY, id],
-    queryFn: async () => {
-      const response = await GroupService.getGroupById(id);
-      if (isApiError(response)) {
-        throw response.error;
-      }
-      return response.data as Group;
-    },
-    enabled: !!id,
-    ...options
+    ...options,
   });
 };

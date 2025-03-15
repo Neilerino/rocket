@@ -1,31 +1,45 @@
 -- name: Plans_GetByUserId :many
-SELECT * FROM plans 
-WHERE user_id = $1
-  AND (is_template = $2 OR $3 = false)
-  AND (is_public = $4 OR $5 = false)
-ORDER BY updated_at DESC 
-LIMIT $6 OFFSET $7;
+SELECT *
+FROM plans
+WHERE
+    user_id = $1
+    AND (
+        is_template = $2
+        OR $3 = false
+    )
+    AND (
+        is_public = $4
+        OR $5 = false
+    )
+ORDER BY updated_at DESC
+LIMIT $6
+OFFSET
+    $7;
 
 -- name: Plans_GetByPlanId :one
 SELECT * FROM plans WHERE id = $1 LIMIT 1;
 
 -- name: Plans_CreateOne :one
 INSERT INTO
-    plans (name, description, user_id, is_template, is_public)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING
-    *;
+    plans (
+        name,
+        description,
+        user_id,
+        is_template,
+        is_public
+    )
+VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
 -- name: Plans_UpdateOne :one
-UPDATE plans 
-SET 
+UPDATE plans
+SET
     name = $1,
     description = $2,
     is_template = $3,
     is_public = $4,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $5 
-RETURNING *;
+WHERE
+    id = $5 RETURNING *;
 
 -- name: PlanIntervals_List :many
 SELECT 
@@ -68,16 +82,31 @@ INSERT INTO
         duration,
         "order"
     )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING
-    *;
+VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
 -- name: Plans_DeleteById :one
 DELETE FROM plans WHERE id = $1 RETURNING *;
 
-
 -- name: PlanIntervals_DeleteById :one
 DELETE FROM plan_intervals WHERE id = $1 RETURNING *;
+
+-- name: Groups_List :many
+SELECT * from groups 
+WHERE 
+    (id = @group_id::BIGINT or @group_id::bigint = 0) 
+ORDER BY created_at DESC
+LIMIT @_limit::int
+OFFSET @_offset::int;
+
+-- name: GroupsJoinPlan_List :many
+SELECT groups.* from groups 
+JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id AND (interval_group_assignments.plan_interval_id = @interval_id::BIGINT or @interval_id::bigint = 0)
+JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id AND (plan_intervals.plan_id = @plan_id::BIGINT or @plan_id::bigint = 0)
+WHERE 
+    (id = @group_id::BIGINT or @group_id::bigint = 0) 
+ORDER BY groups.created_at DESC
+LIMIT @_limit::int
+OFFSET @_offset::int;
 
 -- name: Groups_GetByUserId :many
 SELECT * FROM groups WHERE user_id = $1 ORDER BY created_at LIMIT $2;
@@ -98,9 +127,7 @@ LIMIT $2;
 -- name: Groups_CreateOne :one
 INSERT INTO
     groups (name, description, user_id)
-VALUES ($1, $2, $3)
-RETURNING
-    *;
+VALUES ($1, $2, $3) RETURNING *;
 
 -- name: Groups_UpdateOne :one
 UPDATE "groups"
@@ -108,28 +135,28 @@ SET
     name = $1,
     description = $2
 WHERE
-    id = $3
-RETURNING
-    *;
+    id = $3 RETURNING *;
 
 -- name: Groups_DeleteById :one
 DELETE FROM groups WHERE id = $1 RETURNING *;
 
 -- name: IntervalGroupAssignments_Create :one
-INSERT INTO interval_group_assignments (
-    plan_interval_id,
-    group_id,
-    frequency
-) VALUES (
-    $1, $2, $3
-) RETURNING *;
+INSERT INTO
+    interval_group_assignments (
+        plan_interval_id,
+        group_id,
+        frequency
+    )
+VALUES ($1, $2, $3) RETURNING *;
 
 -- name: IntervalGroupAssignments_Delete :exec
-DELETE FROM interval_group_assignments 
-WHERE plan_interval_id = $1 AND group_id = $2;
+DELETE FROM interval_group_assignments
+WHERE
+    plan_interval_id = $1
+    AND group_id = $2;
 
 -- name: IntervalGroupAssignments_GetByIntervalId :many
-SELECT 
+SELECT
     iga.*,
     g.id as g_id,
     g.name as g_name,
@@ -137,12 +164,14 @@ SELECT
     g.user_id as g_user_id,
     g.created_at as g_created_at,
     g.updated_at as g_updated_at
-FROM interval_group_assignments iga
-JOIN groups g ON g.id = iga.group_id
-WHERE iga.plan_interval_id = $1;
+FROM
+    interval_group_assignments iga
+    JOIN groups g ON g.id = iga.group_id
+WHERE
+    iga.plan_interval_id = $1;
 
 -- name: IntervalGroupAssignments_GetByGroupId :many
-SELECT 
+SELECT
     iga.*,
     pi.id as pi_id,
     pi.plan_id as pi_plan_id,
@@ -151,9 +180,11 @@ SELECT
     pi.order as pi_order,
     pi.created_at as pi_created_at,
     pi.updated_at as pi_updated_at
-FROM interval_group_assignments iga
-JOIN plan_intervals pi ON pi.id = iga.plan_interval_id
-WHERE iga.group_id = $1;
+FROM
+    interval_group_assignments iga
+    JOIN plan_intervals pi ON pi.id = iga.plan_interval_id
+WHERE
+    iga.group_id = $1;
 
 -- name: Exercises_GetByPlanId :many
 SELECT exercises.id, exercises.name, exercises.description, exercises.user_id, exercises.created_at, exercises.updated_at
@@ -168,40 +199,35 @@ ORDER BY plan_intervals."order"
 LIMIT $2;
 
 -- name: Exercises_GetByUserId :many
-SELECT * FROM exercises 
-WHERE user_id = $1 
-ORDER BY created_at 
+SELECT *
+FROM exercises
+WHERE
+    user_id = $1
+ORDER BY created_at
 LIMIT $2;
 
 -- name: Exercises_GetById :one
-SELECT * FROM exercises 
-WHERE id = $1 
-LIMIT 1;
+SELECT * FROM exercises WHERE id = $1 LIMIT 1;
 
 -- name: Exercises_CreateOne :one
-INSERT INTO exercises (
-    name, 
-    description, 
-    user_id
-) VALUES (
-    $1, $2, $3
-) RETURNING *;
+INSERT INTO
+    exercises (name, description, user_id)
+VALUES ($1, $2, $3) RETURNING *;
 
 -- name: Exercises_UpdateOne :one
-UPDATE exercises 
-SET 
+UPDATE exercises
+SET
     name = $1,
     description = $2,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $3 
-RETURNING *;
+WHERE
+    id = $3 RETURNING *;
 
 -- name: Exercises_DeleteOne :exec
-DELETE FROM exercises 
-WHERE id = $1;
+DELETE FROM exercises WHERE id = $1;
 
 -- name: ExerciseVariations_GetByExerciseIdWithDetails :many
-SELECT 
+SELECT
     ev.id,
     ev.exercise_id,
     ev.parameter_type_id,
@@ -217,13 +243,15 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM exercise_variations ev
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE ev.exercise_id = $1;
+FROM
+    exercise_variations ev
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    ev.exercise_id = $1;
 
 -- name: ExerciseVariations_GetByIdWithDetails :one
-SELECT 
+SELECT
     ev.id,
     ev.exercise_id,
     ev.parameter_type_id,
@@ -239,48 +267,49 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM exercise_variations ev
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE ev.id = $1;
+FROM
+    exercise_variations ev
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    ev.id = $1;
 
 -- name: ExerciseVariations_CreateOne :one
-INSERT INTO exercise_variations (
-    exercise_id,
-    parameter_type_id
-) VALUES (
-    $1, $2
-) RETURNING *;
-
--- name: ExerciseVariations_DeleteOne :exec
-DELETE FROM exercise_variations 
-WHERE id = $1;
-
--- name: ParameterTypes_GetById :one
-SELECT * FROM parameter_types 
-WHERE id = $1;
-
--- name: ParameterTypes_CreateOne :one
-INSERT INTO parameter_types (
-    name,
-    data_type,
-    default_unit,
-    min_value,
-    max_value
-) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING *;
-
--- name: ExerciseVariations_CreateOneWithDetails :one
-WITH created_variation AS (
-    INSERT INTO exercise_variations (
+INSERT INTO
+    exercise_variations (
         exercise_id,
         parameter_type_id
-    ) VALUES (
-        $1, $2
-    ) RETURNING *
-)
-SELECT 
+    )
+VALUES ($1, $2) RETURNING *;
+
+-- name: ExerciseVariations_DeleteOne :exec
+DELETE FROM exercise_variations WHERE id = $1;
+
+-- name: ParameterTypes_GetById :one
+SELECT * FROM parameter_types WHERE id = $1;
+
+-- name: ParameterTypes_CreateOne :one
+INSERT INTO
+    parameter_types (
+        name,
+        data_type,
+        default_unit,
+        min_value,
+        max_value
+    )
+VALUES ($1, $2, $3, $4, $5) RETURNING *;
+
+-- name: ExerciseVariations_CreateOneWithDetails :one
+WITH
+    created_variation AS (
+        INSERT INTO
+            exercise_variations (
+                exercise_id,
+                parameter_type_id
+            )
+        VALUES ($1, $2) RETURNING *
+    )
+SELECT
     ev.id,
     ev.exercise_id,
     ev.parameter_type_id,
@@ -296,12 +325,13 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM created_variation ev
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id;
+FROM
+    created_variation ev
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id;
 
 -- name: IntervalExercisePrescriptions_GetByGroupId :many
-SELECT 
+SELECT
     iep.id,
     iep.group_id,
     iep.exercise_variation_id,
@@ -326,14 +356,16 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM interval_exercise_prescriptions iep
-JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE iep.group_id = $1;
+FROM
+    interval_exercise_prescriptions iep
+    JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    iep.group_id = $1;
 
 -- name: IntervalExercisePrescriptions_GetByPlanIntervalId :many
-SELECT 
+SELECT
     iep.id,
     iep.group_id,
     iep.exercise_variation_id,
@@ -358,25 +390,36 @@ SELECT
     pt.default_unit as pt_default_unit,
     pt.min_value as pt_min_value,
     pt.max_value as pt_max_value
-FROM interval_exercise_prescriptions iep
-JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
-JOIN exercises e ON e.id = ev.exercise_id
-JOIN parameter_types pt ON pt.id = ev.parameter_type_id
-WHERE iep.plan_interval_id = $1;
+FROM
+    interval_exercise_prescriptions iep
+    JOIN exercise_variations ev ON ev.id = iep.exercise_variation_id
+    JOIN exercises e ON e.id = ev.exercise_id
+    JOIN parameter_types pt ON pt.id = ev.parameter_type_id
+WHERE
+    iep.plan_interval_id = $1;
 
 -- name: IntervalExercisePrescriptions_CreateOne :one
-INSERT INTO interval_exercise_prescriptions (
-    group_id,
-    exercise_variation_id,
-    plan_interval_id,
-    rpe,
-    sets,
-    reps,
-    duration,
-    rest
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING *;
+INSERT INTO
+    interval_exercise_prescriptions (
+        group_id,
+        exercise_variation_id,
+        plan_interval_id,
+        rpe,
+        sets,
+        reps,
+        duration,
+        rest
+    )
+VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8
+    ) RETURNING *;
 
 -- name: IntervalExercisePrescriptions_DeleteOne :exec
 DELETE FROM interval_exercise_prescriptions WHERE id = $1;
