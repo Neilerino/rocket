@@ -5,27 +5,48 @@ import { Label } from 'shad/components/ui/label';
 import { X as CloseIcon, Plus } from 'lucide-react';
 import { Exercise } from './types';
 import { Group } from '@/services/types';
+import { useCreateGroup, useUpdateGroup } from '@/services/hooks';
+import { GroupFilters } from '@/services/api';
 
 interface GroupFormData {
-  id: number | undefined;
+  id?: number;
   name: string;
   description: string;
 }
 
 interface NewGroupTabProps {
-  groupFormData: GroupFormData;
-  onUpdateGroup: (group: GroupFormData) => void;
+  context: GroupFilters;
+  group: Group | undefined;
+  setSaveCallback: (callback: () => void) => void;
 }
 
-const NewGroupTab = ({ groupFormData, onUpdateGroup }: NewGroupTabProps) => {
+const NewGroupTab = ({ context, group, setSaveCallback }: NewGroupTabProps) => {
   // const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const { mutate: createGroup } = useCreateGroup({ filters: context });
+  const { mutate: updateGroup } = useUpdateGroup({ filters: context });
 
-  const handleInputChange = (field: keyof Group, value: string) => {
-    onUpdateGroup({
+  const [groupFormData, setGroupFormData] = useState<GroupFormData>(
+    group || { name: '', description: '' },
+  );
+
+  const handleInputChange = (field: keyof GroupFormData, value: string) => {
+    setGroupFormData({
       ...groupFormData,
       [field]: value,
     });
   };
+
+  setSaveCallback(() => {
+    if (groupFormData.id) {
+      updateGroup({
+        id: groupFormData.id,
+        name: groupFormData.name,
+        description: groupFormData.description,
+      });
+    } else {
+      createGroup(groupFormData);
+    }
+  });
 
   // const handleAddExercise = () => {
   //   setSelectedExercise({
@@ -42,18 +63,19 @@ const NewGroupTab = ({ groupFormData, onUpdateGroup }: NewGroupTabProps) => {
   //   setSelectedExercise(exercise);
   // };
 
-  // const handleSaveExercise = (exercise: Exercise) => {
-  //   const isNew = !exercise.id;
-  //   const updatedExercises = isNew
-  //     ? [...group.exercises, { ...exercise, id: crypto.randomUUID() }]
-  //     : group.exercises.map((e) => (e.id === exercise.id ? exercise : e));
+  const handleSaveExercise = (exercise: Exercise) => {
+    return;
+    // const isNew = !exercise.id;
+    // const updatedExercises = isNew
+    //   ? [...group.exercises, { ...exercise, id: crypto.randomUUID() }]
+    //   : group.exercises.map((e) => (e.id === exercise.id ? exercise : e));
 
-  //   onUpdateGroup({
-  //     ...group,
-  //     exercises: updatedExercises,
-  //   });
-  //   setSelectedExercise(null);
-  // };
+    // onUpdateGroup({
+    //   ...group,
+    //   exercises: updatedExercises,
+    // });
+    // setSelectedExercise(null);
+  };
 
   // const handleDeleteExercise = (exerciseId: string) => {
   //   onUpdateGroup({

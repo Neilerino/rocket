@@ -15,7 +15,7 @@ func NewGroupsService(repo *repository.GroupsRepository) *GroupsService {
 }
 
 func (s *GroupsService) ListGroups(ctx context.Context, planId int64, groupId int64, intervalId int64, limit int32) ([]types.Group, error) {
-	groups, err := s.repo.GetByPlanId(ctx, planId, groupId, intervalId, limit)
+	groups, err := s.repo.ListGroups(ctx, planId, groupId, intervalId, limit)
 	if err != nil {
 		return nil, err
 	}

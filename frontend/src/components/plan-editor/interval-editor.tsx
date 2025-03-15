@@ -265,7 +265,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
           setExerciseDrawerOpen(false);
         }}
         isOpen={exerciseDrawerOpen}
-        onSave={handleSaveExercise}
+        onSave={() => {}}
         allExercises={allExercises}
         intervalId={interval.id}
         parameterTypes={parameterTypes}

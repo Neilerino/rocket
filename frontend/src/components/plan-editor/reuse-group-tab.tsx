@@ -1,53 +1,43 @@
 import { useState } from 'react';
 import { Exercise } from './types';
 import GroupCard from './group-card';
-import { Button } from 'shad/components/ui/button';
 import { Search } from 'lucide-react';
 import { Group } from '@/services/types';
+import { GroupFilters } from '@/services/api/groups';
+
+import { useAssignGroupToInterval } from '@/services/hooks';
 
 interface ReuseGroupTabProps {
   availableGroups: Group[];
-  onSelectGroup: (group: Group) => void;
+  context: GroupFilters;
+  setSaveCallback: (callback: () => void) => void;
   allExercises?: Exercise[];
 }
 
 const ReuseGroupTab = ({
   availableGroups,
-  onSelectGroup,
+  context,
+  setSaveCallback,
   allExercises = [],
 }: ReuseGroupTabProps) => {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { mutate: assignGroupToInterval } = useAssignGroupToInterval();
 
-  // Filter groups based on search term
-  const filteredGroups = availableGroups.filter(
-    (group) =>
-      group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (group.description && group.description.toLowerCase().includes(searchTerm.toLowerCase())),
-  );
-
-  console.log('selected group id: ', selectedGroupId);
-
-  // Handle group selection
-  const handleGroupClick = (group: Group) => {
-    console.log('handleGroupClick - called', group);
-    setSelectedGroupId(group.id);
-  };
-
-  // Handle use group button click
-  const handleUseGroup = () => {
-    if (!selectedGroupId) return;
-
-    const group = availableGroups.find((g) => g.id === selectedGroupId);
-    if (!group) return;
-
-    onSelectGroup(group);
-  };
+  setSaveCallback(() => {
+    if (selectedGroupId && context.intervalId) {
+      assignGroupToInterval({
+        groupId: selectedGroupId,
+        intervalId: context.intervalId,
+      });
+    }
+  });
 
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-500 mb-2">
-        Select an existing group to use in this interval.
+        Select an existing group to use in this interval. Select an existing group to use in this
+        interval.
       </div>
 
       {/* Search input */}
@@ -65,14 +55,14 @@ const ReuseGroupTab = ({
       </div>
 
       <div className="space-y-4 overflow-y-auto pr-1">
-        {filteredGroups.length === 0 ? (
+        {availableGroups.length === 0 ? (
           <div className="text-center text-gray-500 py-8 border border-dashed rounded-lg">
             {searchTerm
               ? `No groups found matching "${searchTerm}"`
               : 'No groups available to reuse'}
           </div>
         ) : (
-          filteredGroups.map((group) => (
+          availableGroups.map((group) => (
             <GroupCard
               key={group.id}
               group={group}
@@ -83,12 +73,6 @@ const ReuseGroupTab = ({
             />
           ))
         )}
-      </div>
-
-      <div className="pt-4 flex justify-end">
-        <Button onClick={handleUseGroup} disabled={!selectedGroupId} className="w-full sm:w-auto">
-          Use Selected Group
-        </Button>
       </div>
     </div>
   );

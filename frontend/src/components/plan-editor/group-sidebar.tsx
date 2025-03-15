@@ -36,7 +36,7 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
     onClose: onCloseDrawer,
   } = useDisclosure({ isOpen, onClose });
   const { data: groups } = useGroups({ planId: context.planId });
-
+  const [saveCallback, setSaveCallback] = useState<(() => void) | null>(null);
   const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('new');
   const [currentGroup, setCurrentGroup] = useState<Group | null>(group);
 
@@ -55,31 +55,9 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
     setActiveTab(tabId as 'new' | 'reuse');
   };
 
-  const handleReuseGroup = (existingGroup: Group) => {
-    const updatedGroup = {
-      ...existingGroup,
-      id: group.id, // Keep the current ID but use all other properties from existing group
-    };
-
-    setCurrentGroup(updatedGroup);
-
-    if (onUpdateGroup) {
-      onUpdateGroup(updatedGroup);
-    }
-
-    setActiveTab('new'); // Switch back to new tab after reusing
-  };
-
-  const handleUpdateGroup = (updatedGroup: Group) => {
-    setCurrentGroup(updatedGroup);
-    if (onUpdateGroup) {
-      onUpdateGroup(updatedGroup);
-    }
-  };
-
   const handleSave = () => {
-    if (currentGroup && onSave) {
-      onSave(currentGroup);
+    if (saveCallback) {
+      saveCallback();
     }
     onCloseDrawer();
   };
@@ -124,11 +102,8 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
 
         {/* Content Area */}
         <DrawerBody className="flex-1 overflow-auto p-6">
-          {activeTab === 'new' && group && onUpdateGroup && (
-            <NewGroupTab
-              groupFormData={currentGroup || { name: '', description: '' }}
-              onUpdateGroup={handleUpdateGroup}
-            />
+          {activeTab === 'new' && group && (
+            <NewGroupTab context={context} group={currentGroup} setSaveCallback={setSaveCallback} />
           )}
 
           {groups && activeTab === 'reuse' && (
