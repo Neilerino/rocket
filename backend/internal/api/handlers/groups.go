@@ -61,13 +61,6 @@ func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Successfully retrieved groups, count: %d", len(groups))
 		}
 
-		// If we're expecting a single result but got none, return a 404
-		if len(groups) == 0 {
-			log.Printf("Group not found")
-			api_utils.WriteError(w, http.StatusNotFound, "Group not found")
-			return nil
-		}
-
 		w.Header().Set("Content-Type", "application/json")
 		return json.NewEncoder(w).Encode(groups)
 	})
@@ -189,7 +182,7 @@ func (h *GroupsHandler) AssignToInterval(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	planIntervalId, err := api_utils.ParseBigInt(chi.URLParam(r, "planIntervalId"))
+	planIntervalId, err := api_utils.ParseBigInt(chi.URLParam(r, "intervalId"))
 	if err != nil {
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid plan interval ID")
 		return

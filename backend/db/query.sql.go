@@ -438,7 +438,7 @@ SELECT groups.id, groups.name, groups.description, groups.user_id, groups.create
 JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id AND (interval_group_assignments.plan_interval_id = $1::BIGINT or $1::bigint = 0)
 JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id AND (plan_intervals.plan_id = $2::BIGINT or $2::bigint = 0)
 WHERE 
-    (id = $3::BIGINT or $3::bigint = 0) 
+    (groups.id = $3::BIGINT or $3::bigint = 0) 
 ORDER BY groups.created_at DESC
 LIMIT $5::int
 OFFSET $4::int

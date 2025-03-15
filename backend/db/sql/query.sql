@@ -103,7 +103,7 @@ SELECT groups.* from groups
 JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id AND (interval_group_assignments.plan_interval_id = @interval_id::BIGINT or @interval_id::bigint = 0)
 JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id AND (plan_intervals.plan_id = @plan_id::BIGINT or @plan_id::bigint = 0)
 WHERE 
-    (id = @group_id::BIGINT or @group_id::bigint = 0) 
+    (groups.id = @group_id::BIGINT or @group_id::bigint = 0) 
 ORDER BY groups.created_at DESC
 LIMIT @_limit::int
 OFFSET @_offset::int;
