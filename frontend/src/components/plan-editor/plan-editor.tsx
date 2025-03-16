@@ -128,7 +128,7 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
     if (!intervalToDelete) return;
 
     // If the interval has no groups, delete it without confirmation
-    if (intervalToDelete.groups.length === 0) {
+    if (intervalToDelete.groupCount === 0) {
       // Call the delete API
       deleteInterval(intervalId, {
         onSuccess: () => {
