@@ -45,35 +45,41 @@ type Group struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	UserID      int64  `json:"user_id"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	UserID      int64  `json:"userId"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 type Exercise struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	UserID      int64  `json:"user_id"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	UserID      int64  `json:"userId"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 type ParameterType struct {
 	ID          int64   `json:"id"`
 	Name        string  `json:"name"`
-	DataType    string  `json:"data_type"`
-	DefaultUnit string  `json:"default_unit"`
-	MinValue    float64 `json:"min_value,omitempty"`
-	MaxValue    float64 `json:"max_value,omitempty"`
+	DataType    string  `json:"dataType"`
+	DefaultUnit string  `json:"defaultUnit"`
+	MinValue    float64 `json:"minValue,omitempty"`
+	MaxValue    float64 `json:"maxValue,omitempty"`
+}
+
+type ExerciseVariationParam struct {
+	ID                  int64         `json:"id"`
+	ExerciseVariationId int64         `json:"exerciseVariationId"`
+	Locked              bool          `json:"locked"`
+	ParameterTypeId     int64         `json:"parameterTypeId"`
+	ParameterType       ParameterType `json:"parameterType"`
 }
 
 type ExerciseVariation struct {
-	ID              int64         `json:"id"`
-	Exercise        Exercise      `json:"exercise"`
-	ParameterType   ParameterType `json:"parameter_type"`
-	ExerciseId      int64         `json:"exercise_id"`
-	ParameterTypeId int64         `json:"parameter_type_id"`
+	ID         int64                    `json:"id"`
+	ExerciseId int64                    `json:"exerciseId"`
+	Parameters []ExerciseVariationParam `json:"parameters"`
 }
 
 type IntervalExercisePrescription struct {

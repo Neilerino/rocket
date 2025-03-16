@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import NewGroupTab from './new-group-tab';
 import ReuseGroupTab from './reuse-group-tab';
@@ -36,7 +36,7 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
     onClose: onCloseDrawer,
   } = useDisclosure({ isOpen, onClose });
   const { data: groups } = useGroups({ planId: context.planId });
-  const [saveCallback, setSaveCallback] = useState<(() => void) | null>(null);
+  const saveCallback = useRef<(() => void) | null>(null);
   const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('new');
   const [currentGroup, setCurrentGroup] = useState<Group | null>(group);
 
@@ -46,18 +46,14 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
     tabItems.push({ id: 'reuse', label: 'Reuse Group' });
   }
 
-  // TODO: Neil - Finish the group sidebar:
-  // It should nicely handle either creating a new group or reusing an existing one
-  // The NewGroupTab should handle creating a new group or editing a new one nicely via the GroupFormData
-
   // Handle tab change
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId as 'new' | 'reuse');
   };
 
   const handleSave = () => {
-    if (saveCallback) {
-      saveCallback();
+    if (saveCallback.current) {
+      saveCallback.current();
     }
     onCloseDrawer();
   };
@@ -102,14 +98,15 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
 
         {/* Content Area */}
         <DrawerBody className="flex-1 overflow-auto p-6">
-          {activeTab === 'new' && group && (
-            <NewGroupTab context={context} group={currentGroup} setSaveCallback={setSaveCallback} />
+          {activeTab === 'new' && (
+            <NewGroupTab context={context} group={currentGroup} saveCallback={saveCallback} />
           )}
 
           {groups && activeTab === 'reuse' && (
             <ReuseGroupTab
               availableGroups={groups}
-              onSelectGroup={handleReuseGroup}
+              context={context}
+              saveCallback={saveCallback}
               allExercises={allExercises}
             />
           )}

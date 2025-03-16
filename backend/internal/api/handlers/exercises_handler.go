@@ -6,6 +6,7 @@ import (
 	api_utils "backend/internal/api/utils"
 	"backend/internal/service"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -152,5 +153,48 @@ func (h *ExercisesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if success {
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (h *ExercisesHandler) List(w http.ResponseWriter, r *http.Request) {
+	filterParser := api_utils.NewFilterParser(r, true)
+
+	// Get filters with defaults
+	exerciseId := filterParser.GetIntFilterOrZero("id")
+	userId := filterParser.GetIntFilterOrZero("userId")
+	planId := filterParser.GetIntFilterOrZero("planId")
+	groupId := filterParser.GetIntFilterOrZero("groupId")
+	intervalId := filterParser.GetIntFilterOrZero("intervalId")
+
+	// Check if at least one filter is provided
+	if exerciseId == 0 && userId == 0 && planId == 0 && groupId == 0 && intervalId == 0 {
+		api_utils.WriteError(w, http.StatusBadRequest, "Missing at least one filter parameter")
+		return
+	}
+
+	// Get limit from query params
+	limit := filterParser.GetLimit(100)
+
+	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		exercise_repo := repository.ExercisesRepository{Queries: queries}
+		exercise_service := service.NewExercisesService(&exercise_repo)
+
+		log.Printf("Calling ListExercises with exerciseId=%d, userId=%d, planId=%d, groupId=%d, intervalId=%d, limit=%d", 
+			exerciseId, userId, planId, groupId, intervalId, limit)
+		
+		exercises, err := exercise_service.ListExercises(r.Context(), exerciseId, userId, planId, groupId, intervalId, int32(limit))
+		if err != nil {
+			log.Printf("Error retrieving exercises: %v", err)
+			return err
+		}
+
+		log.Printf("Successfully retrieved exercises")
+		
+		w.Header().Set("Content-Type", "application/json")
+		return json.NewEncoder(w).Encode(exercises)
+	})
+
+	if success {
+		w.WriteHeader(http.StatusOK)
 	}
 }

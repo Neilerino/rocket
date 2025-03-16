@@ -4,7 +4,7 @@ import { isApiError } from '../../api/errorHandler';
 import { Group, CreateGroupDto, UpdateGroupDto } from '../../types';
 import { createGroupCacheKey } from './utils';
 
-export const useCreateGroup = (args: { filters: GroupFilters }) => {
+export const useCreateGroup = ({ filters }: { filters: GroupFilters }) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -16,24 +16,21 @@ export const useCreateGroup = (args: { filters: GroupFilters }) => {
       return response.data as Group;
     },
     onSuccess: async (group) => {
-      if (args.filters.intervalId) {
-        const response = await GroupService.assignGroupToInterval(
-          group.id,
-          args.filters.intervalId,
-        );
+      if (filters.intervalId) {
+        const response = await GroupService.assignGroupToInterval(group.id, filters.intervalId);
         if (isApiError(response)) {
           throw response.error;
         }
       }
 
-      queryClient.setQueryData(createGroupCacheKey(args), (old: Group[] | undefined) =>
+      queryClient.setQueryData(createGroupCacheKey({ filters }), (old: Group[] | undefined) =>
         old ? [...old, group] : [group],
       );
     },
   });
 };
 
-export const useUpdateGroup = (args: { filters: GroupFilters }) => {
+export const useUpdateGroup = ({ filters }: { filters: GroupFilters }) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -45,10 +42,10 @@ export const useUpdateGroup = (args: { filters: GroupFilters }) => {
       return response.data as Group;
     },
     onMutate: async (updatedGroup) => {
-      await queryClient.cancelQueries({ queryKey: createGroupCacheKey(args) });
-      const previousGroup = queryClient.getQueryData(createGroupCacheKey(args));
+      await queryClient.cancelQueries({ queryKey: createGroupCacheKey({ filters }) });
+      const previousGroup = queryClient.getQueryData(createGroupCacheKey({ filters }));
 
-      queryClient.setQueryData(createGroupCacheKey(args), (old: Group[] | undefined) =>
+      queryClient.setQueryData(createGroupCacheKey({ filters }), (old: Group[] | undefined) =>
         old
           ? old.map((g) => (g.id === updatedGroup.id ? { ...g, ...updatedGroup } : g))
           : undefined,
@@ -58,13 +55,13 @@ export const useUpdateGroup = (args: { filters: GroupFilters }) => {
     },
     onError: (_err, _variables, context) => {
       if (context?.previousGroup) {
-        queryClient.setQueryData(createGroupCacheKey(args), context.previousGroup);
+        queryClient.setQueryData(createGroupCacheKey({ filters }), context.previousGroup);
       }
     },
   });
 };
 
-export const useDeleteGroup = (args: { filters: GroupFilters }) => {
+export const useDeleteGroup = ({ filters }: { filters: GroupFilters }) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -76,17 +73,17 @@ export const useDeleteGroup = (args: { filters: GroupFilters }) => {
       return id;
     },
     onSuccess: (id) => {
-      queryClient.setQueryData(createGroupCacheKey(args), (old: Group[] | undefined) =>
+      queryClient.setQueryData(createGroupCacheKey({ filters }), (old: Group[] | undefined) =>
         old ? old.filter((g) => g.id !== id) : undefined,
       );
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: createGroupCacheKey(args) });
+      queryClient.invalidateQueries({ queryKey: createGroupCacheKey({ filters }) });
     },
   });
 };
 
-export const useAssignGroupToInterval = () => {
+export const useAssignGroupToInterval = ({ filters }: { filters: GroupFilters }) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -98,10 +95,8 @@ export const useAssignGroupToInterval = () => {
       return { groupId, intervalId };
     },
     onSuccess: (_, variables) => {
-      queryClient.setQueryData(
-        createGroupCacheKey({ intervalId: variables.intervalId }),
-        (old: Group[] | undefined) =>
-          old ? [...old, { id: variables.groupId }] : [{ id: variables.groupId }],
+      queryClient.setQueryData(createGroupCacheKey({ filters }), (old: Group[] | undefined) =>
+        old ? [...old, { id: variables.groupId }] : [{ id: variables.groupId }],
       );
     },
   });
@@ -120,7 +115,7 @@ export const useRemoveGroupFromInterval = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.setQueryData(
-        createGroupCacheKey({ intervalId: variables.intervalId }),
+        createGroupCacheKey({ filters: { intervalId: variables.intervalId } }),
         (old: Group[] | undefined) =>
           old ? old.filter((g) => g.id !== variables.groupId) : undefined,
       );

@@ -85,3 +85,32 @@ func (s *ExercisesService) UpdateExercise(ctx context.Context, id int64, name st
 func (s *ExercisesService) DeleteExercise(ctx context.Context, id int64) error {
 	return s.repo.DeleteExercise(ctx, id)
 }
+
+func (s *ExercisesService) ListExercises(ctx context.Context, exerciseId, userId, planId, groupId, intervalId int64, limit int32) (*[]types.Exercise, error) {
+	params := repository.ExerciseListParams{
+		ExerciseID: exerciseId,
+		UserID:     userId,
+		PlanID:     planId,
+		GroupID:    groupId,
+		IntervalID: intervalId,
+		Limit:      limit,
+	}
+	
+	exercises, err := s.repo.ListExercises(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []types.Exercise
+	for _, exercise := range exercises {
+		result = append(result, types.Exercise{
+			ID:          exercise.ID,
+			Name:        exercise.Name,
+			Description: exercise.Description,
+			UserID:      exercise.UserID.Int64,
+			CreatedAt:   exercise.CreatedAt.Time.String(),
+			UpdatedAt:   exercise.UpdatedAt.Time.String(),
+		})
+	}
+	return &result, nil
+}

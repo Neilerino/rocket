@@ -7,26 +7,27 @@ import { Exercise } from './types';
 import { Group } from '@/services/types';
 import { useCreateGroup, useUpdateGroup } from '@/services/hooks';
 import { GroupFilters } from '@/services/api';
+import { RefObject } from 'react';
 
 interface GroupFormData {
-  id?: number;
+  id: number | undefined;
   name: string;
   description: string;
 }
 
 interface NewGroupTabProps {
   context: GroupFilters;
-  group: Group | undefined;
-  setSaveCallback: (callback: () => void) => void;
+  group: Group | null;
+  saveCallback: RefObject<(() => void) | null>;
 }
 
-const NewGroupTab = ({ context, group, setSaveCallback }: NewGroupTabProps) => {
+const NewGroupTab = ({ context, group, saveCallback }: NewGroupTabProps) => {
   // const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const { mutate: createGroup } = useCreateGroup({ filters: context });
   const { mutate: updateGroup } = useUpdateGroup({ filters: context });
 
   const [groupFormData, setGroupFormData] = useState<GroupFormData>(
-    group || { name: '', description: '' },
+    group || { id: undefined, name: '', description: '' },
   );
 
   const handleInputChange = (field: keyof GroupFormData, value: string) => {
@@ -36,7 +37,7 @@ const NewGroupTab = ({ context, group, setSaveCallback }: NewGroupTabProps) => {
     });
   };
 
-  setSaveCallback(() => {
+  saveCallback.current = () => {
     if (groupFormData.id) {
       updateGroup({
         id: groupFormData.id,
@@ -46,7 +47,7 @@ const NewGroupTab = ({ context, group, setSaveCallback }: NewGroupTabProps) => {
     } else {
       createGroup(groupFormData);
     }
-  });
+  };
 
   // const handleAddExercise = () => {
   //   setSelectedExercise({

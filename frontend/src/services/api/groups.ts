@@ -47,10 +47,10 @@ export const GroupService = {
   },
 
   async assignGroupToInterval(groupId: number, intervalId: number): Promise<ApiResponse<void>> {
-    return apiClient.post(`/groups/${groupId}/intervals/${intervalId}`, {});
+    return apiClient.post(`/groups/${groupId}/assign/${intervalId}`, {});
   },
 
   async removeGroupFromInterval(groupId: number, intervalId: number): Promise<ApiResponse<void>> {
-    return apiClient.delete(`/groups/${groupId}/intervals/${intervalId}`);
+    return apiClient.delete(`/groups/${groupId}/assign/${intervalId}`);
   },
 };

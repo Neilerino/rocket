@@ -102,12 +102,21 @@ CREATE TABLE IF NOT EXISTS parameter_types (
 CREATE TABLE IF NOT EXISTS exercise_variations (
     id BIGSERIAL PRIMARY KEY,
     exercise_id BIGINT NOT NULL REFERENCES exercises (id),
-    parameter_type_id BIGINT REFERENCES parameter_types (id)
+    name TEXT NOT NULL CONSTRAINT exercise_variations_name_chk CHECK (
+        validate_length (name, 0, 255)
+    )
+);
+
+CREATE TABLE IF NOT EXISTS exercise_variation_params (
+    id BIGSERIAL PRIMARY KEY,
+    exercise_variation_id BIGINT NOT NULL REFERENCES exercise_variations (id),
+    parameter_type_id BIGINT NOT NULL REFERENCES parameter_types (id),
+    locked BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS interval_group_assignments (
     id BIGSERIAL PRIMARY KEY,
-    plan_interval_id BIGINT NOT NULL REFERENCES plan_intervals (id),
+    plan_interval_id BIGINT NOT NULL REFERENCES plan_intervals (id) ON DELETE CASCADE,
     group_id BIGINT NOT NULL REFERENCES groups (id),
     frequency INTEGER NOT NULL
 );

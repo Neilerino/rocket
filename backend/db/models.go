@@ -27,9 +27,16 @@ type Exercise struct {
 }
 
 type ExerciseVariation struct {
-	ID              int64
-	ExerciseID      int64
-	ParameterTypeID pgtype.Int8
+	ID         int64
+	ExerciseID int64
+	Name       string
+}
+
+type ExerciseVariationParam struct {
+	ID                  int64
+	ExerciseVariationID int64
+	ParameterTypeID     int64
+	Locked              bool
 }
 
 type Group struct {

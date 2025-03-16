@@ -67,19 +67,18 @@ func NewRouter(db *db.Database) http.Handler {
 
 		// Exercises
 		exercises_handler := &handlers.ExercisesHandler{Db: db}
+		exercise_variations_handler := &handlers.ExerciseVariationsHandler{Db: db}
 		r.Route("/exercises", func(r chi.Router) {
-			r.Get("/", exercises_handler.ListByUserId)
+			r.Get("/", exercises_handler.List)
 			r.Post("/", exercises_handler.Create)
-			r.Get("/{id}", exercises_handler.GetById)
 			r.Put("/{id}", exercises_handler.Update)
 			r.Delete("/{id}", exercises_handler.Delete)
+			r.Post("/{exerciseId}/create-variation", exercise_variations_handler.CreateVariation)
 		})
 
 		// Exercise Variations
-		exercise_variations_handler := &handlers.ExerciseVariationsHandler{Db: db}
 		r.Route("/exercise-variations", func(r chi.Router) {
-			r.Get("/exercise/{exerciseId}", exercise_variations_handler.ListByExerciseId)
-			r.Get("/{id}", exercise_variations_handler.GetById)
+			r.Get("/", exercise_variations_handler.List)
 			r.Post("/", exercise_variations_handler.Create)
 			r.Delete("/{id}", exercise_variations_handler.Delete)
 		})

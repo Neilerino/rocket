@@ -11,6 +11,28 @@ type ExercisesRepository struct {
 	Queries *db.Queries
 }
 
+// ExerciseListParams holds parameters for listing exercises
+type ExerciseListParams struct {
+	ExerciseID int64
+	UserID     int64
+	PlanID     int64
+	GroupID    int64
+	IntervalID int64
+	Limit      int32
+}
+
+func (r *ExercisesRepository) ListExercises(ctx context.Context, params ExerciseListParams) ([]db.Exercise, error) {
+	return r.Queries.Exercises_List(ctx, db.Exercises_ListParams{
+		ExerciseID: params.ExerciseID,
+		UserID:     params.UserID,
+		PlanID:     params.PlanID,
+		GroupID:    params.GroupID,
+		IntervalID: params.IntervalID,
+		Limit:      params.Limit,
+		Offset:     0,
+	})
+}
+
 func (r *ExercisesRepository) GetExercisesByUserId(ctx context.Context, userId int64, limit int32) ([]db.Exercise, error) {
 	exercises, err := r.Queries.Exercises_GetByUserId(ctx, db.Exercises_GetByUserIdParams{UserID: pgtype.Int8{Int64: userId}, Limit: limit})
 	if err != nil {

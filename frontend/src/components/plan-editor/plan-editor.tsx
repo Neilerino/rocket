@@ -68,7 +68,6 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
   };
 
   const handleUpdateGroup = (updatedGroup: Group) => {
-    console.log('Updating group:', updatedGroup);
     setLocalIntervals((prevIntervals) =>
       prevIntervals.map((interval) => ({
         ...interval,

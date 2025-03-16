@@ -11,13 +11,14 @@ import { createGroupCacheKey } from './utils';
  */
 export const useGroups = (filters: GroupFilters = {}, options = {}) => {
   return useQuery({
-    queryKey: [createGroupCacheKey({ filters })],
+    queryKey: createGroupCacheKey({ filters }),
     queryFn: async () => {
       const response = await GroupService.getGroups(filters);
       if (isApiError(response)) {
         throw response.error;
       }
-      return response.data as Group[];
+      const cacheValue = response.data || ([] as Group[]);
+      return cacheValue;
     },
     ...options,
   });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { RefObject, useState } from 'react';
 import { Exercise } from './types';
 import GroupCard from './group-card';
 import { Search } from 'lucide-react';
@@ -10,28 +10,28 @@ import { useAssignGroupToInterval } from '@/services/hooks';
 interface ReuseGroupTabProps {
   availableGroups: Group[];
   context: GroupFilters;
-  setSaveCallback: (callback: () => void) => void;
+  saveCallback: RefObject<(() => void) | null>;
   allExercises?: Exercise[];
 }
 
 const ReuseGroupTab = ({
   availableGroups,
   context,
-  setSaveCallback,
+  saveCallback,
   allExercises = [],
 }: ReuseGroupTabProps) => {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { mutate: assignGroupToInterval } = useAssignGroupToInterval();
+  const { mutate: assignGroupToInterval } = useAssignGroupToInterval(context);
 
-  setSaveCallback(() => {
+  saveCallback.current = () => {
     if (selectedGroupId && context.intervalId) {
       assignGroupToInterval({
         groupId: selectedGroupId,
         intervalId: context.intervalId,
       });
     }
-  });
+  };
 
   return (
     <div className="space-y-4">
