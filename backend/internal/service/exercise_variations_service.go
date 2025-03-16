@@ -1,6 +1,7 @@
 package service
 
 import (
+	"backend/db"
 	"backend/db/repository"
 	"backend/internal/types"
 	"context"
@@ -8,8 +9,9 @@ import (
 )
 
 type ExerciseVariationsService struct {
-	VariationRepo *repository.ExerciseVariationsRepository
-	ExerciseRepo  *repository.ExercisesRepository
+	VariationRepo      *repository.ExerciseVariationsRepository
+	ExerciseRepo       *repository.ExercisesRepository
+	ParameterTypesRepo *repository.ParameterTypesRepository
 }
 
 type ExerciseVariationListParams struct {
@@ -18,6 +20,7 @@ type ExerciseVariationListParams struct {
 	PlanId         int64
 	PlanIntervalId int64
 	UserId         int64
+	VariationId    int64
 	Limit          int32
 	Offset         int32
 }
@@ -34,7 +37,15 @@ type CreateExerciseParameterTypeParams struct {
 
 type ExerciseVariationCreateParams struct {
 	ExerciseId     int64
+	Name           string
 	ParameterTypes []CreateExerciseParameterTypeParams
+}
+
+func NewExerciseVariationsService(queries *db.Queries) *ExerciseVariationsService {
+	variationRepo := repository.NewExerciseVariationsRepository(queries)
+	exerciseRepo := repository.NewExercisesRepository(queries)
+	parameterTypesRepo := repository.NewParameterTypesRepository(queries)
+	return &ExerciseVariationsService{VariationRepo: variationRepo, ExerciseRepo: exerciseRepo, ParameterTypesRepo: parameterTypesRepo}
 }
 
 func (s *ExerciseVariationsService) List(ctx context.Context, params ExerciseVariationListParams) ([]types.ExerciseVariation, error) {
@@ -44,6 +55,7 @@ func (s *ExerciseVariationsService) List(ctx context.Context, params ExerciseVar
 		PlanId:         params.PlanId,
 		PlanIntervalId: params.PlanIntervalId,
 		UserId:         params.UserId,
+		VariationId:    params.VariationId,
 		Limit:          params.Limit,
 		Offset:         params.Offset,
 	}
@@ -92,14 +104,6 @@ func (s *ExerciseVariationsService) List(ctx context.Context, params ExerciseVar
 	return variations, nil
 }
 
-func NewExerciseVariationsService(variationRepo *repository.ExerciseVariationsRepository, exerciseRepo *repository.ExercisesRepository) *ExerciseVariationsService {
-	return &ExerciseVariationsService{VariationRepo: variationRepo, ExerciseRepo: exerciseRepo}
-}
-
-func (s *ExerciseVariationsService) GetById(ctx context.Context, id int64) (*types.ExerciseVariation, error) {
-	return s.VariationRepo.GetById(ctx, id)
-}
-
 func (s *ExerciseVariationsService) DeleteOne(ctx context.Context, id int64) error {
 	return s.VariationRepo.DeleteOne(ctx, id)
 }
@@ -124,10 +128,22 @@ func (s *ExerciseVariationsService) CreateVariation(ctx context.Context, exercis
 			s.VariationRepo.AddParam(ctx, exerciseVariation.ID, *parameterTypeArg.ParameterTypeId, parameterTypeArg.Locked)
 		}
 		if parameterTypeArg.ParameterTypeId == nil {
-			// TODO: Create Parameter type
-			// Assign that parameter type to the variation
+			p, err := s.ParameterTypesRepo.Create(ctx, repository.CreateParameterTypeParams{
+				Name:        *parameterTypeArg.Name,
+				DataType:    *parameterTypeArg.DataType,
+				DefaultUnit: *parameterTypeArg.DefaultUnit,
+				MinValue:    *parameterTypeArg.MinValue,
+				MaxValue:    *parameterTypeArg.MaxValue,
+			})
+			if err != nil {
+				return nil, err
+			}
+			s.VariationRepo.AddParam(ctx, exerciseVariation.ID, p.ID, parameterTypeArg.Locked)
 		}
 	}
 
-	return nil, nil
+	return &types.ExerciseVariation{
+		ID:         exerciseVariation.ID,
+		ExerciseId: exerciseId,
+	}, nil
 }

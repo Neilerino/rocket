@@ -11,6 +11,10 @@ type ExercisesRepository struct {
 	Queries *db.Queries
 }
 
+func NewExercisesRepository(queries *db.Queries) *ExercisesRepository {
+	return &ExercisesRepository{Queries: queries}
+}
+
 // ExerciseListParams holds parameters for listing exercises
 type ExerciseListParams struct {
 	ExerciseID int64

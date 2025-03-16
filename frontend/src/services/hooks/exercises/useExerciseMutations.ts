@@ -1,11 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ExerciseService } from '../../api/exercises';
+import { ExerciseFilters, ExerciseVariationFilters, ExerciseService } from '../../api/exercises';
 import { isApiError } from '../../api/errorHandler';
-import { Exercise, CreateExerciseDto, UpdateExerciseDto } from '../../types';
+import { Exercise, ExerciseVariation, CreateExerciseDto, UpdateExerciseDto, CreateExerciseVariationDto } from '../../types';
+import { createExerciseCacheKey, createExerciseVariationCacheKey } from './utils';
 
-const QUERY_KEY = 'exercises';
-
-export const useCreateExercise = () => {
+export const useCreateExercise = ({ filters }: { filters: ExerciseFilters }) => {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -16,15 +15,15 @@ export const useCreateExercise = () => {
       }
       return response.data as Exercise;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEY, 'user', variables.userId] 
-      });
-    }
+    onSuccess: (exercise) => {
+      queryClient.setQueryData(createExerciseCacheKey({ filters }), (old: Exercise[] | undefined) =>
+        old ? [...old, exercise] : [exercise],
+      );
+    },
   });
 };
 
-export const useUpdateExercise = () => {
+export const useUpdateExercise = ({ filters }: { filters: ExerciseFilters }) => {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -36,30 +35,26 @@ export const useUpdateExercise = () => {
       return response.data as Exercise;
     },
     onMutate: async (updatedExercise) => {
-      await queryClient.cancelQueries({ queryKey: [QUERY_KEY, updatedExercise.id] });
-      const previousExercise = queryClient.getQueryData([QUERY_KEY, updatedExercise.id]);
+      await queryClient.cancelQueries({ queryKey: createExerciseCacheKey({ filters }) });
+      const previousExercises = queryClient.getQueryData(createExerciseCacheKey({ filters }));
       
-      queryClient.setQueryData([QUERY_KEY, updatedExercise.id], 
-        (old: Exercise | undefined) => old ? { ...old, ...updatedExercise } : undefined);
-        
-      return { previousExercise };
+      queryClient.setQueryData(createExerciseCacheKey({ filters }), (old: Exercise[] | undefined) =>
+        old
+          ? old.map((e) => (e.id === updatedExercise.id ? { ...e, ...updatedExercise } : e))
+          : undefined,
+      );
+      
+      return { previousExercises };
     },
-    onError: (_err, variables, context) => {
-      if (context?.previousExercise) {
-        queryClient.setQueryData(
-          [QUERY_KEY, variables.id],
-          context.previousExercise
-        );
+    onError: (_err, _variables, context) => {
+      if (context?.previousExercises) {
+        queryClient.setQueryData(createExerciseCacheKey({ filters }), context.previousExercises);
       }
     },
-    onSettled: (_, __, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.id] });
-    }
   });
 };
 
-export const useDeleteExercise = () => {
+export const useDeleteExercise = ({ filters }: { filters: ExerciseFilters }) => {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -71,8 +66,53 @@ export const useDeleteExercise = () => {
       return id;
     },
     onSuccess: (id) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      queryClient.removeQueries({ queryKey: [QUERY_KEY, id] });
-    }
+      queryClient.setQueryData(createExerciseCacheKey({ filters }), (old: Exercise[] | undefined) =>
+        old ? old.filter((e) => e.id !== id) : undefined,
+      );
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: createExerciseCacheKey({ filters }) });
+    },
+  });
+};
+
+export const useCreateExerciseVariation = ({ filters }: { filters: ExerciseVariationFilters }) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ exerciseId, variationData }: { exerciseId: number; variationData: CreateExerciseVariationDto }) => {
+      const response = await ExerciseService.createExerciseVariation(exerciseId, variationData);
+      if (isApiError(response)) {
+        throw response.error;
+      }
+      return response.data as ExerciseVariation;
+    },
+    onSuccess: (variation) => {
+      queryClient.setQueryData(createExerciseVariationCacheKey({ filters }), (old: ExerciseVariation[] | undefined) =>
+        old ? [...old, variation] : [variation],
+      );
+    },
+  });
+};
+
+export const useDeleteExerciseVariation = ({ filters }: { filters: ExerciseVariationFilters }) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await ExerciseService.deleteExerciseVariation(id);
+      if (isApiError(response)) {
+        throw response.error;
+      }
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.setQueryData(createExerciseVariationCacheKey({ filters }), (old: ExerciseVariation[] | undefined) =>
+        old ? old.filter((v) => v.id !== id) : undefined,
+      );
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: createExerciseVariationCacheKey({ filters }) });
+    },
   });
 };

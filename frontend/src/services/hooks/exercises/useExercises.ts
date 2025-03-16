@@ -1,36 +1,54 @@
 import { useQuery } from '@tanstack/react-query';
-import { ExerciseService } from '../../api/exercises';
+import { ExerciseFilters, ExerciseVariationFilters, ExerciseService } from '../../api/exercises';
 import { isApiError } from '../../api/errorHandler';
-import { Exercise } from '../../types';
+import { Exercise, ExerciseVariation } from '../../types';
+import { createExerciseCacheKey, createExerciseVariationCacheKey } from './utils';
 
-const QUERY_KEY = 'exercises';
-
-export const useExercisesByUserId = (userId: number, options = {}) => {
+/**
+ * Hook to fetch exercises with flexible filtering
+ * @param filters Filter criteria (id, userId, planId, etc.)
+ * @param options Additional react-query options
+ */
+export const useExercises = (filters: ExerciseFilters = {}, options = {}) => {
   return useQuery({
-    queryKey: [QUERY_KEY, 'user', userId],
+    queryKey: createExerciseCacheKey({ filters }),
     queryFn: async () => {
-      const response = await ExerciseService.getExercisesByUserId(userId);
+      const response = await ExerciseService.getExercises(filters);
       if (isApiError(response)) {
         throw response.error;
       }
-      return response.data as Exercise[];
+      const cacheValue = response.data || ([] as Exercise[]);
+      return cacheValue;
     },
-    enabled: !!userId,
-    ...options
+    ...options,
   });
 };
 
-export const useExerciseById = (id: number, options = {}) => {
+/**
+ * Hook to fetch exercise variations with flexible filtering
+ * @param filters Filter criteria (exerciseId, variationId, userId, etc.)
+ * @param options Additional react-query options
+ */
+export const useExerciseVariations = (filters: ExerciseVariationFilters = {}, options = {}) => {
   return useQuery({
-    queryKey: [QUERY_KEY, id],
+    queryKey: createExerciseVariationCacheKey({ filters }),
     queryFn: async () => {
-      const response = await ExerciseService.getExerciseById(id);
+      const response = await ExerciseService.getExerciseVariations(filters);
       if (isApiError(response)) {
         throw response.error;
       }
-      return response.data as Exercise;
+      const cacheValue = response.data || ([] as ExerciseVariation[]);
+      return cacheValue;
     },
-    enabled: !!id,
-    ...options
+    ...options,
   });
+};
+
+/**
+ * Hook to fetch exercises by user ID
+ * @param userId User ID
+ * @param options Additional react-query options
+ */
+export const useExercisesByUserId = (userId: number, options = {}) => {
+  return useExercises({ userId }, { enabled: !!userId, ...options });
 };

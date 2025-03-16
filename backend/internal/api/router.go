@@ -73,24 +73,23 @@ func NewRouter(db *db.Database) http.Handler {
 			r.Post("/", exercises_handler.Create)
 			r.Put("/{id}", exercises_handler.Update)
 			r.Delete("/{id}", exercises_handler.Delete)
-			r.Post("/{exerciseId}/create-variation", exercise_variations_handler.CreateVariation)
+			r.Post("/{exerciseId}/create-variation", exercise_variations_handler.Create)
 		})
 
 		// Exercise Variations
 		r.Route("/exercise-variations", func(r chi.Router) {
 			r.Get("/", exercise_variations_handler.List)
-			r.Post("/", exercise_variations_handler.Create)
 			r.Delete("/{id}", exercise_variations_handler.Delete)
 		})
 
 		// Interval Exercise Prescriptions
-		interval_exercise_prescriptions_handler := &handlers.IntervalExercisePrescriptionsHandler{Db: db}
-		r.Route("/interval-exercise-prescriptions", func(r chi.Router) {
-			r.Get("/group/{groupId}", interval_exercise_prescriptions_handler.ListByGroupId)
-			r.Get("/plan-interval/{planIntervalId}", interval_exercise_prescriptions_handler.ListByPlanIntervalId)
-			r.Post("/", interval_exercise_prescriptions_handler.Create)
-			r.Delete("/{id}", interval_exercise_prescriptions_handler.Delete)
-		})
+		// interval_exercise_prescriptions_handler := &handlers.IntervalExercisePrescriptionsHandler{Db: db}
+		// r.Route("/interval-exercise-prescriptions", func(r chi.Router) {
+		// 	r.Get("/group/{groupId}", interval_exercise_prescriptions_handler.ListByGroupId)
+		// 	r.Get("/plan-interval/{planIntervalId}", interval_exercise_prescriptions_handler.ListByPlanIntervalId)
+		// 	r.Post("/", interval_exercise_prescriptions_handler.Create)
+		// 	r.Delete("/{id}", interval_exercise_prescriptions_handler.Delete)
+		// })
 	})
 
 	return r

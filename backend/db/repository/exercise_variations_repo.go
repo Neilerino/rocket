@@ -2,7 +2,6 @@ package repository
 
 import (
 	"backend/db"
-	"backend/internal/types"
 	"context"
 )
 
@@ -15,9 +14,14 @@ type ExerciseVariationListParams struct {
 	GroupId        int64
 	PlanId         int64
 	PlanIntervalId int64
+	VariationId    int64
 	UserId         int64
 	Limit          int32
 	Offset         int32
+}
+
+func NewExerciseVariationsRepository(queries *db.Queries) *ExerciseVariationsRepository {
+	return &ExerciseVariationsRepository{Queries: queries}
 }
 
 func (r *ExerciseVariationsRepository) List(ctx context.Context, params ExerciseVariationListParams) ([]db.ExerciseVariations_ListWithDetailsRow, error) {
@@ -26,6 +30,7 @@ func (r *ExerciseVariationsRepository) List(ctx context.Context, params Exercise
 		GroupID:        params.GroupId,
 		PlanID:         params.PlanId,
 		PlanIntervalID: params.PlanIntervalId,
+		VariationID:    params.VariationId,
 		UserID:         params.UserId,
 		Limit:          params.Limit,
 		Offset:         params.Offset,
@@ -35,18 +40,6 @@ func (r *ExerciseVariationsRepository) List(ctx context.Context, params Exercise
 	}
 
 	return rows, nil
-}
-
-func (r *ExerciseVariationsRepository) GetById(ctx context.Context, id int64) (*types.ExerciseVariation, error) {
-	row, err := r.Queries.ExerciseVariations_GetByIdWithDetails(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.ExerciseVariation{
-		ID:         row.ID,
-		ExerciseId: row.ExerciseID,
-	}, nil
 }
 
 func (r *ExerciseVariationsRepository) CreateExerciseVariation(ctx context.Context, exerciseId int64, name string) (db.ExerciseVariation, error) {

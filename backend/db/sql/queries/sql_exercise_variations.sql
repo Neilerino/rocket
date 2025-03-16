@@ -29,6 +29,7 @@ WHERE
     AND (iep.group_id = @group_id::BIGINT or @group_id::bigint = 0)
     AND (iep.plan_interval_id = @plan_interval_id::BIGINT or @plan_interval_id::bigint = 0)
     AND (iep.plan_id = @plan_id::BIGINT or @plan_id::bigint = 0)
+    AND (ev.id = @variation_id::BIGINT or @variation_id::bigint = 0)
 ORDER BY e.created_at DESC -- Maybe come back and tweak this sort query a little bit
 LIMIT @_limit::int
 OFFSET @_offset::int;

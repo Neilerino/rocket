@@ -84,9 +84,10 @@ WHERE
     AND (iep.group_id = $3::BIGINT or $3::bigint = 0)
     AND (iep.plan_interval_id = $4::BIGINT or $4::bigint = 0)
     AND (iep.plan_id = $5::BIGINT or $5::bigint = 0)
+    AND (ev.id = $6::BIGINT or $6::bigint = 0)
 ORDER BY e.created_at DESC -- Maybe come back and tweak this sort query a little bit
-LIMIT $7::int
-OFFSET $6::int
+LIMIT $8::int
+OFFSET $7::int
 `
 
 type ExerciseVariations_ListWithDetailsParams struct {
@@ -95,6 +96,7 @@ type ExerciseVariations_ListWithDetailsParams struct {
 	GroupID        int64
 	PlanIntervalID int64
 	PlanID         int64
+	VariationID    int64
 	Offset         int32
 	Limit          int32
 }
@@ -126,6 +128,7 @@ func (q *Queries) ExerciseVariations_ListWithDetails(ctx context.Context, arg Ex
 		arg.GroupID,
 		arg.PlanIntervalID,
 		arg.PlanID,
+		arg.VariationID,
 		arg.Offset,
 		arg.Limit,
 	)

@@ -92,21 +92,33 @@ export interface ParameterType {
   maxValue?: number;
 }
 
+export interface ExerciseVariationParam {
+  id: number;
+  exerciseVariationId: number;
+  locked: boolean;
+  parameterTypeId: number;
+  parameterType: ParameterType;
+}
+
 export interface ExerciseVariation extends BaseEntity {
   exerciseId: number;
-  parameterTypeId: number;
+  parameters: ExerciseVariationParam[];
   exercise?: Exercise;
-  parameterType?: ParameterType;
+}
+
+export interface CreateExerciseParameterTypeDto {
+  parameterTypeId?: number;
+  name?: string;
+  dataType?: string;
+  defaultUnit?: string;
+  minValue?: number;
+  maxValue?: number;
+  locked: boolean;
 }
 
 export interface CreateExerciseVariationDto {
   exerciseId: number;
-  name: string;
-  dataType: string;
-  defaultUnit: string;
-  minValue?: number;
-  maxValue?: number;
-  parameterTypeId: number;
+  parameterTypes: CreateExerciseParameterTypeDto[];
 }
 
 // Interval Exercise Prescription Types
