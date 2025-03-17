@@ -96,23 +96,26 @@ FROM
     interval_exercise_prescriptions iep
 WHERE
     (iep.group_id = $1::BIGINT or $1::bigint = 0)
-    AND (iep.exercise_variation_id = $2::BIGINT or $2::bigint = 0)
-    AND (iep.plan_interval_id = $3::BIGINT or $3::bigint = 0)
-LIMIT $5::int
-OFFSET $4::int
+    AND (iep.id = $2::BIGINT or $2::bigint = 0)
+    AND (iep.exercise_variation_id = $3::BIGINT or $3::bigint = 0)
+    AND (iep.plan_interval_id = $4::BIGINT or $4::bigint = 0)
+LIMIT $6::int
+OFFSET $5::int
 `
 
 type IntervalExercisePrescriptions_ListParams struct {
-	GroupID     int64
-	VariationID int64
-	IntervalID  int64
-	Offset      int32
-	Limit       int32
+	GroupID        int64
+	PrescriptionID int64
+	VariationID    int64
+	IntervalID     int64
+	Offset         int32
+	Limit          int32
 }
 
 func (q *Queries) IntervalExercisePrescriptions_List(ctx context.Context, arg IntervalExercisePrescriptions_ListParams) ([]IntervalExercisePrescription, error) {
 	rows, err := q.db.Query(ctx, intervalExercisePrescriptions_List,
 		arg.GroupID,
+		arg.PrescriptionID,
 		arg.VariationID,
 		arg.IntervalID,
 		arg.Offset,

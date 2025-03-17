@@ -2,12 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PrescriptionService } from '../../api/prescriptions';
 import { isApiError } from '../../api/errorHandler';
 import { IntervalExercisePrescription, CreatePrescriptionDto } from '../../types';
+import { createPrescriptionCacheKey } from './utils';
 
-const QUERY_KEY = 'prescriptions';
-
+/**
+ * Hook for creating a new prescription
+ */
 export const useCreatePrescription = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (prescriptionData: CreatePrescriptionDto) => {
       const response = await PrescriptionService.createPrescription(prescriptionData);
@@ -17,19 +19,35 @@ export const useCreatePrescription = () => {
       return response.data as IntervalExercisePrescription;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEY, 'group', variables.groupId] 
+      // Invalidate relevant queries
+
+      throw new Error('Not implemented');
+      queryClient.invalidateQueries({
+        queryKey: createPrescriptionCacheKey({
+          filters: { groupId: variables.groupId },
+        }),
       });
-      queryClient.invalidateQueries({ 
-        queryKey: [QUERY_KEY, 'interval', variables.planIntervalId] 
+
+      queryClient.invalidateQueries({
+        queryKey: createPrescriptionCacheKey({
+          filters: { intervalId: variables.planIntervalId },
+        }),
       });
-    }
+
+      // Invalidate all prescriptions queries
+      queryClient.invalidateQueries({
+        queryKey: createPrescriptionCacheKey(),
+      });
+    },
   });
 };
 
+/**
+ * Hook for deleting a prescription
+ */
 export const useDeletePrescription = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await PrescriptionService.deletePrescription(id);
@@ -39,7 +57,10 @@ export const useDeletePrescription = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-    }
+      // Invalidate all prescription queries
+      queryClient.invalidateQueries({
+        queryKey: createPrescriptionCacheKey(),
+      });
+    },
   });
 };

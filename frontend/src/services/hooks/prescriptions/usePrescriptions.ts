@@ -1,36 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
-import { PrescriptionService } from '../../api/prescriptions';
+import { PrescriptionService, PrescriptionFilters } from '../../api/prescriptions';
 import { isApiError } from '../../api/errorHandler';
 import { IntervalExercisePrescription } from '../../types';
+import { createPrescriptionCacheKey } from './utils';
 
-const QUERY_KEY = 'prescriptions';
-
-export const usePrescriptionsByGroupId = (groupId: number, options = {}) => {
+/**
+ * Hook to fetch prescriptions with flexible filtering
+ * @param filters Filter criteria (groupId, intervalId, etc.)
+ * @param options Additional react-query options
+ */
+export const usePrescriptions = (filters: PrescriptionFilters = {}, options = {}) => {
   return useQuery({
-    queryKey: [QUERY_KEY, 'group', groupId],
+    queryKey: createPrescriptionCacheKey({ filters }),
     queryFn: async () => {
-      const response = await PrescriptionService.getPrescriptionsByGroupId(groupId);
+      const response = await PrescriptionService.getPrescriptions(filters);
       if (isApiError(response)) {
         throw response.error;
       }
-      return response.data as IntervalExercisePrescription[];
+      const cacheValue = response.data || ([] as IntervalExercisePrescription[]);
+      return cacheValue;
     },
-    enabled: !!groupId,
-    ...options
-  });
-};
-
-export const usePrescriptionsByIntervalId = (intervalId: number, options = {}) => {
-  return useQuery({
-    queryKey: [QUERY_KEY, 'interval', intervalId],
-    queryFn: async () => {
-      const response = await PrescriptionService.getPrescriptionsByIntervalId(intervalId);
-      if (isApiError(response)) {
-        throw response.error;
-      }
-      return response.data as IntervalExercisePrescription[];
-    },
-    enabled: !!intervalId,
-    ...options
+    ...options,
   });
 };

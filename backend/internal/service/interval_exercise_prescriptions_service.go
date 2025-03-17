@@ -19,11 +19,12 @@ type IntervalExercisePrescriptionsService struct {
 }
 
 type IntervalExercisePrescriptionListParams struct {
-	ExerciseId *int64
-	IntervalId *int64
-	GroupId    *int64
-	Limit      int32
-	Offset     int32
+	PrescriptionId *int64
+	ExerciseId     *int64
+	IntervalId     *int64
+	GroupId        *int64
+	Limit          int32
+	Offset         int32
 }
 
 type PrescriptionListData struct {
@@ -36,6 +37,18 @@ type PrescriptionListData struct {
 	Reps        int32
 	Duration    string
 	Rest        string
+}
+
+type PrescriptionCreateData struct {
+	GroupId        int64
+	ExerciseId     int64
+	VariationId    int64
+	PlanIntervalId int64
+	Rpe            int32
+	Sets           int32
+	Reps           int32
+	Duration       string
+	Rest           string
 }
 
 func NewIntervalExercisePrescriptionsService(queries *db.Queries) *IntervalExercisePrescriptionsService {
@@ -53,11 +66,12 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 	}
 
 	rows, err := s.PrescriptionRepo.List(ctx, repository.IntervalExercisePrescriptionListParams{
-		ExerciseId: gox.If(params.ExerciseId != nil, *params.ExerciseId, 0),
-		IntervalId: gox.If(params.IntervalId != nil, *params.IntervalId, 0),
-		GroupId:    gox.If(params.GroupId != nil, *params.GroupId, 0),
-		Limit:      params.Limit,
-		Offset:     params.Offset,
+		PrescriptionId: gox.If(params.PrescriptionId != nil, *params.PrescriptionId, 0),
+		ExerciseId:     gox.If(params.ExerciseId != nil, *params.ExerciseId, 0),
+		IntervalId:     gox.If(params.IntervalId != nil, *params.IntervalId, 0),
+		GroupId:        gox.If(params.GroupId != nil, *params.GroupId, 0),
+		Limit:          params.Limit,
+		Offset:         params.Offset,
 	})
 	if err != nil {
 		return nil, err
@@ -101,10 +115,38 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 	return prescriptions, nil
 }
 
-func (s *IntervalExercisePrescriptionsService) CreateOne(ctx context.Context, prescription types.IntervalExercisePrescription) (*types.IntervalExercisePrescription, error) {
-	return s.repo.CreateOne(ctx, prescription)
+func (s *IntervalExercisePrescriptionsService) CreateOne(ctx context.Context, params PrescriptionCreateData) (*types.IntervalExercisePrescription, error) {
+	row, err := s.PrescriptionRepo.CreateOne(ctx, repository.PrescriptionCreateData{
+		GroupId:        params.GroupId,
+		ExerciseId:     params.ExerciseId,
+		VariationId:    params.VariationId,
+		PlanIntervalId: params.PlanIntervalId,
+		RPE:            params.Rpe,
+		Sets:           params.Sets,
+		Reps:           params.Reps,
+		Duration:       params.Duration,
+		Rest:           params.Rest,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	prescriptions, err := s.List(ctx, IntervalExercisePrescriptionListParams{
+		PrescriptionId: &row.ID,
+		Limit:          1,
+		Offset:         0,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(prescriptions) == 0 {
+		return nil, errors.New("created prescription not found")
+	}
+
+	return &prescriptions[0], nil
 }
 
 func (s *IntervalExercisePrescriptionsService) DeleteOne(ctx context.Context, id int64) error {
-	return s.repo.DeleteOne(ctx, id)
+	return s.PrescriptionRepo.DeleteOne(ctx, id)
 }

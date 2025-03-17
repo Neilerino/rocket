@@ -36,12 +36,11 @@ func NewRouter(db *db.Database) http.Handler {
 		// Plans
 		plans_handler := &handlers.PlanHandler{Db: db}
 		r.Route("/plans", func(r chi.Router) {
-			r.Get("/", plans_handler.List) // Updated to match frontend expectations
+			r.Get("/", plans_handler.List)
 			r.Post("/", plans_handler.Create)
 			r.Get("/{id}", plans_handler.GetById)
 			r.Put("/{id}", plans_handler.Edit)
 			r.Delete("/{id}", plans_handler.Delete)
-			r.Get("/user/{userId}", plans_handler.List) // Keep old route for backward compatibility
 		})
 
 		// Plan Intervals
@@ -82,14 +81,13 @@ func NewRouter(db *db.Database) http.Handler {
 			r.Delete("/{id}", exercise_variations_handler.Delete)
 		})
 
-		// Interval Exercise Prescriptions
-		// interval_exercise_prescriptions_handler := &handlers.IntervalExercisePrescriptionsHandler{Db: db}
-		// r.Route("/interval-exercise-prescriptions", func(r chi.Router) {
-		// 	r.Get("/group/{groupId}", interval_exercise_prescriptions_handler.ListByGroupId)
-		// 	r.Get("/plan-interval/{planIntervalId}", interval_exercise_prescriptions_handler.ListByPlanIntervalId)
-		// 	r.Post("/", interval_exercise_prescriptions_handler.Create)
-		// 	r.Delete("/{id}", interval_exercise_prescriptions_handler.Delete)
-		// })
+		//Interval Exercise Prescriptions
+		interval_exercise_prescriptions_handler := &handlers.IntervalExercisePrescriptionsHandler{Db: db}
+		r.Route("/interval-exercise-prescriptions", func(r chi.Router) {
+			r.Get("/", interval_exercise_prescriptions_handler.List)
+			r.Post("/", interval_exercise_prescriptions_handler.Create)
+			// r.Delete("/{id}", interval_exercise_prescriptions_handler.Delete)
+		})
 	})
 
 	return r

@@ -39,6 +39,7 @@ FROM
     interval_exercise_prescriptions iep
 WHERE
     (iep.group_id = @group_id::BIGINT or @group_id::bigint = 0)
+    AND (iep.id = @prescription_id::BIGINT or @prescription_id::bigint = 0)
     AND (iep.exercise_variation_id = @variation_id::BIGINT or @variation_id::bigint = 0)
     AND (iep.plan_interval_id = @interval_id::BIGINT or @interval_id::bigint = 0)
 LIMIT @_limit::int

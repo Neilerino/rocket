@@ -2,6 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -76,4 +79,96 @@ func IntervalToString(interval pgtype.Interval) string {
 	}
 
 	return result
+}
+
+func StringToInterval(duration string) (pgtype.Interval, error) {
+	// Initialize variables for all time units
+	var months, weeks, days int32
+	var microseconds int64
+
+	// Handle more flexible formats including natural language descriptions
+	// First, convert to lowercase and remove any extra spaces
+	duration = strings.ToLower(strings.TrimSpace(duration))
+
+	// Check for natural language format like "7 days" or "2 weeks"
+	if strings.Contains(duration, " ") {
+		parts := strings.Fields(duration)
+		if len(parts) >= 2 {
+			// Try to parse the numeric part
+			value, err := strconv.Atoi(parts[0])
+			if err != nil {
+				return pgtype.Interval{}, fmt.Errorf("invalid duration format: %s", duration)
+			}
+
+			// Determine the unit
+			unit := parts[1]
+			// Handle both singular and plural forms
+			if strings.HasSuffix(unit, "s") && len(unit) > 1 {
+				unit = unit[:len(unit)-1]
+			}
+
+			switch unit {
+			case "month", "months":
+				months = int32(value)
+			case "week", "weeks":
+				weeks = int32(value)
+			case "day", "days":
+				days = int32(value)
+			default:
+				return pgtype.Interval{}, fmt.Errorf("unsupported time unit: %s", unit)
+			}
+		}
+	} else {
+		// Try to parse the technical format like "1M2W3D4u"
+		// Extract months (M)
+		monthsRegex := regexp.MustCompile(`(\d+)M`)
+		if matches := monthsRegex.FindStringSubmatch(duration); len(matches) > 1 {
+			if value, err := strconv.Atoi(matches[1]); err == nil {
+				months = int32(value)
+			}
+		}
+
+		// Extract weeks (W)
+		weeksRegex := regexp.MustCompile(`(\d+)W`)
+		if matches := weeksRegex.FindStringSubmatch(duration); len(matches) > 1 {
+			if value, err := strconv.Atoi(matches[1]); err == nil {
+				weeks = int32(value)
+			}
+		}
+
+		// Extract days (D)
+		daysRegex := regexp.MustCompile(`(\d+)D`)
+		if matches := daysRegex.FindStringSubmatch(duration); len(matches) > 1 {
+			if value, err := strconv.Atoi(matches[1]); err == nil {
+				days = int32(value)
+			}
+		}
+
+		// Extract microseconds (u)
+		microsecondsRegex := regexp.MustCompile(`(\d+)u`)
+		if matches := microsecondsRegex.FindStringSubmatch(duration); len(matches) > 1 {
+			if value, err := strconv.Atoi(matches[1]); err == nil {
+				microseconds = int64(value)
+			}
+		}
+	}
+
+	// Convert weeks to days (1 week = 7 days)
+	days += weeks * 7
+
+	// If no valid duration was parsed, return an error
+	if months == 0 && days == 0 && microseconds == 0 {
+		return pgtype.Interval{}, fmt.Errorf("could not parse duration: %s", duration)
+	}
+
+	// Create a properly initialized pgtype.Interval
+	interval := pgtype.Interval{
+		Months:       months,
+		Days:         days,
+		Microseconds: microseconds,
+		Valid:        true,
+	}
+
+	fmt.Printf("Parsed duration '%s' into interval: %+v\n", duration, interval)
+	return interval, nil
 }
