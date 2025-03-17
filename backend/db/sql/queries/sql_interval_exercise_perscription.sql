@@ -23,3 +23,23 @@ VALUES (
 
 -- name: IntervalExercisePrescriptions_DeleteOne :exec
 DELETE FROM interval_exercise_prescriptions WHERE id = $1;
+
+-- name: IntervalExercisePrescriptions_List :many
+SELECT
+    iep.id,
+    iep.group_id,
+    iep.exercise_variation_id,
+    iep.plan_interval_id,
+    iep.rpe,
+    iep.sets,
+    iep.reps,
+    iep.duration,
+    iep.rest
+FROM
+    interval_exercise_prescriptions iep
+WHERE
+    (iep.group_id = @group_id::BIGINT or @group_id::bigint = 0)
+    AND (iep.exercise_variation_id = @variation_id::BIGINT or @variation_id::bigint = 0)
+    AND (iep.plan_interval_id = @interval_id::BIGINT or @interval_id::bigint = 0)
+LIMIT @_limit::int
+OFFSET @_offset::int;

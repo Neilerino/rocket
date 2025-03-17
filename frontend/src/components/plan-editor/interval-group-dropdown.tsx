@@ -3,6 +3,7 @@ import React from 'react';
 import ExerciseCard from './exercise-card';
 import { Plus } from 'lucide-react';
 import { Exercise, ExercisePrescription } from './types';
+import { useExerciseVariations } from '@/services/hooks';
 
 // Extended Group interface with exercises
 interface GroupWithExercises extends Group {
@@ -24,6 +25,10 @@ const GroupDropDown: React.FC<GroupDropDownProps> = ({
   setCurrentGroup,
   setExerciseDrawerOpen,
 }) => {
+  const { data: groupExercisesVariations } = useExerciseVariations({
+    groupId: group.id,
+  });
+
   return (
     <div key={group.id} className="space-y-4">
       {/* Add Exercises Card - Now at the top */}
@@ -83,7 +88,7 @@ const GroupDropDown: React.FC<GroupDropDownProps> = ({
                   };
                   setSelectedExercise(customExercise);
                 }
-                
+
                 setCurrentGroup(group);
               }}
             />

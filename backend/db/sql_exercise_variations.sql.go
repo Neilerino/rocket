@@ -79,24 +79,24 @@ FROM
     JOIN parameter_types pt ON pt.id = evp.parameter_type_id
     JOIN interval_exercise_prescriptions iep ON iep.exercise_variation_id = ev.id
 WHERE
-    (ev.exercise_id = $1::BIGINT or $1::bigint = 0) 
+    (ev.exercise_id = ANY($1::BIGINT[]) or cardinality($1::bigint[]) = 0) 
     AND (e.user_id = $2::BIGINT or $2::bigint = 0)
-    AND (iep.group_id = $3::BIGINT or $3::bigint = 0)
-    AND (iep.plan_interval_id = $4::BIGINT or $4::bigint = 0)
-    AND (iep.plan_id = $5::BIGINT or $5::bigint = 0)
-    AND (ev.id = $6::BIGINT or $6::bigint = 0)
+    AND (iep.group_id = ANY($3::BIGINT[]) or cardinality($3::bigint[]) = 0)
+    AND (iep.plan_interval_id = ANY($4::BIGINT[]) or cardinality($4::bigint[]) = 0)
+    AND (iep.plan_id = ANY($5::BIGINT[]) or cardinality($5::bigint[]) = 0)
+    AND (ev.id = ANY($6::BIGINT[]) or cardinality($6::bigint[]) = 0)
 ORDER BY e.created_at DESC -- Maybe come back and tweak this sort query a little bit
 LIMIT $8::int
 OFFSET $7::int
 `
 
 type ExerciseVariations_ListWithDetailsParams struct {
-	ExerciseID     int64
+	ExerciseID     []int64
 	UserID         int64
-	GroupID        int64
-	PlanIntervalID int64
-	PlanID         int64
-	VariationID    int64
+	GroupID        []int64
+	PlanIntervalID []int64
+	PlanID         []int64
+	VariationID    []int64
 	Offset         int32
 	Limit          int32
 }

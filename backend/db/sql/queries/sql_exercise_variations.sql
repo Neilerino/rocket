@@ -24,12 +24,12 @@ FROM
     JOIN parameter_types pt ON pt.id = evp.parameter_type_id
     JOIN interval_exercise_prescriptions iep ON iep.exercise_variation_id = ev.id
 WHERE
-    (ev.exercise_id = @exercise_id::BIGINT or @exercise_id::bigint = 0) 
+    (ev.exercise_id = ANY(@exercise_id::BIGINT[]) or cardinality(@exercise_id::bigint[]) = 0) 
     AND (e.user_id = @user_id::BIGINT or @user_id::bigint = 0)
-    AND (iep.group_id = @group_id::BIGINT or @group_id::bigint = 0)
-    AND (iep.plan_interval_id = @plan_interval_id::BIGINT or @plan_interval_id::bigint = 0)
-    AND (iep.plan_id = @plan_id::BIGINT or @plan_id::bigint = 0)
-    AND (ev.id = @variation_id::BIGINT or @variation_id::bigint = 0)
+    AND (iep.group_id = ANY(@group_id::BIGINT[]) or cardinality(@group_id::bigint[]) = 0)
+    AND (iep.plan_interval_id = ANY(@plan_interval_id::BIGINT[]) or cardinality(@plan_interval_id::bigint[]) = 0)
+    AND (iep.plan_id = ANY(@plan_id::BIGINT[]) or cardinality(@plan_id::bigint[]) = 0)
+    AND (ev.id = ANY(@variation_id::BIGINT[]) or cardinality(@variation_id::bigint[]) = 0)
 ORDER BY e.created_at DESC -- Maybe come back and tweak this sort query a little bit
 LIMIT @_limit::int
 OFFSET @_offset::int;

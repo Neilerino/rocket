@@ -24,28 +24,19 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
   setCurrentGroup,
   allExercises,
 }) => {
-  // Only fetch groups when the interval is expanded
   const groupContext: GroupFilters = { intervalId: intervalId };
   const { data: groups, isLoading } = useGroups(groupContext);
 
   const updateGroup = useUpdateGroup({ filters: groupContext });
 
-  // State for active group tab
   const [activeGroup, setActiveGroup] = useState<number | null>(groups?.[0]?.id || null);
 
-  // Handle tab selection
   const handleSelectTab = (id: string) => {
     setActiveGroup(Number(id));
   };
 
   return (
-    <motion.div
-      initial={{ height: 0, opacity: 0 }}
-      animate={{ height: 'auto', opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="overflow-hidden"
-    >
+    <>
       {/* Custom Tabs Container */}
       <div className="border-b bg-white">
         {groups && groups.length > 0 && (
@@ -102,7 +93,7 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
               ),
           )}
       </div>
-    </motion.div>
+    </>
   );
 };
 

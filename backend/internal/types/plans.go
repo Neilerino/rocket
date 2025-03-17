@@ -79,20 +79,21 @@ type ExerciseVariationParam struct {
 type ExerciseVariation struct {
 	ID         int64                    `json:"id"`
 	ExerciseId int64                    `json:"exerciseId"`
+	Exercise   *Exercise                `json:"exercise,omitempty"`
 	Parameters []ExerciseVariationParam `json:"parameters"`
 }
 
 type IntervalExercisePrescription struct {
-	ID                  int64              `json:"id"`
-	GroupId             int64              `json:"group_id"`
-	ExerciseVariationId int64              `json:"exercise_variation_id"`
-	PlanIntervalId      int64              `json:"plan_interval_id"`
-	RPE                 float64            `json:"rpe"`
-	Sets                int32              `json:"sets"`
-	Reps                int32              `json:"reps"`
-	Duration            int32              `json:"duration"`
-	Rest                int32              `json:"rest"`
-	ExerciseVariation   *ExerciseVariation `json:"exercise_variation,omitempty"`
+	ID                  int64             `json:"id"`
+	GroupId             int64             `json:"group_id"`
+	ExerciseVariationId int64             `json:"exercise_variation_id"`
+	PlanIntervalId      int64             `json:"plan_interval_id"`
+	RPE                 float64           `json:"rpe"`
+	Sets                int32             `json:"sets"`
+	Reps                int32             `json:"reps"`
+	Duration            string            `json:"duration"`
+	Rest                string            `json:"rest"`
+	ExerciseVariation   ExerciseVariation `json:"exercise_variation,omitempty"`
 }
 
 type IntervalGroupAssignment struct {

@@ -9,6 +9,10 @@ type GroupsRepository struct {
 	Queries *db.Queries
 }
 
+func NewGroupsRepository(queries *db.Queries) *GroupsRepository {
+	return &GroupsRepository{Queries: queries}
+}
+
 func (r *GroupsRepository) ListGroups(ctx context.Context, planId int64, groupId int64, intervalId int64, limit int32) ([]db.Group, error) {
 	if planId != 0 {
 		return r.Queries.GroupsJoinPlan_List(ctx, db.GroupsJoinPlan_ListParams{PlanID: planId, GroupID: groupId, IntervalID: intervalId, Limit: limit, Offset: 0})

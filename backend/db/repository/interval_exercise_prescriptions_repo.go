@@ -13,6 +13,32 @@ type IntervalExercisePrescriptionsRepository struct {
 	Queries *db.Queries
 }
 
+type IntervalExercisePrescriptionListParams struct {
+	ExerciseId int64
+	IntervalId int64
+	GroupId    int64
+	Offset     int32
+	Limit      int32
+}
+
+func NewIntervalExercisePrescriptionsRepository(queries *db.Queries) *IntervalExercisePrescriptionsRepository {
+	return &IntervalExercisePrescriptionsRepository{Queries: queries}
+}
+
+func (r *IntervalExercisePrescriptionsRepository) List(ctx context.Context, params IntervalExercisePrescriptionListParams) ([]db.IntervalExercisePrescription, error) {
+	if params.ExerciseId != 0 && params.IntervalId != 0 && params.GroupId != 0 {
+		return nil, errors.New("only one of ExerciseId, IntervalId, or GroupId can be specified")
+	}
+
+	return r.Queries.IntervalExercisePrescriptions_List(ctx, db.IntervalExercisePrescriptions_ListParams{
+		GroupID:     params.GroupId,
+		VariationID: params.ExerciseId,
+		IntervalID:  params.IntervalId,
+		Offset:      params.Offset,
+		Limit:       params.Limit,
+	})
+}
+
 func (r *IntervalExercisePrescriptionsRepository) CreateOne(ctx context.Context, prescription types.IntervalExercisePrescription) (*types.IntervalExercisePrescription, error) {
 	row, err := r.Queries.IntervalExercisePrescriptions_CreateOne(ctx, db.IntervalExercisePrescriptions_CreateOneParams{
 		GroupID:             prescription.GroupId,

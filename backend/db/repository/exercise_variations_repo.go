@@ -10,11 +10,11 @@ type ExerciseVariationsRepository struct {
 }
 
 type ExerciseVariationListParams struct {
-	ExerciseId     int64
-	GroupId        int64
-	PlanId         int64
-	PlanIntervalId int64
-	VariationId    int64
+	ExerciseId     []int64
+	GroupId        []int64
+	PlanId         []int64
+	PlanIntervalId []int64
+	VariationId    []int64
 	UserId         int64
 	Limit          int32
 	Offset         int32

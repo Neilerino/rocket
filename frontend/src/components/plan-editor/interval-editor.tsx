@@ -6,6 +6,7 @@ import { AnimatePresence } from 'framer-motion';
 import { ChevronRight, Trash2, Edit } from 'lucide-react';
 import IntervalEditDialog from './interval-edit-dialog';
 import IntervalGroupTabs from './interval-group-tabs';
+import { motion } from 'framer-motion';
 
 interface IntervalEditorProps {
   interval: Interval;
@@ -113,14 +114,22 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
 
       <AnimatePresence>
         {isExpanded && (
-          <IntervalGroupTabs
-            intervalId={interval.id}
-            onGroupDrawerOpen={() => setGroupDrawerOpen(true)}
-            onExerciseDrawerOpen={() => setExerciseDrawerOpen(true)}
-            setSelectedExercise={setSelectedExercise}
-            setCurrentGroup={setCurrentGroup}
-            allExercises={allExercises}
-          />
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <IntervalGroupTabs
+              intervalId={interval.id}
+              onGroupDrawerOpen={() => setGroupDrawerOpen(true)}
+              onExerciseDrawerOpen={() => setExerciseDrawerOpen(true)}
+              setSelectedExercise={setSelectedExercise}
+              setCurrentGroup={setCurrentGroup}
+              allExercises={allExercises}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 

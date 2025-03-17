@@ -1,17 +1,104 @@
 package service
 
 import (
+	"backend/db"
 	"backend/db/repository"
 	"backend/internal/types"
+	"backend/internal/utils"
 	"context"
+	"errors"
+
+	"github.com/icza/gox/gox"
 )
 
 type IntervalExercisePrescriptionsService struct {
-	repo *repository.IntervalExercisePrescriptionsRepository
+	PrescriptionRepo *repository.IntervalExercisePrescriptionsRepository
+	ExerciseRepo     *repository.ExercisesRepository
+	GroupRepo        *repository.GroupsRepository
+	VariationRepo    *repository.ExerciseVariationsRepository
 }
 
-func NewIntervalExercisePrescriptionsService(repo *repository.IntervalExercisePrescriptionsRepository) *IntervalExercisePrescriptionsService {
-	return &IntervalExercisePrescriptionsService{repo: repo}
+type IntervalExercisePrescriptionListParams struct {
+	ExerciseId *int64
+	IntervalId *int64
+	GroupId    *int64
+	Limit      int32
+	Offset     int32
+}
+
+type PrescriptionListData struct {
+	Id          int64
+	VariationID int64
+	IntervalId  int64
+	GroupId     int64
+	Rpe         int32
+	Sets        int32
+	Reps        int32
+	Duration    string
+	Rest        string
+}
+
+func NewIntervalExercisePrescriptionsService(queries *db.Queries) *IntervalExercisePrescriptionsService {
+	return &IntervalExercisePrescriptionsService{
+		PrescriptionRepo: repository.NewIntervalExercisePrescriptionsRepository(queries),
+		ExerciseRepo:     repository.NewExercisesRepository(queries),
+		GroupRepo:        repository.NewGroupsRepository(queries),
+		VariationRepo:    repository.NewExerciseVariationsRepository(queries),
+	}
+}
+
+func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params IntervalExercisePrescriptionListParams) ([]types.IntervalExercisePrescription, error) {
+	if params.ExerciseId == nil && params.IntervalId == nil && params.GroupId == nil {
+		return nil, errors.New("at least one of ExerciseId, IntervalId, or GroupId must be specified")
+	}
+
+	rows, err := s.PrescriptionRepo.List(ctx, repository.IntervalExercisePrescriptionListParams{
+		ExerciseId: gox.If(params.ExerciseId != nil, *params.ExerciseId, 0),
+		IntervalId: gox.If(params.IntervalId != nil, *params.IntervalId, 0),
+		GroupId:    gox.If(params.GroupId != nil, *params.GroupId, 0),
+		Limit:      params.Limit,
+		Offset:     params.Offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var variationIds []int64
+	for _, row := range rows {
+		variationIds = append(variationIds, row.ExerciseVariationID)
+	}
+
+	variation_rows, err := s.VariationRepo.List(ctx, repository.ExerciseVariationListParams{
+		VariationId: variationIds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	variations := ExerciseVariationRowToApi(variation_rows)
+
+	var variationMap = make(map[int64]types.ExerciseVariation)
+	for _, exVariation := range variations {
+		variationMap[exVariation.ID] = exVariation
+	}
+
+	var prescriptions []types.IntervalExercisePrescription
+	for _, row := range rows {
+		prescriptions = append(prescriptions, types.IntervalExercisePrescription{
+			ID:                  row.ID,
+			GroupId:             row.GroupID,
+			ExerciseVariationId: row.ExerciseVariationID,
+			PlanIntervalId:      row.PlanIntervalID,
+			RPE:                 float64(row.Rpe.Int32),
+			Sets:                row.Sets,
+			Reps:                row.Reps.Int32,
+			Duration:            utils.IntervalToString(row.Duration),
+			Rest:                utils.IntervalToString(row.Rest),
+			ExerciseVariation:   variationMap[row.ExerciseVariationID],
+		})
+	}
+
+	return prescriptions, nil
 }
 
 func (s *IntervalExercisePrescriptionsService) CreateOne(ctx context.Context, prescription types.IntervalExercisePrescription) (*types.IntervalExercisePrescription, error) {

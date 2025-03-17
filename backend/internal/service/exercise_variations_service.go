@@ -15,12 +15,12 @@ type ExerciseVariationsService struct {
 }
 
 type ExerciseVariationListParams struct {
-	ExerciseId     int64
-	GroupId        int64
-	PlanId         int64
-	PlanIntervalId int64
+	ExerciseId     []int64
+	GroupId        []int64
+	PlanId         []int64
+	PlanIntervalId []int64
 	UserId         int64
-	VariationId    int64
+	VariationId    []int64
 	Limit          int32
 	Offset         int32
 }
@@ -65,41 +65,7 @@ func (s *ExerciseVariationsService) List(ctx context.Context, params ExerciseVar
 		return nil, err
 	}
 
-	variationsMap := make(map[int64]*types.ExerciseVariation)
-
-	for _, row := range rows {
-		variation, exists := variationsMap[row.ID]
-
-		if !exists {
-			variation = &types.ExerciseVariation{
-				ID:         row.ID,
-				ExerciseId: row.ExerciseID,
-				Parameters: []types.ExerciseVariationParam{},
-			}
-			variationsMap[row.ID] = variation
-		}
-
-		param := types.ExerciseVariationParam{
-			ID:                  row.EvpID,
-			ExerciseVariationId: row.ID,
-			Locked:              row.Locked,
-			ParameterTypeId:     row.PtID,
-			ParameterType: types.ParameterType{
-				ID:          row.PtID,
-				Name:        row.PtName,
-				DataType:    row.PtDataType,
-				DefaultUnit: row.PtDefaultUnit,
-				MinValue:    row.PtMinValue.Float64,
-				MaxValue:    row.PtMaxValue.Float64,
-			},
-		}
-		variation.Parameters = append(variation.Parameters, param)
-	}
-
-	variations := make([]types.ExerciseVariation, 0, len(variationsMap))
-	for _, variation := range variationsMap {
-		variations = append(variations, *variation)
-	}
+	variations := ExerciseVariationRowToApi(rows)
 
 	return variations, nil
 }

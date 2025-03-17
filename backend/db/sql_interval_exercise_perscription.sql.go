@@ -80,3 +80,68 @@ func (q *Queries) IntervalExercisePrescriptions_DeleteOne(ctx context.Context, i
 	_, err := q.db.Exec(ctx, intervalExercisePrescriptions_DeleteOne, id)
 	return err
 }
+
+const intervalExercisePrescriptions_List = `-- name: IntervalExercisePrescriptions_List :many
+SELECT
+    iep.id,
+    iep.group_id,
+    iep.exercise_variation_id,
+    iep.plan_interval_id,
+    iep.rpe,
+    iep.sets,
+    iep.reps,
+    iep.duration,
+    iep.rest
+FROM
+    interval_exercise_prescriptions iep
+WHERE
+    (iep.group_id = $1::BIGINT or $1::bigint = 0)
+    AND (iep.exercise_variation_id = $2::BIGINT or $2::bigint = 0)
+    AND (iep.plan_interval_id = $3::BIGINT or $3::bigint = 0)
+LIMIT $5::int
+OFFSET $4::int
+`
+
+type IntervalExercisePrescriptions_ListParams struct {
+	GroupID     int64
+	VariationID int64
+	IntervalID  int64
+	Offset      int32
+	Limit       int32
+}
+
+func (q *Queries) IntervalExercisePrescriptions_List(ctx context.Context, arg IntervalExercisePrescriptions_ListParams) ([]IntervalExercisePrescription, error) {
+	rows, err := q.db.Query(ctx, intervalExercisePrescriptions_List,
+		arg.GroupID,
+		arg.VariationID,
+		arg.IntervalID,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IntervalExercisePrescription
+	for rows.Next() {
+		var i IntervalExercisePrescription
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.ExerciseVariationID,
+			&i.PlanIntervalID,
+			&i.Rpe,
+			&i.Sets,
+			&i.Reps,
+			&i.Duration,
+			&i.Rest,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
