@@ -1,10 +1,16 @@
-import { Exercise, Group } from '@/services/types';
+import { Group } from '@/services/types';
 import React from 'react';
 import ExerciseCard from './exercise-card';
 import { Plus } from 'lucide-react';
+import { Exercise, ExercisePrescription } from './types';
+
+// Extended Group interface with exercises
+interface GroupWithExercises extends Group {
+  exercises: ExercisePrescription[];
+}
 
 interface GroupDropDownProps {
-  group: Group;
+  group: GroupWithExercises;
   allExercises: Exercise[];
   setSelectedExercise: (exercise: Exercise | null) => void;
   setCurrentGroup: (group: Group | null) => void;
@@ -42,7 +48,7 @@ const GroupDropDown: React.FC<GroupDropDownProps> = ({
         const exercise: Partial<Exercise> = {
           name: prescription.exerciseId
             ? allExercises.find((e) => e.id === prescription.exerciseId)?.name || 'Unknown Exercise'
-            : prescription.name,
+            : 'Custom Exercise',
           description: '',
         };
 
@@ -53,21 +59,31 @@ const GroupDropDown: React.FC<GroupDropDownProps> = ({
               prescription={prescription}
               onEdit={() => {
                 // Create a full exercise object if we have one
-                const fullExercise = prescription.exerciseId
-                  ? allExercises.find((e) => e.id === prescription.exerciseId) || {
+                if (prescription.exerciseId) {
+                  const fullExercise = allExercises.find((e) => e.id === prescription.exerciseId);
+                  if (fullExercise) {
+                    setSelectedExercise(fullExercise);
+                  } else {
+                    // Create a minimal exercise if we can't find the full one
+                    const minimalExercise: Exercise = {
                       id: prescription.exerciseId,
                       name: exercise.name || 'Unknown',
                       description: exercise.description || '',
                       variations: [],
-                    }
-                  : {
-                      id: prescription.id || '',
-                      name: exercise.name || 'Custom Exercise',
-                      description: exercise.description || '',
-                      variations: [],
                     };
-
-                setSelectedExercise(fullExercise);
+                    setSelectedExercise(minimalExercise);
+                  }
+                } else {
+                  // For custom exercises without an ID
+                  const customExercise: Exercise = {
+                    id: prescription.id || '',
+                    name: exercise.name || 'Custom Exercise',
+                    description: exercise.description || '',
+                    variations: [],
+                  };
+                  setSelectedExercise(customExercise);
+                }
+                
                 setCurrentGroup(group);
               }}
             />

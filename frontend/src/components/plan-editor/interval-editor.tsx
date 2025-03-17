@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
-import {
-  Exercise,
-  ExercisePrescription,
-  Group,
-  PlanInterval as Interval,
-  ParameterType,
-} from './types';
-import ExerciseCard from './exercise-card';
+import { Exercise, Group, PlanInterval as Interval, ParameterType } from './types';
 import ExerciseSidebar from './exercise-sidebar';
 import GroupSidebar from './group-sidebar';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus, Trash2, Edit } from 'lucide-react';
-import { Tabs, TabItem } from '../ui/tabs';
-import { sampleExercises } from './sample-data';
+import { AnimatePresence } from 'framer-motion';
+import { ChevronRight, Trash2, Edit } from 'lucide-react';
 import IntervalEditDialog from './interval-edit-dialog';
-import { useGroups, useUpdateGroup, useDeleteGroup } from '@/services/hooks';
-import GroupDropDown from './interval-group-dropdown';
+import IntervalGroupTabs from './interval-group-tabs';
 
 interface IntervalEditorProps {
   interval: Interval;
@@ -38,36 +28,24 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
 }) => {
   const groupContext = { intervalId: interval.id, planId: interval.planId };
 
-  const { data: groups, isLoading } = useGroups(groupContext);
-  const deleteGroup = useDeleteGroup({ filters: groupContext });
-  const updateGroup = useUpdateGroup({ filters: groupContext });
-
-  const [activeGroup, setActiveGroup] = useState<number | null>(groups?.[0]?.id || null);
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  const handleSelectTab = (id: string) => {
-    setActiveGroup(Number(id));
-  };
-
-  // Handle delete interval
   const handleDeleteInterval = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent toggling the interval
+    e.stopPropagation();
     if (onDeleteInterval) {
       onDeleteInterval(interval.id);
     }
   };
 
-  // Handle edit interval
   const handleEditInterval = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent toggling the interval
+    e.stopPropagation();
     setShowEditDialog(true);
   };
 
-  // Handle save interval
   const handleSaveInterval = (updatedInterval: Interval) => {
     if (onUpdateInterval) {
       onUpdateInterval(updatedInterval);
@@ -76,7 +54,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
 
   return (
     <div className="border rounded-lg bg-white overflow-hidden shadow-sm">
-      {/* Interval Header */}
       <div
         className={`
           p-4 flex items-center justify-between bg-white cursor-pointer hover:bg-gray-50 transition-colors duration-200
@@ -107,9 +84,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex space-x-2">
-          {/* Edit Interval Button */}
           <button
             className="p-1.5 text-gray-400 hover:text-blue-500 rounded-full hover:bg-gray-100 transition-colors duration-200"
             onClick={handleEditInterval}
@@ -118,7 +93,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
             <Edit size={18} />
           </button>
 
-          {/* Delete Interval Button */}
           <button
             className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 transition-colors duration-200"
             onClick={handleDeleteInterval}
@@ -139,6 +113,18 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
 
       <AnimatePresence>
         {isExpanded && (
+          <IntervalGroupTabs
+            intervalId={interval.id}
+            onGroupDrawerOpen={() => setGroupDrawerOpen(true)}
+            onExerciseDrawerOpen={() => setExerciseDrawerOpen(true)}
+            setSelectedExercise={setSelectedExercise}
+            setCurrentGroup={setCurrentGroup}
+            allExercises={allExercises}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* {isExpanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -146,7 +132,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            {/* Custom Tabs Container */}
             <div className="border-b bg-white">
               {groups && groups.length > 0 && (
                 <Tabs
@@ -202,8 +187,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
                 )}
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        )} */}
       <ExerciseSidebar
         exercise={selectedExercise}
         group={currentGroup}
@@ -222,14 +206,12 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
         group={currentGroup}
         onClose={() => {
           setCurrentGroup(null);
-          setGroupDrawerOpen(false);
         }}
         isOpen={groupDrawerOpen}
         onUpdateGroup={onUpdateGroup}
         onSave={(group) => {
           onUpdateGroup(group);
           setCurrentGroup(null);
-          setGroupDrawerOpen(false);
         }}
         context={groupContext}
       />
