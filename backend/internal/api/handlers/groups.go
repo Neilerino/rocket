@@ -30,6 +30,7 @@ type ListGroupApiArgs struct {
 	PlanId     int64 `json:"planId,omitempty"`
 	IntervalId int64 `json:"intervalId,omitempty"`
 	Id         int64 `json:"id,omitempty"`
+	UserId     int64 `json:"userId,omitempty"`
 }
 
 func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -38,8 +39,9 @@ func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
 	planId := filterParser.GetIntFilterOrZero("planId")
 	intervalId := filterParser.GetIntFilterOrZero("intervalId")
 	groupId := filterParser.GetIntFilterOrZero("id")
+	userId := filterParser.GetIntFilterOrZero("userId")
 
-	if planId == 0 && groupId == 0 && intervalId == 0 {
+	if planId == 0 && groupId == 0 && intervalId == 0 && userId == 0 {
 		api_utils.WriteError(w, http.StatusBadRequest, "Missing required field: planId, id, or intervalId")
 		return
 	}
@@ -51,7 +53,13 @@ func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
 		group_service := service.NewGroupsService(&group_repo)
 
 		log.Printf("Calling service.ListGroups with planId=%d, groupId=%d, intervalId=%d, limit=%d", planId, groupId, intervalId, limit)
-		groups, err := group_service.ListGroups(r.Context(), planId, groupId, intervalId, int32(limit))
+		groups, err := group_service.ListGroups(r.Context(), service.GroupListParams{
+			PlanId:     &planId,
+			GroupId:    &groupId,
+			IntervalId: &intervalId,
+			UserId:     &userId,
+			Limit:      int32(limit),
+		})
 		if err != nil {
 			log.Printf("Error from ListGroups: %v", err)
 			return err

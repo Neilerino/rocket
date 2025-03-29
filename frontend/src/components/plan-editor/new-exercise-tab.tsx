@@ -295,9 +295,9 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
           </div>
 
           <ParameterManager
+            parameterTypes={parameterTypes}
             parameters={formData.parameters}
             lockedParameters={lockedParamsAsNumbers}
-            availableParameterTypes={parameterTypes}
             onChange={handleParameterChange}
           />
         </div>

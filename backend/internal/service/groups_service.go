@@ -10,12 +10,28 @@ type GroupsService struct {
 	repo *repository.GroupsRepository
 }
 
+type GroupListParams struct {
+	PlanId     *int64
+	GroupId    *int64
+	IntervalId *int64
+	UserId     *int64
+	Limit      int32
+	Offset     int32
+}
+
 func NewGroupsService(repo *repository.GroupsRepository) *GroupsService {
 	return &GroupsService{repo: repo}
 }
 
-func (s *GroupsService) ListGroups(ctx context.Context, planId int64, groupId int64, intervalId int64, limit int32) ([]types.Group, error) {
-	groups, err := s.repo.ListGroups(ctx, planId, groupId, intervalId, limit)
+func (s *GroupsService) ListGroups(ctx context.Context, params GroupListParams) ([]types.Group, error) {
+	groups, err := s.repo.ListGroups(ctx, repository.GroupListParams{
+		PlanId:     DerefOrDefault(params.PlanId, 0),
+		GroupId:    DerefOrDefault(params.GroupId, 0),
+		IntervalId: DerefOrDefault(params.IntervalId, 0),
+		UserId:     DerefOrDefault(params.UserId, 0),
+		Limit:      params.Limit,
+		Offset:     params.Offset,
+	})
 	if err != nil {
 		return nil, err
 	}

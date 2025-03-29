@@ -31,11 +31,11 @@ func (fp *FilterParser) GetUserID() (int64, error) {
 		}
 		return -1, ErrMissingParameter("userId")
 	}
-	
+
 	if fp.Logger {
 		log.Printf("Using userId parameter: %s", userIdParam)
 	}
-	
+
 	userId, err := ParseBigInt(userIdParam)
 	if err != nil {
 		if fp.Logger {
@@ -43,11 +43,11 @@ func (fp *FilterParser) GetUserID() (int64, error) {
 		}
 		return -1, ErrInvalidParameter("userId")
 	}
-	
+
 	if fp.Logger {
 		log.Printf("Parsed userId: %d", userId)
 	}
-	
+
 	return userId, nil
 }
 
@@ -60,11 +60,11 @@ func (fp *FilterParser) GetLimit(defaultLimit int32) int32 {
 			limit = int32(limitInt)
 		}
 	}
-	
+
 	if fp.Logger {
 		log.Printf("Using limit: %d", limit)
 	}
-	
+
 	return limit
 }
 
@@ -77,11 +77,11 @@ func (fp *FilterParser) GetOffset(defaultOffset int) int {
 			offset = offsetInt
 		}
 	}
-	
+
 	if fp.Logger {
 		log.Printf("Using offset: %d", offset)
 	}
-	
+
 	return offset
 }
 
@@ -89,13 +89,13 @@ func (fp *FilterParser) GetOffset(defaultOffset int) int {
 // Returns a pointer to bool if the parameter exists and is a valid boolean, nil otherwise
 func (fp *FilterParser) GetBoolFilter(paramName string) *bool {
 	var result *bool
-	
+
 	// Try both filter format and regular format
 	paramValue := fp.Request.URL.Query().Get("filters[" + paramName + "]")
 	if paramValue == "" {
 		paramValue = fp.Request.URL.Query().Get(paramName)
 	}
-	
+
 	if paramValue != "" {
 		// Check if the value is a valid boolean (true/false, case-insensitive)
 		switch strings.ToLower(paramValue) {
@@ -114,12 +114,12 @@ func (fp *FilterParser) GetBoolFilter(paramName string) *bool {
 				log.Printf("Warning: Invalid boolean value '%s' for parameter '%s', treating as false", paramValue, paramName)
 			}
 		}
-		
+
 		if fp.Logger && result != nil {
 			log.Printf("Using %s filter: %v", paramName, *result)
 		}
 	}
-	
+
 	return result
 }
 
@@ -150,11 +150,11 @@ func (fp *FilterParser) GetStringFilter(paramName string) string {
 	if paramValue == "" {
 		paramValue = fp.Request.URL.Query().Get(paramName)
 	}
-	
+
 	if paramValue != "" && fp.Logger {
 		log.Printf("Using %s filter: %s", paramName, paramValue)
 	}
-	
+
 	return paramValue
 }
 
@@ -175,18 +175,18 @@ func (fp *FilterParser) GetStringFilterWithDefault(paramName string, defaultValu
 // Returns a pointer to int64 if the parameter exists and is valid, nil otherwise
 func (fp *FilterParser) GetIntFilter(paramName string) *int64 {
 	var result *int64
-	
+
 	// Try both filter format and regular format
 	paramValue := fp.Request.URL.Query().Get("filters[" + paramName + "]")
 	if paramValue == "" {
 		paramValue = fp.Request.URL.Query().Get(paramName)
 	}
-	
+
 	if paramValue != "" {
 		intValue, err := ParseBigInt(paramValue)
 		if err == nil {
 			result = &intValue
-			
+
 			if fp.Logger {
 				log.Printf("Using %s filter: %d", paramName, intValue)
 			}
@@ -194,7 +194,7 @@ func (fp *FilterParser) GetIntFilter(paramName string) *int64 {
 			log.Printf("Invalid %s filter value: %s", paramName, paramValue)
 		}
 	}
-	
+
 	return result
 }
 
@@ -250,6 +250,6 @@ func (fp *FilterParser) HasFilter(paramName string) bool {
 	if paramValue == "" {
 		paramValue = fp.Request.URL.Query().Get(paramName)
 	}
-	
+
 	return paramValue != ""
 }

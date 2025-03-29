@@ -7,8 +7,6 @@ import (
 	"backend/internal/utils"
 	"context"
 	"errors"
-
-	"github.com/icza/gox/gox"
 )
 
 type IntervalExercisePrescriptionsService struct {
@@ -66,10 +64,10 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 	}
 
 	rows, err := s.PrescriptionRepo.List(ctx, repository.IntervalExercisePrescriptionListParams{
-		PrescriptionId: gox.IfFunc(params.PrescriptionId != nil, func() int64 { return *params.PrescriptionId }, func() int64 { return 0 }),
-		ExerciseId:     gox.IfFunc(params.ExerciseId != nil, func() int64 { return *params.ExerciseId }, func() int64 { return 0 }),
-		IntervalId:     gox.IfFunc(params.IntervalId != nil, func() int64 { return *params.IntervalId }, func() int64 { return 0 }),
-		GroupId:        gox.IfFunc(params.GroupId != nil, func() int64 { return *params.GroupId }, func() int64 { return 0 }),
+		PrescriptionId: DerefOrDefault(params.PrescriptionId, 0),
+		ExerciseId:     DerefOrDefault(params.ExerciseId, 0),
+		IntervalId:     DerefOrDefault(params.IntervalId, 0),
+		GroupId:        DerefOrDefault(params.GroupId, 0),
 		Limit:          params.Limit,
 		Offset:         params.Offset,
 	})

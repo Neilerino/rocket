@@ -1,17 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import NewGroupTab from './new-group-tab';
 import ReuseGroupTab from './reuse-group-tab';
 import { Tabs, TabItem } from '../ui/tabs';
 import { Button } from 'shad/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from '@heroui/drawer';
 import { useDisclosure } from '@heroui/react';
-import { sampleExercises } from './sample-data';
-import { useGroups, useUpdateGroup } from '@/services/hooks';
+import { useGroups } from '@/services/hooks';
 import { Group } from '@/services/types';
-import { Loader2 } from 'lucide-react'; // Import Loader icon
-
-// In the future, this could come from an API
 import { GroupFilters } from '@/services/api';
 
 interface GroupSidebarProps {
@@ -70,9 +66,6 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({ group, onClose, onSave, isO
     </Button>
   );
 
-  // Create a list of all exercises for reference when displaying group exercises
-  const allExercises = [...sampleExercises];
-
   return (
     <Drawer
       isOpen={isDrawerOpen}
@@ -105,12 +98,7 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({ group, onClose, onSave, isO
           )}
 
           {groups && activeTab === 'reuse' && (
-            <ReuseGroupTab
-              availableGroups={groups}
-              context={context}
-              saveCallback={saveCallback}
-              allExercises={allExercises}
-            />
+            <ReuseGroupTab context={context} saveCallback={saveCallback} />
           )}
         </DrawerBody>
 

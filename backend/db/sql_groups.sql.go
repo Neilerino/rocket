@@ -11,58 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const groupsJoinPlan_List = `-- name: GroupsJoinPlan_List :many
-SELECT groups.id, groups.name, groups.description, groups.user_id, groups.created_at, groups.updated_at from groups 
-JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id AND (interval_group_assignments.plan_interval_id = $1::BIGINT or $1::bigint = 0)
-JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id AND (plan_intervals.plan_id = $2::BIGINT or $2::bigint = 0)
-WHERE 
-    (groups.id = $3::BIGINT or $3::bigint = 0) 
-ORDER BY groups.created_at DESC
-LIMIT $5::int
-OFFSET $4::int
-`
-
-type GroupsJoinPlan_ListParams struct {
-	IntervalID int64
-	PlanID     int64
-	GroupID    int64
-	Offset     int32
-	Limit      int32
-}
-
-func (q *Queries) GroupsJoinPlan_List(ctx context.Context, arg GroupsJoinPlan_ListParams) ([]Group, error) {
-	rows, err := q.db.Query(ctx, groupsJoinPlan_List,
-		arg.IntervalID,
-		arg.PlanID,
-		arg.GroupID,
-		arg.Offset,
-		arg.Limit,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Group
-	for rows.Next() {
-		var i Group
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.UserID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const groups_CreateOne = `-- name: Groups_CreateOne :one
 INSERT INTO
     groups (name, description, user_id)
@@ -218,22 +166,37 @@ func (q *Queries) Groups_GetByUserId(ctx context.Context, arg Groups_GetByUserId
 }
 
 const groups_List = `-- name: Groups_List :many
-SELECT id, name, description, user_id, created_at, updated_at from groups 
+SELECT groups.id, groups.name, groups.description, groups.user_id, groups.created_at, groups.updated_at from groups 
+JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id
+JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id 
 WHERE 
-    (id = $1::BIGINT or $1::bigint = 0) 
-ORDER BY created_at DESC
-LIMIT $3::int
-OFFSET $2::int
+    (groups.id = $1::BIGINT or $1::bigint = 0) 
+    AND (groups.user_id = $2::BIGINT or $2::bigint = 0)
+    AND (plan_intervals.plan_id = $3::BIGINT or $3::bigint = 0)
+    AND (interval_group_assignments.plan_interval_id = $4::BIGINT or $4::bigint = 0)
+ORDER BY groups.created_at DESC
+LIMIT $6::int
+OFFSET $5::int
 `
 
 type Groups_ListParams struct {
-	GroupID int64
-	Offset  int32
-	Limit   int32
+	GroupID    int64
+	UserID     int64
+	PlanID     int64
+	IntervalID int64
+	Offset     int32
+	Limit      int32
 }
 
 func (q *Queries) Groups_List(ctx context.Context, arg Groups_ListParams) ([]Group, error) {
-	rows, err := q.db.Query(ctx, groups_List, arg.GroupID, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, groups_List,
+		arg.GroupID,
+		arg.UserID,
+		arg.PlanID,
+		arg.IntervalID,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}

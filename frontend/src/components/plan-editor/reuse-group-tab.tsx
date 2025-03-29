@@ -1,25 +1,20 @@
 import { RefObject, useState } from 'react';
-import { Exercise } from '@/services/types';
 import GroupCard from './group-card';
 import { Search } from 'lucide-react';
 import { Group } from '@/services/types';
 import { GroupFilters } from '@/services/api/groups';
+import { useGroups } from '@/services/hooks';
 
 import { useAssignGroupToInterval } from '@/services/hooks';
 
 interface ReuseGroupTabProps {
-  availableGroups: Group[];
   context: GroupFilters;
   saveCallback: RefObject<(() => Promise<Group>) | null>;
-  allExercises?: Exercise[];
 }
 
-const ReuseGroupTab = ({
-  availableGroups,
-  context,
-  saveCallback,
-  allExercises = [],
-}: ReuseGroupTabProps) => {
+const ReuseGroupTab = ({ context, saveCallback }: ReuseGroupTabProps) => {
+  const { data: groups } = useGroups({ userId: 1 });
+
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { mutateAsync: assignGroupToInterval } = useAssignGroupToInterval(context);
@@ -31,7 +26,7 @@ const ReuseGroupTab = ({
         intervalId: context.intervalId,
       });
     }
-    return availableGroups.find((g) => g.id === selectedGroupId) as Group;
+    return groups?.find((g) => g.id === selectedGroupId) as Group;
   };
 
   return (
@@ -56,21 +51,20 @@ const ReuseGroupTab = ({
       </div>
 
       <div className="space-y-4 overflow-y-auto pr-1">
-        {availableGroups.length === 0 ? (
+        {groups?.length === 0 ? (
           <div className="text-center text-gray-500 py-8 border border-dashed rounded-lg">
             {searchTerm
               ? `No groups found matching "${searchTerm}"`
               : 'No groups available to reuse'}
           </div>
         ) : (
-          availableGroups.map((group) => (
+          groups?.map((group) => (
             <GroupCard
               key={group.id}
               group={group}
               onClick={() => setSelectedGroupId(group.id)}
               selected={selectedGroupId === group.id}
               className="hover:shadow-sm"
-              allExercises={allExercises}
             />
           ))
         )}

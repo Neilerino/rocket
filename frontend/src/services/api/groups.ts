@@ -6,6 +6,7 @@ export interface GroupFilters {
   planId?: number;
   id?: number;
   intervalId?: number;
+  userId?: number;
 }
 
 interface PaginationParams {

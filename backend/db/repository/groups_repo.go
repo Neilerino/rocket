@@ -9,12 +9,21 @@ type GroupsRepository struct {
 	Queries *db.Queries
 }
 
+type GroupListParams struct {
+	PlanId     int64
+	GroupId    int64
+	IntervalId int64
+	UserId     int64
+	Offset     int32
+	Limit      int32
+}
+
 func NewGroupsRepository(queries *db.Queries) *GroupsRepository {
 	return &GroupsRepository{Queries: queries}
 }
 
-func (r *GroupsRepository) ListGroups(ctx context.Context, planId int64, groupId int64, intervalId int64, limit int32) ([]db.Group, error) {
-	return r.Queries.GroupsJoinPlan_List(ctx, db.GroupsJoinPlan_ListParams{PlanID: planId, GroupID: groupId, IntervalID: intervalId, Limit: limit, Offset: 0})
+func (r *GroupsRepository) ListGroups(ctx context.Context, params GroupListParams) ([]db.Group, error) {
+	return r.Queries.Groups_List(ctx, db.Groups_ListParams{PlanID: params.PlanId, GroupID: params.GroupId, IntervalID: params.IntervalId, UserID: params.UserId, Limit: params.Limit, Offset: params.Offset})
 }
 
 func (r *GroupsRepository) GetByUserId(ctx context.Context, userId int64, limit int) ([]db.Group, error) {

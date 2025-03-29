@@ -1,17 +1,12 @@
 -- name: Groups_List :many
-SELECT * from groups 
-WHERE 
-    (id = @group_id::BIGINT or @group_id::bigint = 0) 
-ORDER BY created_at DESC
-LIMIT @_limit::int
-OFFSET @_offset::int;
-
--- name: GroupsJoinPlan_List :many
 SELECT groups.* from groups 
-JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id AND (interval_group_assignments.plan_interval_id = @interval_id::BIGINT or @interval_id::bigint = 0)
-JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id AND (plan_intervals.plan_id = @plan_id::BIGINT or @plan_id::bigint = 0)
+JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id
+JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id 
 WHERE 
     (groups.id = @group_id::BIGINT or @group_id::bigint = 0) 
+    AND (groups.user_id = @user_id::BIGINT or @user_id::bigint = 0)
+    AND (plan_intervals.plan_id = @plan_id::BIGINT or @plan_id::bigint = 0)
+    AND (interval_group_assignments.plan_interval_id = @interval_id::BIGINT or @interval_id::bigint = 0)
 ORDER BY groups.created_at DESC
 LIMIT @_limit::int
 OFFSET @_offset::int;

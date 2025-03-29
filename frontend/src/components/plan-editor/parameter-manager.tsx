@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ParameterType } from './types';
+import { ParameterType } from '@/services/types';
 import { Input } from 'shad/components/ui/input';
 import { Button } from 'shad/components/ui/button';
 import { Select, SelectItem } from '@heroui/select';
-import { PlusCircle, Lock, Unlock, Info, X, Trash2, ArrowUpDown } from 'lucide-react';
+import { Info, Trash2, ArrowUpDown } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -15,10 +15,7 @@ interface ParameterManagerProps {
   parameterTypes: ParameterType[];
   parameters: Record<string, number>;
   lockedParameters?: Record<string, number>;
-  onChange: (
-    parameters: Record<string, number>,
-    lockedParameters: Record<string, number>
-  ) => void;
+  onChange: (parameters: Record<string, number>, lockedParameters: Record<string, number>) => void;
 }
 
 const ParameterManager: React.FC<ParameterManagerProps> = ({
@@ -29,66 +26,62 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
 }) => {
   // Track newly added parameter IDs for animation
   const [newParams, setNewParams] = useState<Record<string, boolean>>({});
-  
+
   // Track parameters being removed for fade-out animation
   const [removingParams, setRemovingParams] = useState<Record<string, boolean>>({});
-  
+
   // Track container heights for animation
   const lockedContainerRef = useRef<HTMLDivElement>(null);
   const variableContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Track the previous parameters to detect additions and removals
   const prevParamsRef = useRef<{
     params: Record<string, number>;
     lockedParams: Record<string, number>;
   }>({ params: {}, lockedParams: {} });
-  
+
   // Detect when parameters are added to trigger animations
   useEffect(() => {
     const prevParams = prevParamsRef.current;
-    
+
     // Find new parameters that weren't in the previous state
     const newParamIds: Record<string, boolean> = {};
-    
+
     // Check for new variable parameters
-    Object.keys(parameters).forEach(paramId => {
+    Object.keys(parameters).forEach((paramId) => {
       if (!prevParams.params[paramId]) {
         newParamIds[paramId] = true;
       }
     });
-    
+
     // Check for new locked parameters
-    Object.keys(lockedParameters).forEach(paramId => {
+    Object.keys(lockedParameters).forEach((paramId) => {
       if (!prevParams.lockedParams[paramId]) {
         newParamIds[`locked-${paramId}`] = true;
       }
     });
-    
+
     // If we found new parameters, update state and clear after animation
     if (Object.keys(newParamIds).length > 0) {
       setNewParams(newParamIds);
-      
+
       // Clear animation flags after animation completes
       const animationTimeout = setTimeout(() => {
         setNewParams({});
       }, 500); // Match this with the animation duration
-      
+
       return () => clearTimeout(animationTimeout);
     }
-    
+
     // Update the reference for next comparison
-    prevParamsRef.current = { 
-      params: { ...parameters }, 
-      lockedParams: { ...lockedParameters } 
+    prevParamsRef.current = {
+      params: { ...parameters },
+      lockedParams: { ...lockedParameters },
     };
   }, [parameters, lockedParameters]);
 
   // Handle parameter value change
-  const handleValueChange = (
-    paramId: string,
-    value: string,
-    isLocked: boolean
-  ) => {
+  const handleValueChange = (paramId: string, value: string, isLocked: boolean) => {
     const numValue = parseFloat(value);
     if (isNaN(numValue)) return;
 
@@ -98,11 +91,11 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         ...lockedParameters,
         [paramId]: numValue,
       };
-      
+
       // Remove from regular parameters if it exists there
       const updatedParams = { ...parameters };
       delete updatedParams[paramId];
-      
+
       onChange(updatedParams, updatedLockedParams);
     } else {
       // Update regular parameters
@@ -110,11 +103,11 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         ...parameters,
         [paramId]: numValue,
       };
-      
+
       // Remove from locked parameters if it exists there
       const updatedLockedParams = { ...lockedParameters };
       delete updatedLockedParams[paramId];
-      
+
       onChange(updatedParams, updatedLockedParams);
     }
   };
@@ -127,7 +120,7 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
       const updatedLockedParams = { ...lockedParameters, [paramId]: value };
       const updatedParams = { ...parameters };
       delete updatedParams[paramId];
-      
+
       onChange(updatedParams, updatedLockedParams);
     } else {
       // Move from locked to variable
@@ -135,7 +128,7 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
       const updatedParams = { ...parameters, [paramId]: value };
       const updatedLockedParams = { ...lockedParameters };
       delete updatedLockedParams[paramId];
-      
+
       onChange(updatedParams, updatedLockedParams);
     }
   };
@@ -144,8 +137,8 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
   const removeParameter = (paramId: string, isLocked: boolean) => {
     // First mark this parameter as being removed (for animation)
     const paramKey = isLocked ? `locked-${paramId}` : paramId;
-    setRemovingParams(prev => ({ ...prev, [paramKey]: true }));
-    
+    setRemovingParams((prev) => ({ ...prev, [paramKey]: true }));
+
     // Wait for animation to complete before actually removing
     setTimeout(() => {
       if (isLocked) {
@@ -157,9 +150,9 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         delete updatedParams[paramId];
         onChange(updatedParams, lockedParameters);
       }
-      
+
       // Clear the removing state for this parameter
-      setRemovingParams(prev => {
+      setRemovingParams((prev) => {
         const updated = { ...prev };
         delete updated[paramKey];
         return updated;
@@ -170,14 +163,14 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
   // Add a new parameter directly from selection
   const handleParameterSelection = (selectedParamId: string, isConstant: boolean) => {
     if (!selectedParamId) return;
-    
+
     if (isConstant) {
       // Add to locked parameters
       const updatedLockedParams = {
         ...lockedParameters,
         [selectedParamId]: 0,
       };
-      
+
       onChange(parameters, updatedLockedParams);
     } else {
       // Add to regular parameters
@@ -185,21 +178,16 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         ...parameters,
         [selectedParamId]: 0,
       };
-      
+
       onChange(updatedParams, lockedParameters);
     }
   };
 
   // Get available parameter types (those not already used)
   const getAvailableParameterTypes = () => {
-    const usedParamIds = [
-      ...Object.keys(parameters),
-      ...Object.keys(lockedParameters),
-    ];
-    
-    return parameterTypes.filter(
-      (param) => !usedParamIds.includes(param.id)
-    );
+    const usedParamIds = [...Object.keys(parameters), ...Object.keys(lockedParameters)];
+
+    return parameterTypes.filter((param) => !usedParamIds.includes(param.id));
   };
 
   // Get parameter name from ID
@@ -231,7 +219,8 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
               </TooltipTrigger>
               <TooltipContent>
                 <p className="max-w-xs text-sm">
-                  Constant parameters remain fixed between workouts. For example, edge size in hangboarding would typically be locked, while added weight might vary.
+                  Constant parameters remain fixed between workouts. For example, edge size in
+                  hangboarding would typically be locked, while added weight might vary.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -241,7 +230,7 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         {/* Add Parameter Selector */}
         {availableParameterTypes.length > 0 && (
           <div className="w-full">
-            <Select 
+            <Select
               label="Add constant parameter"
               placeholder="Select a parameter to add"
               onSelectionChange={(keys) => {
@@ -266,12 +255,15 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         )}
 
         {/* Locked Parameters List */}
-        <div 
+        <div
           ref={lockedContainerRef}
           className="mt-2 grid grid-rows-[auto] transition-all duration-300 ease-in-out"
-          style={{ 
-            gridTemplateRows: Object.keys(lockedParameters).length === 0 ? "1fr" : `repeat(${Object.keys(lockedParameters).length}, auto)`,
-            gap: '0.5rem'
+          style={{
+            gridTemplateRows:
+              Object.keys(lockedParameters).length === 0
+                ? '1fr'
+                : `repeat(${Object.keys(lockedParameters).length}, auto)`,
+            gap: '0.5rem',
           }}
         >
           {Object.entries(lockedParameters).length > 0 ? (
@@ -279,13 +271,12 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
               const paramKey = `locked-${paramId}`;
               const isRemoving = removingParams[paramKey];
               const isNew = newParams[paramKey];
-              
+
               return (
-                <div 
-                  key={paramKey} 
+                <div
+                  key={paramKey}
                   className={`flex items-center gap-2 bg-gray-50 p-3 rounded-md border transition-all duration-300 ${
-                    isRemoving ? 'animate-fade-out-up' : 
-                    isNew ? 'animate-fade-in-down' : ''
+                    isRemoving ? 'animate-fade-out-up' : isNew ? 'animate-fade-in-down' : ''
                   }`}
                 >
                   <div className="flex-1 flex items-center">
@@ -364,7 +355,8 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
               </TooltipTrigger>
               <TooltipContent>
                 <p className="max-w-xs text-sm">
-                  Variable parameters change between workouts and are tracked for progress. For example, weight added or removed during an exercise.
+                  Variable parameters change between workouts and are tracked for progress. For
+                  example, weight added or removed during an exercise.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -374,7 +366,7 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         {/* Add Parameter Selector */}
         {availableParameterTypes.length > 0 && (
           <div className="w-full">
-            <Select 
+            <Select
               label="Add variable parameter"
               placeholder="Select a parameter to add"
               onSelectionChange={(keys) => {
@@ -399,25 +391,27 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         )}
 
         {/* Variable Parameters List */}
-        <div 
+        <div
           ref={variableContainerRef}
           className="mt-2 grid grid-rows-[auto] transition-all duration-300 ease-in-out"
-          style={{ 
-            gridTemplateRows: Object.keys(parameters).length === 0 ? "1fr" : `repeat(${Object.keys(parameters).length}, auto)`,
-            gap: '0.5rem'
+          style={{
+            gridTemplateRows:
+              Object.keys(parameters).length === 0
+                ? '1fr'
+                : `repeat(${Object.keys(parameters).length}, auto)`,
+            gap: '0.5rem',
           }}
         >
           {Object.entries(parameters).length > 0 ? (
             Object.entries(parameters).map(([paramId, value]) => {
               const isRemoving = removingParams[paramId];
               const isNew = newParams[paramId];
-              
+
               return (
-                <div 
-                  key={`param-${paramId}`} 
+                <div
+                  key={`param-${paramId}`}
                   className={`flex items-center gap-2 bg-gray-50 p-3 rounded-md border transition-all duration-300 ${
-                    isRemoving ? 'animate-fade-out-up' : 
-                    isNew ? 'animate-fade-in-down' : ''
+                    isRemoving ? 'animate-fade-out-up' : isNew ? 'animate-fade-in-down' : ''
                   }`}
                 >
                   <div className="flex-1 flex items-center">
