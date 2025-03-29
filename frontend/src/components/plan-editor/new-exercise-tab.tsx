@@ -1,113 +1,105 @@
-import { useState } from 'react';
-import { Button } from 'shad/components/ui/button';
+import React from 'react';
 import { Input } from 'shad/components/ui/input';
-import { Label } from 'shad/components/ui/label';
 import { Textarea } from 'shad/components/ui/textarea';
-import { Slider } from 'shad/components/ui/slider';
-import { Exercise, ParameterType, ExercisePrescription } from './types';
-import { ExerciseAccordion, AccordionItem } from './exercise-accordion';
-import { Info, Clock, Repeat, Settings } from 'lucide-react';
+import { ExerciseFormData } from './exercise-sidebar';
+import { Exercise as ServiceExercise, ParameterType } from '@/services/types';
+import ExerciseSelection from './exercise-selection';
+import { AccordionItem } from './exercise-accordion';
 import ParameterManager from './parameter-manager';
+import { Clock, Repeat, Settings } from 'lucide-react';
+import { Slider } from 'shad/components/ui/slider';
 
 interface NewExerciseTabProps {
-  exercise?: Exercise;
-  parameterTypes?: ParameterType[];
-  prescription?: ExercisePrescription;
-  onChange?: (prescription: ExercisePrescription) => void;
+  formData: ExerciseFormData;
+  onFormChange: <K extends keyof ExerciseFormData>(field: K, value: ExerciseFormData[K]) => void;
+  allExercises: ServiceExercise[];
+  parameterTypes: ParameterType[];
 }
 
 const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
-  exercise,
-  parameterTypes = [],
-  prescription: externalPrescription,
-  onChange,
+  formData,
+  onFormChange,
+  allExercises,
+  parameterTypes,
 }) => {
-  // Create a default prescription if none is provided
-  const defaultPrescription: ExercisePrescription = {
-    id: '',
-    exerciseId: exercise?.id || '',
-    name: exercise?.name || '',
-    sets: 3,
-    reps: 10,
-    parameters: {},
-    lockedParameters: {},
+  const handleChange = <K extends keyof ExerciseFormData>(field: K, value: ExerciseFormData[K]) => {
+    onFormChange(field, value);
   };
 
-  // Use the provided prescription or the default
-  const prescription = externalPrescription || defaultPrescription;
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleChange('name', e.target.value);
+  };
 
-  // Local state for form fields
-  const [hasReps, setHasReps] = useState(true);
-  const [hasDuration, setHasDuration] = useState(false);
-  const [description, setDescription] = useState(exercise?.description || '');
-
-  // Handle prescription changes
-  const handleChange = (updatedPrescription: ExercisePrescription) => {
-    if (onChange) {
-      onChange(updatedPrescription);
+  const handleSetsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
+    if (value === null || !isNaN(value)) {
+      handleChange('sets', value);
     }
   };
 
-  // Handle name change
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleChange({
-      ...prescription,
-      name: e.target.value,
-    });
-  };
-
-  // Handle sets change
-  const handleSetsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleChange({
-      ...prescription,
-      sets: parseInt(e.target.value) || 0,
-    });
-  };
-
-  // Handle reps change
   const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleChange({
-      ...prescription,
-      reps: parseInt(e.target.value) || 0,
-    });
+    const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
+    if (value === null || !isNaN(value)) {
+      handleChange('reps', value);
+    }
   };
 
-  // Format rest time from seconds to minutes and seconds
-  const formatRestTime = (restSeconds?: string) => {
-    if (!restSeconds) return { minutes: 0, seconds: 0 };
-    
-    const totalSeconds = parseInt(restSeconds) || 0;
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
+    if (value === null || !isNaN(value)) {
+      handleChange('durationMinutes', value);
+    }
+  };
+
+  const formatRestTime = (restSeconds?: number | null) => {
+    if (restSeconds === null || restSeconds === undefined) return { minutes: 0, seconds: 0 };
+
+    const totalSeconds = restSeconds;
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    
+
     return { minutes, seconds };
   };
 
-  // Update rest time
   const updateRestTime = (minutes: string | number, seconds: string | number) => {
     const mins = parseInt(minutes.toString()) || 0;
     const secs = parseInt(seconds.toString()) || 0;
-    const totalSeconds = (mins * 60) + secs;
-    
-    handleChange({
-      ...prescription,
-      rest: totalSeconds.toString(),
-    });
+    const totalSeconds = mins * 60 + secs;
+
+    handleChange('rest', totalSeconds > 0 ? totalSeconds : null);
   };
 
-  // Handle parameter changes from the parameter manager
   const handleParameterChange = (
     parameters: Record<string, number>,
-    lockedParameters: Record<string, number>
+    lockedParameters: Record<string, number>,
   ) => {
-    handleChange({
-      ...prescription,
-      parameters,
-      lockedParameters,
-    });
+    onFormChange('parameters', parameters);
+    const lockedParamsAsBooleans: Record<string, boolean> = Object.entries(lockedParameters).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value === 1;
+        return acc;
+      },
+      {} as Record<string, boolean>,
+    );
+    onFormChange('lockedParameters', lockedParamsAsBooleans);
   };
 
-  const { minutes: restMinutes, seconds: restSeconds } = formatRestTime(prescription.rest);
+  const { minutes: restMinutes, seconds: restSeconds } = formatRestTime(formData.rest);
+  const exerciseDescription = formData.exercise?.description || '';
+  const currentSets = formData.sets ?? '';
+  const currentReps = formData.reps ?? '';
+  const currentDuration = formData.durationMinutes ?? '';
+  const currentRpe = formData.rpe ?? 0;
+
+  const lockedParamsAsNumbers: Record<string, number> = Object.entries(
+    formData.lockedParameters,
+  ).reduce(
+    (acc, [key, value]) => {
+      acc[key] = value ? 1 : 0;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return (
     <div className="space-y-6">
@@ -118,7 +110,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
         </label>
         <Input
           id="name"
-          value={prescription.name || ''}
+          value={formData.name || ''}
           onChange={handleNameChange}
           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="e.g. Campus Board Ladders"
@@ -132,10 +124,10 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
         <Textarea
           id="description"
           rows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          placeholder="Describe the exercise and how to perform it"
+          value={exerciseDescription}
+          readOnly
+          className="w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-100 focus:outline-none"
+          placeholder="Description of the selected exercise"
         />
       </div>
 
@@ -157,14 +149,27 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
               type="number"
               id="sets"
               min={1}
-              value={prescription.sets || ''}
+              value={currentSets}
               onChange={handleSetsChange}
               className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
-          <AccordionItem value="reps" title="Repetitions" checked={hasReps} onCheckChange={setHasReps}>
-            {hasReps && (
+          <ExerciseSelection
+            value={formData.exercise}
+            exercises={allExercises}
+            onChange={(exercise: ServiceExercise | null) => handleChange('exercise', exercise)}
+          />
+
+          <AccordionItem
+            value="reps"
+            title="Repetitions"
+            checked={formData.reps !== null && formData.reps !== undefined}
+            onCheckChange={(checked: boolean) => {
+              handleChange('reps', checked ? (formData.reps ?? 1) : null);
+            }}
+          >
+            {formData.reps !== null && formData.reps !== undefined && (
               <div className="space-y-2">
                 <label htmlFor="reps" className="block text-sm font-medium text-gray-700">
                   Reps per Set
@@ -173,7 +178,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
                   type="number"
                   id="reps"
                   min={1}
-                  value={prescription.reps || ''}
+                  value={currentReps}
                   onChange={handleRepsChange}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
@@ -184,10 +189,12 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
           <AccordionItem
             value="duration"
             title="Duration"
-            checked={hasDuration}
-            onCheckChange={setHasDuration}
+            checked={formData.durationMinutes !== null && formData.durationMinutes !== undefined}
+            onCheckChange={(checked: boolean) => {
+              handleChange('durationMinutes', checked ? (formData.durationMinutes ?? 1) : null);
+            }}
           >
-            {hasDuration && (
+            {formData.durationMinutes !== null && formData.durationMinutes !== undefined && (
               <div className="space-y-2">
                 <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
                   Active Time (minutes)
@@ -196,13 +203,8 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
                   type="number"
                   id="duration"
                   min={0}
-                  value={prescription.durationMinutes || ''}
-                  onChange={(e) =>
-                    handleChange({
-                      ...prescription,
-                      durationMinutes: parseInt(e.target.value) || 0,
-                    })
-                  }
+                  value={currentDuration}
+                  onChange={handleDurationChange}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
@@ -258,26 +260,21 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
 
           <div className="flex items-center justify-between">
             <label htmlFor="rpe" className="text-sm font-medium text-gray-700">
-              Rate of Perceived Exertion (RPE)
+              RPE (Rate of Perceived Exertion)
             </label>
             <div className="flex items-center">
               <span className="text-sm font-medium bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded">
-                {prescription.rpe?.toFixed(1) || 0}
+                {currentRpe.toFixed(1)}
               </span>
             </div>
           </div>
           <Slider
-            value={[prescription.rpe || 0]}
+            value={[currentRpe]}
             min={0}
             max={10}
             step={0.5}
             className="mt-2"
-            onValueChange={([value]) =>
-              handleChange({
-                ...prescription,
-                rpe: value,
-              })
-            }
+            onValueChange={([value]) => handleChange('rpe', value)}
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>Easy</span>
@@ -298,9 +295,9 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({
           </div>
 
           <ParameterManager
-            parameterTypes={parameterTypes}
-            parameters={prescription.parameters || {}}
-            lockedParameters={prescription.lockedParameters || {}}
+            parameters={formData.parameters}
+            lockedParameters={lockedParamsAsNumbers}
+            availableParameterTypes={parameterTypes}
             onChange={handleParameterChange}
           />
         </div>

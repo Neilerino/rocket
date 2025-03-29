@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { Exercise, Group } from '@/services/types';
 import { useGroups, useUpdateGroup } from '@/services/hooks';
@@ -13,7 +12,6 @@ interface IntervalGroupTabsProps {
   onExerciseDrawerOpen: () => void;
   setSelectedExercise: (exercise: Exercise | null) => void;
   setCurrentGroup: (group: Group | null) => void;
-  allExercises: Exercise[];
 }
 
 const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
@@ -22,7 +20,6 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
   onExerciseDrawerOpen,
   setSelectedExercise,
   setCurrentGroup,
-  allExercises,
 }) => {
   const groupContext: GroupFilters = { intervalId: intervalId };
   const { data: groups, isLoading } = useGroups(groupContext);
@@ -85,7 +82,6 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
                 <GroupDropDown
                   key={group.id}
                   group={group}
-                  allExercises={allExercises}
                   setSelectedExercise={setSelectedExercise}
                   setCurrentGroup={setCurrentGroup}
                   setExerciseDrawerOpen={onExerciseDrawerOpen}

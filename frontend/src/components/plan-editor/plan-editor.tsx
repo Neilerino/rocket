@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import IntervalEditor from './interval-editor';
-import { Group, ParameterType, PlanInterval as LocalPlanInterval } from './types';
-import { CreatePlanIntervalDto } from '../../services/types';
-import { sampleExercises, sampleParameterTypes } from './sample-data';
+import {
+  CreatePlanIntervalDto,
+  PlanInterval as ServicePlanInterval,
+  Group as ServiceGroup,
+} from '../../services/types';
 import { Button } from '@heroui/button';
 import { Plus, Copy } from 'lucide-react';
 import ConfirmationModal from '../ui/confirmation-modal';
@@ -11,44 +13,16 @@ import {
   useCreateInterval,
   useDeleteInterval,
 } from '../../services/hooks/intervals/useIntervalMutations';
+import { useExercises } from '@/services/hooks/exercises/useExercises';
+import { useGroups } from '@/services/hooks/groups/useGroups';
 
 interface PlanEditorProps {
   planId: number;
 }
 
 export default function PlanEditor({ planId }: PlanEditorProps) {
-  // State for local UI operations
-  const [localIntervals, setLocalIntervals] = useState<LocalPlanInterval[]>([]);
-
-  // API hooks
-  const { data: intervals, isLoading } = useIntervalsByPlanId(planId);
-  const { mutate: createInterval } = useCreateInterval();
-  const { mutate: deleteInterval } = useDeleteInterval(planId);
-
-  // Update local intervals when API data changes
-  useEffect(() => {
-    if (intervals) {
-      const convertedIntervals: LocalPlanInterval[] = intervals.map((apiInterval) => ({
-        id: apiInterval.id,
-        planId: apiInterval.planId,
-        name: apiInterval.name,
-        description: apiInterval.description,
-        duration: apiInterval.duration,
-        order: apiInterval.order,
-        groupCount: apiInterval.groupCount,
-        groups: [], // We'll need to implement group fetching separately
-      }));
-      setLocalIntervals(convertedIntervals);
-    }
-  }, [intervals]);
-
-  // State for open/closed intervals
-  const [expandedIntervals, setExpandedIntervals] = useState<number[]>([0]); // Start with first interval expanded
-
-  // Parameter types for exercise customization
-  const parameterTypes: ParameterType[] = sampleParameterTypes;
-
-  // State for confirmation modal
+  const [intervalsState, setIntervalsState] = useState<ServicePlanInterval[]>([]);
+  const [expandedIntervals, setExpandedIntervals] = useState<number[]>([]);
   const [confirmationModal, setConfirmationModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -61,94 +35,82 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
     onConfirm: () => {},
   });
 
-  const toggleInterval = (intervalId: number) => {
-    setExpandedIntervals((prev) =>
-      prev.includes(intervalId) ? prev.filter((id) => id !== intervalId) : [...prev, intervalId],
-    );
-  };
+  const { data: intervals, isLoading } = useIntervalsByPlanId(planId);
+  const { data: allExercises, isLoading: exercisesLoading } = useExercises({});
+  const { data: allGroups, isLoading: groupsLoading } = useGroups({});
+  const { mutate: createInterval } = useCreateInterval();
+  const { mutate: deleteInterval } = useDeleteInterval(planId);
 
-  const handleUpdateGroup = (updatedGroup: Group) => {
-    setLocalIntervals((prevIntervals) =>
-      prevIntervals.map((interval) => ({
-        ...interval,
-        groups: interval.groups.map((group) =>
-          group.id === updatedGroup.id ? updatedGroup : group,
-        ),
-      })),
-    );
-  };
+  useEffect(() => {
+    if (intervals) {
+      setIntervalsState(intervals);
+    }
+  }, [intervals]);
 
-  // Function to create a new empty interval
+  useEffect(() => {
+    if (intervalsState.length > 0) {
+      setExpandedIntervals([intervalsState[0].id]);
+    }
+  }, [intervalsState]);
+
   const handleCreateNewInterval = () => {
     if (!planId) return;
 
     const newInterval: CreatePlanIntervalDto = {
       planId: Number(planId),
-      name: `Week ${intervals?.length ? intervals.length + 1 : 1}`,
+      name: `Week ${intervalsState.length + 1}`,
       description: '',
-      duration: '7 days', // Default duration of 7 days
-      order: intervals?.length ? intervals.length : 0,
+      duration: '7 days',
+      order: intervalsState.length,
     };
 
     createInterval(newInterval, {
       onSuccess: (createdInterval) => {
-        // Auto-expand the new interval
         setExpandedIntervals((prev) => [...prev, createdInterval.id]);
       },
     });
   };
 
-  // Function to copy the last interval
   const handleCopyFromPrevious = () => {
-    if (!planId || !intervals || intervals.length === 0) return;
+    if (!planId || !intervalsState || intervalsState.length === 0) return;
 
-    const lastInterval = intervals[intervals.length - 1];
+    const lastInterval = intervalsState[intervalsState.length - 1];
 
-    // Create a new interval based on the last one
     const newInterval: CreatePlanIntervalDto = {
       planId: Number(planId),
-      name: `Week ${intervals.length + 1}`,
+      name: `Week ${intervalsState.length + 1}`,
       description: lastInterval.description || '',
       duration: lastInterval.duration,
-      order: intervals.length,
+      order: intervalsState.length,
     };
 
     createInterval(newInterval, {
       onSuccess: (createdInterval) => {
-        // Auto-expand the new interval
         setExpandedIntervals((prev) => [...prev, createdInterval.id]);
       },
     });
   };
 
-  // Function to open delete interval confirmation
   const handleDeleteInterval = (intervalId: number) => {
-    // Find the interval to get its name
-    const intervalToDelete = localIntervals.find((interval) => Number(interval.id) === intervalId);
+    const intervalToDelete = intervalsState.find((interval) => interval.id === intervalId);
     if (!intervalToDelete) return;
 
-    // If the interval has no groups, delete it without confirmation
     if (intervalToDelete.groupCount === 0) {
-      // Call the delete API
       deleteInterval(intervalId, {
         onSuccess: () => {
-          // Remove from expanded intervals if it was expanded
           setExpandedIntervals((prev) => prev.filter((id) => id !== intervalId));
         },
       });
       return;
     }
 
-    // Open confirmation modal for intervals with groups
     setConfirmationModal({
       isOpen: true,
       title: 'Delete Interval',
       message: `Are you sure you want to delete "${intervalToDelete.name}"? This action cannot be undone.`,
       onConfirm: () => {
-        // Call the delete API
         deleteInterval(intervalId, {
           onSuccess: () => {
-            // Remove from expanded intervals if it was expanded
             setExpandedIntervals((prev) => prev.filter((id) => id !== intervalId));
           },
         });
@@ -156,20 +118,21 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
     });
   };
 
-  // Function to close the confirmation modal
   const closeConfirmationModal = () => {
-    setConfirmationModal((prev) => ({
-      ...prev,
-      isOpen: false,
-    }));
+    setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
   };
 
-  // Function to update an interval
-  const handleUpdateInterval = (updatedInterval: LocalPlanInterval) => {
-    setLocalIntervals((prevIntervals) =>
+  const handleUpdateInterval = (updatedInterval: ServicePlanInterval) => {
+    setIntervalsState((prevIntervals) =>
       prevIntervals.map((interval) =>
         interval.id === updatedInterval.id ? updatedInterval : interval,
       ),
+    );
+  };
+
+  const toggleInterval = (intervalId: number) => {
+    setExpandedIntervals((prev) =>
+      prev.includes(intervalId) ? prev.filter((id) => id !== intervalId) : [...prev, intervalId],
     );
   };
 
@@ -177,18 +140,17 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
     <div className="relative">
       {/* Main content */}
       <div className="space-y-4">
-        {isLoading ? (
-          <div className="p-6 text-center">Loading intervals...</div>
-        ) : localIntervals.length > 0 ? (
-          localIntervals.map((interval) => (
+        {isLoading || exercisesLoading || groupsLoading ? (
+          <div className="p-6 text-center">Loading...</div>
+        ) : intervalsState.length > 0 ? (
+          intervalsState.map((interval) => (
             <IntervalEditor
               key={interval.id}
               interval={interval}
               isExpanded={expandedIntervals.includes(Number(interval.id))}
               onToggle={() => toggleInterval(Number(interval.id))}
-              parameterTypes={parameterTypes}
-              allExercises={sampleExercises}
-              onUpdateGroup={handleUpdateGroup}
+              allExercises={allExercises || []}
+              allGroups={allGroups || []}
               onDeleteInterval={handleDeleteInterval}
               onUpdateInterval={handleUpdateInterval}
             />
@@ -215,7 +177,7 @@ export default function PlanEditor({ planId }: PlanEditorProps) {
             variant="bordered"
             className="flex-1 py-6 border-dashed border-2 flex items-center justify-center gap-2"
             onPress={handleCopyFromPrevious}
-            disabled={!intervals || intervals.length === 0}
+            disabled={!intervalsState || intervalsState.length === 0}
             disableAnimation
           >
             <Copy size={18} />

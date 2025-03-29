@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
-import { Exercise, ExercisePrescription, Group, ParameterType } from './types';
+import React, { useState, useEffect } from 'react';
+import {
+  Exercise as ServiceExercise,
+  Group,
+  IntervalExercisePrescription,
+  ExerciseVariationParam,
+} from '@/services/types';
 import { X } from 'lucide-react';
 import NewExerciseTab from './new-exercise-tab';
 import ReuseExerciseTab from './reuse-exercise-tab';
@@ -7,25 +12,36 @@ import { Tabs, TabItem } from '../ui/tabs';
 import { Button } from 'shad/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from '@heroui/drawer';
 import { useDisclosure } from '@heroui/react';
-import { sampleExerciseVariants, sampleParameterTypes, ExerciseVariant } from './sample-data';
+
+// Export the type for the form state within the sidebar
+export interface ExerciseFormData {
+  id: number | null;
+  exerciseId: number | null;
+  name: string;
+  description: string | null;
+  sets: number | null;
+  reps: number | null;
+  rest: number | null;
+  rpe: number | null;
+  durationMinutes: number | null;
+  parameters: Record<string, number>;
+  lockedParameters: Record<string, boolean>;
+  exercise: ServiceExercise | null;
+}
 
 interface ExerciseSidebarProps {
-  exercise?: Exercise;
-  group?: Group | null;
-  intervalId?: number;
-  parameterTypes?: ParameterType[];
-  allExercises?: Exercise[];
+  prescriptionToEdit?: IntervalExercisePrescription | null;
+  allExercises: ServiceExercise[];
+  allGroups: Group[];
   onClose: () => void;
-  onSave: (prescription: ExercisePrescription) => void;
+  onSave: (formData: ExerciseFormData) => void;
   isOpen: boolean;
 }
 
 const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
-  exercise,
-  group,
-  intervalId,
-  parameterTypes = [],
-  allExercises = [],
+  prescriptionToEdit,
+  allExercises,
+  allGroups,
   onClose,
   onSave,
   isOpen,
@@ -36,52 +52,120 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
     onClose: onCloseDrawer,
   } = useDisclosure({ isOpen, onClose });
 
-  const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('new');
-  const [prescription, setPrescription] = useState<ExercisePrescription>({
-    exerciseId: exercise?.id,
-    name: exercise?.name || '',
+  const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('reuse');
+  const [formData, setFormData] = useState<ExerciseFormData>({
+    id: null,
+    exerciseId: null,
+    name: '',
+    description: null,
     sets: 3,
     reps: 10,
+    rest: 60,
+    rpe: null,
+    durationMinutes: null,
     parameters: {},
+    lockedParameters: {},
+    exercise: null,
   });
 
-  // Define the tab items
-  const tabItems: TabItem[] = [
-    { id: 'new', label: 'New Exercise' },
-    { id: 'reuse', label: 'Reuse Exercise' },
-  ];
+  useEffect(() => {
+    if (prescriptionToEdit) {
+      setActiveTab('new'); // Editing always starts in the 'new' tab view for now
+      const variation = prescriptionToEdit.exerciseVariation;
+      const exercise = variation?.exercise;
+      const params: Record<string, number> = {};
+      const locked: Record<string, boolean> = {};
 
-  // Handle tab change
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId as 'new' | 'reuse');
+      variation?.parameters?.forEach((param: ExerciseVariationParam) => {
+        // Assuming parameter value is stored elsewhere or needs fetching;
+        // Using placeholder 0 for now. The key is the parameterTypeId.
+        // Also assuming the actual value isn't stored directly in ExerciseVariationParam.
+        // This part might need adjustment based on how parameter values are actually stored/retrieved.
+        params[param.parameterTypeId.toString()] = 0; // Placeholder value
+        locked[param.parameterTypeId.toString()] = param.locked;
+      });
+
+      setFormData({
+        id: prescriptionToEdit.id,
+        exerciseId: variation?.exerciseId ?? null,
+        name: exercise?.name ?? 'Unknown Exercise',
+        description: exercise?.description ?? null,
+        sets: prescriptionToEdit.sets ?? null,
+        reps: prescriptionToEdit.reps ?? null,
+        rest: prescriptionToEdit.rest ?? null,
+        exercise: exercise ?? null,
+        durationMinutes: prescriptionToEdit.duration ?? null, // Assuming duration is in minutes
+        rpe: prescriptionToEdit.rpe ?? null,
+        parameters: params, // Needs actual values
+        lockedParameters: locked,
+      });
+    } else {
+      setActiveTab('reuse'); // Default to reuse tab when creating new
+      setFormData({
+        id: null,
+        exerciseId: null,
+        name: '',
+        description: null,
+        sets: 3,
+        reps: 10,
+        rest: 60,
+        rpe: null,
+        durationMinutes: null,
+        parameters: {},
+        lockedParameters: {},
+        exercise: null,
+      });
+    }
+  }, [prescriptionToEdit, allExercises]); // Added allExercises to dependency array
+
+  const handleFormChange = (field: keyof ExerciseFormData, value: any) => {
+    setFormData((prev) => {
+      const newState = { ...prev, [field]: value };
+
+      if (field === 'exerciseId') {
+        const selectedExercise = allExercises.find((ex) => ex.id === value) || null;
+        return {
+          ...newState,
+          exerciseId: value,
+          exercise: selectedExercise,
+          name: selectedExercise ? selectedExercise.name : newState.name,
+          description: selectedExercise ? selectedExercise.description : newState.description,
+          parameters: selectedExercise ? {} : newState.parameters,
+          lockedParameters: selectedExercise ? {} : newState.lockedParameters,
+        };
+      }
+
+      if (field === 'exercise' && value) {
+        const newExercise = value as ServiceExercise;
+        return {
+          ...newState,
+          exercise: newExercise,
+          exerciseId: newExercise.id,
+          name: newExercise.name,
+          description: newExercise.description,
+          parameters: {},
+          lockedParameters: {},
+        };
+      }
+
+      return newState;
+    });
   };
 
   const handleSave = () => {
-    onSave(prescription);
+    if (formData) {
+      onSave(formData);
+    }
     onClose();
   };
 
-  // Handle selection of exercise with variant
-  const handleExerciseSelect = (selectedExercise: Exercise, variant?: ExerciseVariant) => {
-    if (variant) {
-      // If a variant was selected, use its prescription
-      setPrescription({
-        ...variant.prescription,
-        groupId: group?.id || '',
-        planIntervalId: intervalId || '',
-        id: undefined, // We'll get a new ID when saving
-      });
-    } else {
-      // If just an exercise was selected without a variant
-      setPrescription({
-        ...prescription,
-        exerciseId: selectedExercise.id,
-        name: selectedExercise.name,
-        groupId: group?.id || '',
-        planIntervalId: intervalId || '',
-      });
-    }
-    setActiveTab('new');
+  const tabItems: TabItem[] = [
+    { id: 'new', label: 'Edit Details' },
+    { id: 'reuse', label: 'Select Exercise' },
+  ];
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId as 'new' | 'reuse');
   };
 
   const drawerCloseButton = (
@@ -104,12 +188,10 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
       closeButton={drawerCloseButton}
     >
       <DrawerContent className="flex flex-col h-full">
-        {/* Header */}
         <DrawerHeader className="border-b px-4 py-4">
           <h2 className="text-xl font-semibold">Add Exercise</h2>
         </DrawerHeader>
 
-        {/* Tabs */}
         <div className="border-b">
           <Tabs
             tabs={tabItems}
@@ -119,36 +201,30 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
           />
         </div>
 
-        {/* Content Area */}
         <DrawerBody
           className={`flex-1 ${activeTab === 'reuse' ? 'overflow-hidden p-6 pb-0' : 'overflow-auto p-6'}`}
         >
-          {activeTab === 'new' && (
-            <NewExerciseTab
-              exercise={exercise}
-              parameterTypes={parameterTypes}
-              prescription={prescription}
-              onChange={setPrescription}
-            />
+          {activeTab === 'new' && formData && (
+            <NewExerciseTab formData={formData} onFormChange={handleFormChange} />
           )}
 
-          {activeTab === 'reuse' && (
+          {activeTab === 'reuse' && formData && (
             <ReuseExerciseTab
               exercises={allExercises}
-              exerciseVariants={sampleExerciseVariants}
-              parameterTypes={parameterTypes.length > 0 ? parameterTypes : sampleParameterTypes}
-              onSelect={handleExerciseSelect}
+              formData={formData}
+              onFormChange={handleFormChange}
             />
           )}
         </DrawerBody>
 
-        {/* Footer with Action Buttons */}
         <DrawerFooter className="border-t p-4 bg-gray-50">
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>Save</Button>
+            <Button onClick={handleSave} disabled={!formData}>
+              Save
+            </Button>
           </div>
         </DrawerFooter>
       </DrawerContent>

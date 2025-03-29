@@ -1,3 +1,5 @@
+// Removed local Exercise type
+/*
 export interface Exercise {
   id: string;
   name: string;
@@ -5,7 +7,10 @@ export interface Exercise {
   userId?: string;
   variations: any[]; // Add specific types here when needed
 }
+*/
 
+// Removed local ParameterType type
+/*
 export interface ParameterType {
   id: string;
   name: string;
@@ -14,13 +19,19 @@ export interface ParameterType {
   minValue?: number;
   maxValue?: number;
 }
+*/
 
+// Removed local ExerciseVariation type
+/*
 export interface ExerciseVariation {
   id: string;
   exerciseId: string;
   parameterTypeId: string;
 }
+*/
 
+// Removed local ExercisePrescription type
+/*
 export interface ExercisePrescription {
   id?: string;
   exerciseId?: string;
@@ -35,7 +46,9 @@ export interface ExercisePrescription {
   parameters: Record<string, number>;
   lockedParameters?: Record<string, number>;
 }
+*/
 
+// PlanInterval is kept for now, assuming it might be used elsewhere
 export interface PlanInterval {
   id: number;
   planId: number;

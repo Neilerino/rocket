@@ -23,12 +23,13 @@ FROM
     JOIN exercise_variation_params evp ON evp.exercise_variation_id = ev.id
     JOIN parameter_types pt ON pt.id = evp.parameter_type_id
     JOIN interval_exercise_prescriptions iep ON iep.exercise_variation_id = ev.id
+    JOIN plan_intervals pi ON pi.id = iep.plan_interval_id
 WHERE
     (ev.exercise_id = ANY(@exercise_id::BIGINT[]) or cardinality(@exercise_id::bigint[]) = 0) 
     AND (e.user_id = @user_id::BIGINT or @user_id::bigint = 0)
     AND (iep.group_id = ANY(@group_id::BIGINT[]) or cardinality(@group_id::bigint[]) = 0)
     AND (iep.plan_interval_id = ANY(@plan_interval_id::BIGINT[]) or cardinality(@plan_interval_id::bigint[]) = 0)
-    AND (iep.plan_id = ANY(@plan_id::BIGINT[]) or cardinality(@plan_id::bigint[]) = 0)
+    AND (pi.plan_id = ANY(@plan_id::BIGINT[]) or cardinality(@plan_id::bigint[]) = 0)
     AND (ev.id = ANY(@variation_id::BIGINT[]) or cardinality(@variation_id::bigint[]) = 0)
 ORDER BY e.created_at DESC -- Maybe come back and tweak this sort query a little bit
 LIMIT @_limit::int

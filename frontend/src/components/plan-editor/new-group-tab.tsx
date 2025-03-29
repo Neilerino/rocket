@@ -18,13 +18,12 @@ interface GroupFormData {
 interface NewGroupTabProps {
   context: GroupFilters;
   group: Group | null;
-  saveCallback: RefObject<(() => void) | null>;
+  saveCallback: RefObject<(() => Promise<Group>) | null>;
 }
 
 const NewGroupTab = ({ context, group, saveCallback }: NewGroupTabProps) => {
-  // const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const { mutate: createGroup } = useCreateGroup({ filters: context });
-  const { mutate: updateGroup } = useUpdateGroup({ filters: context });
+  const { mutateAsync: createGroup } = useCreateGroup({ filters: context });
+  const { mutateAsync: updateGroup } = useUpdateGroup({ filters: context });
 
   const [groupFormData, setGroupFormData] = useState<GroupFormData>(
     group || { id: undefined, name: '', description: '' },
@@ -37,15 +36,15 @@ const NewGroupTab = ({ context, group, saveCallback }: NewGroupTabProps) => {
     });
   };
 
-  saveCallback.current = () => {
+  saveCallback.current = async () => {
     if (groupFormData.id) {
-      updateGroup({
+      return await updateGroup({
         id: groupFormData.id,
         name: groupFormData.name,
         description: groupFormData.description,
       });
     } else {
-      createGroup(groupFormData);
+      return await createGroup(groupFormData);
     }
   };
 

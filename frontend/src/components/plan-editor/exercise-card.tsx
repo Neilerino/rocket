@@ -1,14 +1,13 @@
-import { Dumbbell, Clock, BarChart, LayoutGrid, Repeat, Timer, Lock } from 'lucide-react';
-import { Exercise, ExercisePrescription, ParameterType } from './types';
+import { Dumbbell, Clock, BarChart, LayoutGrid, Repeat, Timer } from 'lucide-react';
+import { Exercise, IntervalExercisePrescription } from '@/services/types';
 import { Card, CardHeader, CardBody, CardFooter } from '@heroui/card';
 import { Badge } from '@heroui/react';
 import { Chip } from '@heroui/chip';
 
 interface ExerciseCardProps {
   exercise: Exercise;
-  prescription?: ExercisePrescription;
-  parameterTypes?: ParameterType[];
-  onClick?: (exercise: Exercise, prescription?: ExercisePrescription) => void;
+  prescription?: IntervalExercisePrescription;
+  onClick?: (exercise: Exercise, prescription?: IntervalExercisePrescription) => void;
   selected?: boolean;
   compact?: boolean;
 }
@@ -16,33 +15,30 @@ interface ExerciseCardProps {
 const ExerciseCard = ({
   exercise,
   prescription,
-  parameterTypes = [],
   onClick,
   selected = false,
   compact = false,
 }: ExerciseCardProps) => {
-  // Helper function to format time intervals (like "00:01:30" to "1:30")
-  const formatTimeInterval = (interval?: string): string => {
-    if (!interval) return '';
+  // Helper function to format time intervals (accepts seconds, returns M:SS or H:MM:SS)
+  const formatTimeInterval = (seconds?: number): string => {
+    if (seconds === undefined || seconds === null || isNaN(seconds) || seconds < 0) return '';
 
-    // Remove leading zeros and potentially the hour part if it's 0
-    const parts = interval.split(':').map((part) => parseInt(part, 10));
-    if (parts.length !== 3) return interval;
-
-    const [hours, minutes, seconds] = parts;
+    const totalSeconds = Math.round(seconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
 
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     } else {
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      return `${minutes}:${secs.toString().padStart(2, '0')}`;
     }
   };
 
-  // Determine if we should render parameter details
+  // Determine if we should render parameter details based on service type structure
   const shouldRenderParameters =
-    prescription?.parameters &&
-    Object.keys(prescription.parameters).length > 0 &&
-    parameterTypes.length > 0;
+    prescription?.exerciseVariation?.parameters &&
+    prescription.exerciseVariation.parameters.length > 0;
 
   // Generate handler for card click
   const handleClick = () => {
@@ -84,7 +80,7 @@ const ExerciseCard = ({
         {prescription?.sets && (
           <Chip
             color="primary"
-            variant="filled"
+            variant="solid"
             size={compact ? 'sm' : 'md'}
             className="font-medium bg-primary text-white"
           >
@@ -154,21 +150,6 @@ const ExerciseCard = ({
                   </div>
                 </div>
               )}
-
-              {/* Rest Interval (for repeaters) */}
-              {prescription.restInterval && (
-                <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2.5 border border-gray-100">
-                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 font-medium">Rest Interval</div>
-                    <div className="font-semibold text-gray-800">
-                      {formatTimeInterval(prescription.restInterval)}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -219,62 +200,36 @@ const ExerciseCard = ({
       {shouldRenderParameters && !compact && (
         <CardFooter className="bg-gray-50 border-t p-4">
           <div className="w-full">
-            {/* Locked Parameters Section */}
-            {prescription?.lockedParameters &&
-              Object.keys(prescription.lockedParameters).length > 0 && (
-                <div className="mb-4">
-                  <div className="flex items-center mb-3">
-                    <Lock className="w-4 h-4 mr-2 text-gray-500" />
-                    <h4 className="font-medium text-sm text-gray-700">Constant Parameters</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(prescription.lockedParameters).map(([paramTypeId, value]) => {
-                      const paramType = parameterTypes.find((pt) => pt.id === paramTypeId);
-                      if (!paramType) return null;
-
-                      return (
-                        <div
-                          key={`locked-${paramTypeId}`}
-                          className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border"
-                        >
-                          <span className="text-gray-600 font-medium">{paramType.name}</span>
-                          <Badge variant="flat" color="neutral">
-                            {value} {paramType.defaultUnit}
-                          </Badge>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-            {/* Variable Parameters Section */}
-            {Object.keys(prescription?.parameters || {}).length > 0 && (
-              <div>
-                <div className="flex items-center mb-3">
-                  <LayoutGrid className="w-4 h-4 mr-2 text-gray-500" />
-                  <h4 className="font-medium text-sm text-gray-700">Variable Parameters</h4>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(prescription!.parameters).map(([paramTypeId, value]) => {
-                    const paramType = parameterTypes.find((pt) => pt.id === paramTypeId);
-                    if (!paramType) return null;
-
-                    return (
-                      <div
-                        key={paramTypeId}
-                        className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border"
-                      >
-                        <span className="text-gray-600 font-medium">{paramType.name}</span>
-                        <Badge variant="flat" color="primary">
-                          {value} {paramType.defaultUnit}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
+            {/* Parameters Footer - Updated for service type */}
+            <div className={`mt-3 ${compact ? 'pt-2 border-t' : 'pt-4 border-t'}`}>
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <LayoutGrid className="w-4 h-4" />
+                <span>Parameters</span>
               </div>
-            )}
+              <div className={`grid ${compact ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
+                {/* Iterate over prescription.exerciseVariation.parameters */}
+                {prescription!.exerciseVariation!.parameters!.map((param) => {
+                  const name = param.parameterType?.name || `Param ${param.parameterTypeId}`;
+                  // Value is not available here, display name and unit/locked status
+                  // const value = param.value; // Removed
+                  const unit = param.parameterType?.defaultUnit || ''; // Use defaultUnit
+                  const isLocked = param.locked;
+
+                  return (
+                    <div
+                      key={param.id} // Use param.id as key
+                      className="flex items-center justify-between bg-white p-2.5 rounded-md text-sm border border-gray-100"
+                    >
+                      <span className="text-gray-600 font-medium">{name}</span>
+                      {/* Display unit or locked status instead of value */}
+                      <Badge variant="flat" color={isLocked ? "default" : "primary"} size="sm">
+                        {isLocked ? `Locked (${unit})` : unit}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </CardFooter>
       )}

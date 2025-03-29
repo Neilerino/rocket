@@ -9,6 +9,7 @@ import { useDisclosure } from '@heroui/react';
 import { sampleExercises } from './sample-data';
 import { useGroups, useUpdateGroup } from '@/services/hooks';
 import { Group } from '@/services/types';
+import { Loader2 } from 'lucide-react'; // Import Loader icon
 
 // In the future, this could come from an API
 import { GroupFilters } from '@/services/api';
@@ -16,29 +17,21 @@ import { GroupFilters } from '@/services/api';
 interface GroupSidebarProps {
   group: Group | null;
   onClose: () => void;
-  onUpdateGroup?: (group: Group) => void;
   onSave?: (group: Group) => void;
   isOpen: boolean;
   context: GroupFilters;
 }
 
-const GroupSidebar: React.FC<GroupSidebarProps> = ({
-  group,
-  onClose,
-  onUpdateGroup,
-  onSave,
-  isOpen,
-  context,
-}) => {
+const GroupSidebar: React.FC<GroupSidebarProps> = ({ group, onClose, onSave, isOpen, context }) => {
   const {
     isOpen: isDrawerOpen,
     onOpenChange,
     onClose: onCloseDrawer,
   } = useDisclosure({ isOpen, onClose });
   const { data: groups } = useGroups({ planId: context.planId });
-  const saveCallback = useRef<(() => void) | null>(null);
+  const saveCallback = useRef<(() => Promise<Group>) | null>(null);
   const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('new');
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(group);
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
 
   const tabItems: TabItem[] = [{ id: 'new', label: 'New Group' }];
 
@@ -51,11 +44,20 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
     setActiveTab(tabId as 'new' | 'reuse');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (saveCallback.current) {
-      saveCallback.current();
+      setIsLoading(true); // Start loading
+      try {
+        const newGroup = await saveCallback.current();
+        onSave?.(newGroup);
+        onCloseDrawer(); // Close only on success
+      } catch (error) {
+        console.error('Failed to save group:', error);
+        // Optionally, show an error message to the user
+      } finally {
+        setIsLoading(false); // Stop loading regardless of outcome
+      }
     }
-    onCloseDrawer();
   };
 
   const drawerCloseButton = (
@@ -99,7 +101,7 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
         {/* Content Area */}
         <DrawerBody className="flex-1 overflow-auto p-6">
           {activeTab === 'new' && (
-            <NewGroupTab context={context} group={currentGroup} saveCallback={saveCallback} />
+            <NewGroupTab context={context} group={group} saveCallback={saveCallback} />
           )}
 
           {groups && activeTab === 'reuse' && (
@@ -118,7 +120,16 @@ const GroupSidebar: React.FC<GroupSidebarProps> = ({
             <Button variant="outline" onClick={onCloseDrawer}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>Save</Button>
+            <Button onClick={handleSave} className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Group'
+              )}
+            </Button>
           </div>
         </DrawerFooter>
       </DrawerContent>

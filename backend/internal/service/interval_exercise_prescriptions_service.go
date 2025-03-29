@@ -66,10 +66,10 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 	}
 
 	rows, err := s.PrescriptionRepo.List(ctx, repository.IntervalExercisePrescriptionListParams{
-		PrescriptionId: gox.If(params.PrescriptionId != nil, *params.PrescriptionId, 0),
-		ExerciseId:     gox.If(params.ExerciseId != nil, *params.ExerciseId, 0),
-		IntervalId:     gox.If(params.IntervalId != nil, *params.IntervalId, 0),
-		GroupId:        gox.If(params.GroupId != nil, *params.GroupId, 0),
+		PrescriptionId: gox.IfFunc(params.PrescriptionId != nil, func() int64 { return *params.PrescriptionId }, func() int64 { return 0 }),
+		ExerciseId:     gox.IfFunc(params.ExerciseId != nil, func() int64 { return *params.ExerciseId }, func() int64 { return 0 }),
+		IntervalId:     gox.IfFunc(params.IntervalId != nil, func() int64 { return *params.IntervalId }, func() int64 { return 0 }),
+		GroupId:        gox.IfFunc(params.GroupId != nil, func() int64 { return *params.GroupId }, func() int64 { return 0 }),
 		Limit:          params.Limit,
 		Offset:         params.Offset,
 	})

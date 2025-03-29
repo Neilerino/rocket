@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { Exercise, Group, PlanInterval as Interval, ParameterType } from './types';
-import ExerciseSidebar from './exercise-sidebar';
+import {
+  Group as ServiceGroup,
+  PlanInterval as ServicePlanInterval,
+  IntervalExercisePrescription,
+  Exercise as ServiceExercise,
+} from '@/services/types';
+import ExerciseSidebar, { ExerciseFormData } from './exercise-sidebar';
 import GroupSidebar from './group-sidebar';
 import { AnimatePresence } from 'framer-motion';
 import { ChevronRight, Trash2, Edit } from 'lucide-react';
@@ -9,21 +14,21 @@ import IntervalGroupTabs from './interval-group-tabs';
 import { motion } from 'framer-motion';
 
 interface IntervalEditorProps {
-  interval: Interval;
+  interval: ServicePlanInterval;
   isExpanded: boolean;
   onToggle: () => void;
-  parameterTypes: ParameterType[];
-  onUpdateGroup: (group: Group) => void;
+  allExercises: ServiceExercise[];
+  allGroups: ServiceGroup[];
   onDeleteInterval?: (intervalId: number) => void;
-  onUpdateInterval?: (updatedInterval: Interval) => void;
+  onUpdateInterval?: (updatedInterval: ServicePlanInterval) => void;
 }
 
 const IntervalEditor: React.FC<IntervalEditorProps> = ({
   interval,
   isExpanded,
   onToggle,
-  parameterTypes,
-  onUpdateGroup,
+  allExercises,
+  allGroups,
   onDeleteInterval,
   onUpdateInterval,
 }) => {
@@ -31,8 +36,9 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
 
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
+  const [selectedPrescriptionToEdit, setSelectedPrescriptionToEdit] =
+    useState<IntervalExercisePrescription | null>(null);
+  const [currentGroup, setCurrentGroup] = useState<ServiceGroup | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleDeleteInterval = (e: React.MouseEvent) => {
@@ -47,10 +53,22 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
     setShowEditDialog(true);
   };
 
-  const handleSaveInterval = (updatedInterval: Interval) => {
+  const handleSaveInterval = (updatedInterval: ServicePlanInterval) => {
     if (onUpdateInterval) {
       onUpdateInterval(updatedInterval);
     }
+  };
+
+  const handleSavePrescription = (formData: ExerciseFormData) => {
+    console.log('Saving prescription:', formData);
+    setExerciseDrawerOpen(false);
+    setSelectedPrescriptionToEdit(null);
+    setCurrentGroup(null);
+  };
+
+  const handleSetSelectedExercise = (exercise: ServiceExercise | null) => {
+    console.log('Exercise selected in IntervalGroupTabs:', exercise);
+    // TODO: Implement logic if needed - e.g., populate sidebar form based on selection?
   };
 
   return (
@@ -125,102 +143,34 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
               intervalId={interval.id}
               onGroupDrawerOpen={() => setGroupDrawerOpen(true)}
               onExerciseDrawerOpen={() => setExerciseDrawerOpen(true)}
-              setSelectedExercise={setSelectedExercise}
+              setSelectedExercise={handleSetSelectedExercise}
               setCurrentGroup={setCurrentGroup}
-              allExercises={allExercises}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <div className="border-b bg-white">
-              {groups && groups.length > 0 && (
-                <Tabs
-                  tabs={groups.map((group) => ({
-                    id: String(group.id),
-                    label: <span className="whitespace-nowrap">{group.name}</span>,
-                  }))}
-                  activeTabId={String(activeGroup) || ''}
-                  onTabChange={handleSelectTab}
-                  onSave={(id, name) => {
-                    updateGroup.mutate({ id: Number(id), name });
-                  }}
-                  actionButton={
-                    <button
-                      className="group h-full w-full px-6 py-2 text-sm text-gray-600 hover:text-gray-800 active:text-gray-900 hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-2 transition-all duration-150 outline-none focus:outline-none hover:shadow-sm"
-                      onClick={() => setGroupDrawerOpen(true)}
-                    >
-                      <Plus className="w-4 h-4 transform group-hover:scale-110 transition-transform duration-200" />
-                      <span className="transform group-hover:scale-105 transition-transform duration-200">
-                        Add Group
-                      </span>
-                    </button>
-                  }
-                />
-              )}
-
-              {!isLoading && (!groups || groups.length === 0) && (
-                <div className="p-4 text-center">
-                  <button
-                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-                    onClick={() => setGroupDrawerOpen(true)}
-                  >
-                    <Plus className="w-4 h-4 inline mr-2" />
-                    Add First Group
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4">
-              {groups &&
-                groups.map(
-                  (group) =>
-                    activeGroup === group.id && (
-                      <GroupDropDown
-                        group={group}
-                        allExercises={allExercises}
-                        setSelectedExercise={setSelectedExercise}
-                        setCurrentGroup={setCurrentGroup}
-                        setExerciseDrawerOpen={setExerciseDrawerOpen}
-                      />
-                    ),
-                )}
-            </div>
-          </motion.div>
-        )} */}
       <ExerciseSidebar
-        exercise={selectedExercise}
-        group={currentGroup}
+        prescriptionToEdit={selectedPrescriptionToEdit}
+        allExercises={allExercises}
+        allGroups={allGroups}
         onClose={() => {
-          setSelectedExercise(null);
+          setSelectedPrescriptionToEdit(null);
           setCurrentGroup(null);
           setExerciseDrawerOpen(false);
         }}
         isOpen={exerciseDrawerOpen}
-        onSave={() => {}}
-        allExercises={allExercises}
-        intervalId={interval.id}
-        parameterTypes={parameterTypes}
+        onSave={handleSavePrescription}
       />
       <GroupSidebar
         group={currentGroup}
         onClose={() => {
           setCurrentGroup(null);
+          setGroupDrawerOpen(false);
         }}
         isOpen={groupDrawerOpen}
-        onUpdateGroup={onUpdateGroup}
         onSave={(group) => {
-          onUpdateGroup(group);
-          setCurrentGroup(null);
+          setCurrentGroup(group);
         }}
         context={groupContext}
       />

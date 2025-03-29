@@ -1,5 +1,5 @@
 import { RefObject, useState } from 'react';
-import { Exercise } from './types';
+import { Exercise } from '@/services/types';
 import GroupCard from './group-card';
 import { Search } from 'lucide-react';
 import { Group } from '@/services/types';
@@ -10,7 +10,7 @@ import { useAssignGroupToInterval } from '@/services/hooks';
 interface ReuseGroupTabProps {
   availableGroups: Group[];
   context: GroupFilters;
-  saveCallback: RefObject<(() => void) | null>;
+  saveCallback: RefObject<(() => Promise<Group>) | null>;
   allExercises?: Exercise[];
 }
 
@@ -22,15 +22,16 @@ const ReuseGroupTab = ({
 }: ReuseGroupTabProps) => {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { mutate: assignGroupToInterval } = useAssignGroupToInterval(context);
+  const { mutateAsync: assignGroupToInterval } = useAssignGroupToInterval(context);
 
-  saveCallback.current = () => {
+  saveCallback.current = async () => {
     if (selectedGroupId && context.intervalId) {
-      assignGroupToInterval({
+      await assignGroupToInterval({
         groupId: selectedGroupId,
         intervalId: context.intervalId,
       });
     }
+    return availableGroups.find((g) => g.id === selectedGroupId) as Group;
   };
 
   return (

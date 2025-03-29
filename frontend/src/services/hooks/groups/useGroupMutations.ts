@@ -26,6 +26,7 @@ export const useCreateGroup = ({ filters }: { filters: GroupFilters }) => {
       queryClient.setQueryData(createGroupCacheKey({ filters }), (old: Group[] | undefined) =>
         old ? [...old, group] : [group],
       );
+      return group;
     },
   });
 };
@@ -83,7 +84,7 @@ export const useDeleteGroup = ({ filters }: { filters: GroupFilters }) => {
   });
 };
 
-export const useAssignGroupToInterval = ({ filters }: { filters: GroupFilters }) => {
+export const useAssignGroupToInterval = (filters: GroupFilters = {}) => {
   const queryClient = useQueryClient();
 
   return useMutation({
