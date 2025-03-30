@@ -68,3 +68,65 @@ func (q *Queries) ParameterTypes_GetById(ctx context.Context, id int64) (Paramet
 	)
 	return i, err
 }
+
+const parameterTypes_List = `-- name: ParameterTypes_List :many
+SELECT id, name, data_type, default_unit, min_value, max_value, user_id, parameter_type_id FROM parameter_types 
+JOIN user_parameter_types on parameter_types.id = user_parameter_types.parameter_type_id
+WHERE (user_parameter_types.user_id = $1::BIGINT or $1::bigint = 0)
+AND (parameter_types.id = $2::BIGINT or $2::bigint = 0)
+ORDER BY parameter_types.name DESC
+LIMIT $4::int
+OFFSET $3::int
+`
+
+type ParameterTypes_ListParams struct {
+	UserID          int64
+	ParameterTypeID int64
+	Offset          int32
+	Limit           int32
+}
+
+type ParameterTypes_ListRow struct {
+	ID              int64
+	Name            string
+	DataType        string
+	DefaultUnit     string
+	MinValue        pgtype.Float8
+	MaxValue        pgtype.Float8
+	UserID          int64
+	ParameterTypeID int64
+}
+
+func (q *Queries) ParameterTypes_List(ctx context.Context, arg ParameterTypes_ListParams) ([]ParameterTypes_ListRow, error) {
+	rows, err := q.db.Query(ctx, parameterTypes_List,
+		arg.UserID,
+		arg.ParameterTypeID,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ParameterTypes_ListRow
+	for rows.Next() {
+		var i ParameterTypes_ListRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.DataType,
+			&i.DefaultUnit,
+			&i.MinValue,
+			&i.MaxValue,
+			&i.UserID,
+			&i.ParameterTypeID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

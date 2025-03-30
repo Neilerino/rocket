@@ -81,6 +81,12 @@ func NewRouter(db *db.Database) http.Handler {
 			r.Delete("/{id}", exercise_variations_handler.Delete)
 		})
 
+		//Parameter Types
+		parameter_types_handler := &handlers.ParameterTypesHandler{Db: db}
+		r.Route("/parameter-types", func(r chi.Router) {
+			r.Get("/", parameter_types_handler.List)
+		})
+
 		//Interval Exercise Prescriptions
 		interval_exercise_prescriptions_handler := &handlers.IntervalExercisePrescriptionsHandler{Db: db}
 		r.Route("/interval-exercise-prescriptions", func(r chi.Router) {

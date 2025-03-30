@@ -66,7 +66,6 @@ func (h *IntervalExercisePrescriptionsHandler) Create(w http.ResponseWriter, r *
 
 		prescription, err := prescription_service.CreateOne(r.Context(), service.PrescriptionCreateData{
 			GroupId:        args.GroupId,
-			ExerciseId:     args.ExerciseVariationId,
 			VariationId:    args.ExerciseVariationId,
 			PlanIntervalId: args.PlanIntervalId,
 			Rpe:            int32(args.RPE),

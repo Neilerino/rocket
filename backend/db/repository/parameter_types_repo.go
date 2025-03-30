@@ -19,6 +19,13 @@ type CreateParameterTypeParams struct {
 	MaxValue    float64
 }
 
+type ListParameterTypesParams struct {
+	UserId          int64
+	ParameterTypeId int64
+	Offset          int32
+	Limit           int32
+}
+
 func NewParameterTypesRepository(queries *db.Queries) *ParameterTypesRepository {
 	return &ParameterTypesRepository{Queries: queries}
 }
@@ -30,5 +37,14 @@ func (r *ParameterTypesRepository) Create(ctx context.Context, params CreatePara
 		DefaultUnit: params.DefaultUnit,
 		MinValue:    pgtype.Float8{Float64: params.MinValue, Valid: true},
 		MaxValue:    pgtype.Float8{Float64: params.MaxValue, Valid: true},
+	})
+}
+
+func (r *ParameterTypesRepository) List(ctx context.Context, params ListParameterTypesParams) ([]db.ParameterTypes_ListRow, error) {
+	return r.Queries.ParameterTypes_List(ctx, db.ParameterTypes_ListParams{
+		UserID:          params.UserId,
+		ParameterTypeID: params.ParameterTypeId,
+		Offset:          params.Offset,
+		Limit:           params.Limit,
 	})
 }

@@ -39,7 +39,6 @@ type PrescriptionListData struct {
 
 type PrescriptionCreateData struct {
 	GroupId        int64
-	ExerciseId     int64
 	VariationId    int64
 	PlanIntervalId int64
 	Rpe            int32
@@ -114,9 +113,16 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 }
 
 func (s *IntervalExercisePrescriptionsService) CreateOne(ctx context.Context, params PrescriptionCreateData) (*types.IntervalExercisePrescription, error) {
+	exercises, err := s.VariationRepo.List(ctx, repository.ExerciseVariationListParams{
+		VariationId: []int64{params.VariationId},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	row, err := s.PrescriptionRepo.CreateOne(ctx, repository.PrescriptionCreateData{
 		GroupId:        params.GroupId,
-		ExerciseId:     params.ExerciseId,
+		ExerciseId:     exercises[0].ExerciseID,
 		VariationId:    params.VariationId,
 		PlanIntervalId: params.PlanIntervalId,
 		RPE:            params.Rpe,

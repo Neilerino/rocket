@@ -106,3 +106,8 @@ type User struct {
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp
 }
+
+type UserParameterType struct {
+	UserID          int64
+	ParameterTypeID int64
+}

@@ -132,3 +132,10 @@ CREATE TABLE IF NOT EXISTS interval_exercise_prescriptions (
     duration INTERVAL,
     rest INTERVAL
 );
+
+
+CREATE TABLE IF NOT EXISTS user_parameter_types (
+    user_id BIGINT NOT NULL REFERENCES users (id),
+    parameter_type_id BIGINT NOT NULL REFERENCES parameter_types (id),
+    PRIMARY KEY (user_id, parameter_type_id)
+);
