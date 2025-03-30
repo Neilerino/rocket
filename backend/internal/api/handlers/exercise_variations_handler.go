@@ -108,12 +108,12 @@ func (h *ExerciseVariationsHandler) List(w http.ResponseWriter, r *http.Request)
 			exerciseId, userId, planId, groupId, planIntervalId, limit, offset)
 
 		params := service.ExerciseVariationListParams{
-			ExerciseId:     []int64{exerciseId},
-			UserId:         userId,
-			PlanId:         []int64{planId},
-			GroupId:        []int64{groupId},
-			PlanIntervalId: []int64{planIntervalId},
-			VariationId:    []int64{variationId},
+			ExerciseId:     &[]int64{exerciseId},
+			UserId:         &userId,
+			PlanId:         &[]int64{planId},
+			GroupId:        &[]int64{groupId},
+			PlanIntervalId: &[]int64{planIntervalId},
+			VariationId:    &[]int64{variationId},
 			Limit:          int32(limit),
 			Offset:         int32(offset),
 		}
@@ -156,8 +156,10 @@ func (h *ExerciseVariationsHandler) Create(w http.ResponseWriter, r *http.Reques
 			return err
 		}
 
+		log.Printf("Successfully created variation: %v", variation_ret)
+
 		variations, err := variation_service.List(r.Context(), service.ExerciseVariationListParams{
-			VariationId: []int64{variation_ret.ID},
+			VariationId: &[]int64{variation_ret.ID},
 			Limit:       1,
 		})
 		if err != nil {

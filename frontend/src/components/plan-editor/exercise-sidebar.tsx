@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Exercise as ServiceExercise,
-  Group,
   IntervalExercisePrescription,
   ExerciseVariationParam,
+  Group,
+  ExerciseVariation,
+  PlanInterval,
+  CreateExerciseParameterTypeDto,
 } from '@/services/types';
 import { X } from 'lucide-react';
 import NewExerciseTab from './new-exercise-tab';
@@ -12,38 +14,39 @@ import { Tabs, TabItem } from '../ui/tabs';
 import { Button } from 'shad/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from '@heroui/drawer';
 import { useDisclosure } from '@heroui/react';
+import { useExercises, useParameterTypes } from '@/services/hooks';
+import { Loader2 } from 'lucide-react'; // Import Loader icon
+import { useCreatePrescription } from '@/services/hooks';
+import { useCreateExerciseVariation } from '@/services/hooks';
+import { useCreateExercise } from '@/services/hooks';
 
 // Export the type for the form state within the sidebar
 export interface ExerciseFormData {
   id: number | null;
-  exerciseId: number | null;
+  variationId: number | null;
   name: string;
   description: string | null;
-  sets: number | null;
+  sets: number;
   reps: number | null;
-  rest: number | null;
+  rest: string | null;
   rpe: number | null;
-  durationMinutes: number | null;
-  parameters: Record<string, number>;
-  lockedParameters: Record<string, boolean>;
-  exercise: ServiceExercise | null;
+  durationMinutes: string | null;
+  parameters: CreateExerciseParameterTypeDto[];
 }
 
 interface ExerciseSidebarProps {
   prescriptionToEdit?: IntervalExercisePrescription | null;
-  allExercises: ServiceExercise[];
-  allGroups: Group[];
   onClose: () => void;
-  onSave: (formData: ExerciseFormData) => void;
+  currentGroup: Group | null;
+  interval: PlanInterval;
   isOpen: boolean;
 }
 
 const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
   prescriptionToEdit,
-  allExercises,
-  allGroups,
   onClose,
-  onSave,
+  currentGroup,
+  interval,
   isOpen,
 }) => {
   const {
@@ -52,58 +55,88 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
     onClose: onCloseDrawer,
   } = useDisclosure({ isOpen, onClose });
 
+  const { mutateAsync: createExercise, isPending: createExerciseLoading } = useCreateExercise({
+    intervalId: interval.id,
+  });
+  const { mutateAsync: createPrescription, isPending: createPrescriptionLoading } =
+    useCreatePrescription();
+  const { mutateAsync: createExerciseVariation, isPending: createExerciseVariationLoading } =
+    useCreateExerciseVariation({ intervalId: interval.id });
+  const { data: allExercises, isLoading: exercisesLoading } = useExercises({ userId: 1 });
+  const { data: parameterTypes, isLoading: parameterTypesLoading } = useParameterTypes({
+    userId: 1,
+  });
+
+  const isLoading = exercisesLoading || parameterTypesLoading;
+  const isSaving =
+    createExerciseLoading || createPrescriptionLoading || createExerciseVariationLoading;
+
   const [activeTab, setActiveTab] = useState<'new' | 'reuse'>('reuse');
   const [formData, setFormData] = useState<ExerciseFormData>({
     id: null,
-    exerciseId: null,
+    variationId: null,
     name: '',
-    description: null,
+    description: '',
     sets: 3,
     reps: 10,
     rest: 60,
     rpe: null,
     durationMinutes: null,
-    parameters: {},
-    lockedParameters: {},
-    exercise: null,
+    parameters: [],
   });
+
+  const onVariantSelect = (variant: ExerciseVariation) => {
+    const params: Record<number, string | null> = {};
+    const locked: Record<number, string | null> = {};
+
+    variant.parameters?.forEach((param: ExerciseVariationParam) => {
+      if (param.locked) {
+        locked[param.parameterTypeId] = null;
+      } else {
+        params[param.parameterTypeId] = null;
+      }
+    });
+
+    setFormData({
+      ...formData,
+      name: variant.name,
+      variationId: variant.id,
+    });
+    setActiveTab('new');
+  };
 
   useEffect(() => {
     if (prescriptionToEdit) {
       setActiveTab('new'); // Editing always starts in the 'new' tab view for now
       const variation = prescriptionToEdit.exerciseVariation;
-      const exercise = variation?.exercise;
-      const params: Record<string, number> = {};
-      const locked: Record<string, boolean> = {};
+      const params: Record<number, string | null> = {};
+      const locked: Record<number, string | null> = {};
 
       variation?.parameters?.forEach((param: ExerciseVariationParam) => {
-        // Assuming parameter value is stored elsewhere or needs fetching;
-        // Using placeholder 0 for now. The key is the parameterTypeId.
-        // Also assuming the actual value isn't stored directly in ExerciseVariationParam.
-        // This part might need adjustment based on how parameter values are actually stored/retrieved.
-        params[param.parameterTypeId.toString()] = 0; // Placeholder value
-        locked[param.parameterTypeId.toString()] = param.locked;
+        if (param.locked) {
+          locked[param.parameterTypeId] = null;
+        } else {
+          params[param.parameterTypeId] = null;
+        }
       });
 
       setFormData({
         id: prescriptionToEdit.id,
-        exerciseId: variation?.exerciseId ?? null,
-        name: exercise?.name ?? 'Unknown Exercise',
-        description: exercise?.description ?? null,
+        variationId: variation?.id ?? null,
+        name: variation?.name ?? 'Unknown Exercise',
+        description: prescriptionToEdit.exerciseVariation?.exercise?.description ?? '',
         sets: prescriptionToEdit.sets ?? null,
         reps: prescriptionToEdit.reps ?? null,
         rest: prescriptionToEdit.rest ?? null,
-        exercise: exercise ?? null,
         durationMinutes: prescriptionToEdit.duration ?? null, // Assuming duration is in minutes
         rpe: prescriptionToEdit.rpe ?? null,
-        parameters: params, // Needs actual values
-        lockedParameters: locked,
+        parameters: [],
       });
     } else {
       setActiveTab('reuse'); // Default to reuse tab when creating new
       setFormData({
         id: null,
-        exerciseId: null,
+        variationId: null,
         name: '',
         description: null,
         sets: 3,
@@ -111,50 +144,40 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
         rest: 60,
         rpe: null,
         durationMinutes: null,
-        parameters: {},
-        lockedParameters: {},
-        exercise: null,
+        parameters: [],
       });
     }
-  }, [prescriptionToEdit, allExercises]); // Added allExercises to dependency array
+  }, [prescriptionToEdit]); // Depend on prescriptionToEdit
 
   const handleFormChange = (field: keyof ExerciseFormData, value: any) => {
     setFormData((prev) => {
       const newState = { ...prev, [field]: value };
 
-      if (field === 'exerciseId') {
-        const selectedExercise = allExercises.find((ex) => ex.id === value) || null;
-        return {
-          ...newState,
-          exerciseId: value,
-          exercise: selectedExercise,
-          name: selectedExercise ? selectedExercise.name : newState.name,
-          description: selectedExercise ? selectedExercise.description : newState.description,
-          parameters: selectedExercise ? {} : newState.parameters,
-          lockedParameters: selectedExercise ? {} : newState.lockedParameters,
-        };
-      }
-
-      if (field === 'exercise' && value) {
-        const newExercise = value as ServiceExercise;
-        return {
-          ...newState,
-          exercise: newExercise,
-          exerciseId: newExercise.id,
-          name: newExercise.name,
-          description: newExercise.description,
-          parameters: {},
-          lockedParameters: {},
-        };
-      }
-
       return newState;
     });
   };
 
-  const handleSave = () => {
-    if (formData) {
-      onSave(formData);
+  const handleSave = async () => {
+    if (!formData.id && currentGroup && interval) {
+      const exercise = await createExercise({
+        name: formData.name,
+        description: formData.description ?? '',
+        userId: 1,
+      });
+      const variation = await createExerciseVariation({
+        exerciseId: exercise.id,
+        parameterTypes: formData.parameters,
+      });
+      await createPrescription({
+        groupId: currentGroup.id,
+        planIntervalId: interval.id,
+        exerciseVariationId: variation.id,
+        sets: formData.sets,
+        reps: formData.reps ?? undefined,
+        rest: formData.rest ?? undefined,
+        rpe: formData.rpe ?? 0,
+        duration: formData.durationMinutes ?? '10 minutes',
+      });
     }
     onClose();
   };
@@ -204,16 +227,25 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
         <DrawerBody
           className={`flex-1 ${activeTab === 'reuse' ? 'overflow-hidden p-6 pb-0' : 'overflow-auto p-6'}`}
         >
-          {activeTab === 'new' && formData && (
-            <NewExerciseTab formData={formData} onFormChange={handleFormChange} />
-          )}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            </div>
+          ) : (
+            <>
+              {activeTab === 'new' && formData && (
+                <NewExerciseTab
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                  allExercises={allExercises || []}
+                  parameterTypes={parameterTypes || []}
+                />
+              )}
 
-          {activeTab === 'reuse' && formData && (
-            <ReuseExerciseTab
-              exercises={allExercises}
-              formData={formData}
-              onFormChange={handleFormChange}
-            />
+              {activeTab === 'reuse' && formData && (
+                <ReuseExerciseTab exercises={allExercises || []} onSelect={onVariantSelect} />
+              )}
+            </>
           )}
         </DrawerBody>
 
@@ -222,7 +254,7 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!formData}>
+            <Button onClick={handleSave} disabled={!formData || isSaving}>
               Save
             </Button>
           </div>

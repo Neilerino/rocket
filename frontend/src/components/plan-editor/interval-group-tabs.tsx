@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Plus } from 'lucide-react';
 import { Exercise, Group } from '@/services/types';
 import { useGroups, useUpdateGroup } from '@/services/hooks';
@@ -12,6 +12,7 @@ interface IntervalGroupTabsProps {
   onExerciseDrawerOpen: () => void;
   setSelectedExercise: (exercise: Exercise | null) => void;
   setCurrentGroup: (group: Group | null) => void;
+  currentGroup: Group | null;
 }
 
 const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
@@ -19,6 +20,7 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
   onGroupDrawerOpen,
   onExerciseDrawerOpen,
   setSelectedExercise,
+  currentGroup,
   setCurrentGroup,
 }) => {
   const groupContext: GroupFilters = { intervalId: intervalId };
@@ -26,15 +28,12 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
 
   const updateGroup = useUpdateGroup({ filters: groupContext });
 
-  const [activeGroup, setActiveGroup] = useState<number | null>(groups?.[0]?.id || null);
-
   const handleSelectTab = (id: string) => {
-    setActiveGroup(Number(id));
+    setCurrentGroup(groups?.find((group) => group.id === Number(id)) || null);
   };
 
   return (
     <>
-      {/* Custom Tabs Container */}
       <div className="border-b bg-white">
         {groups && groups.length > 0 && (
           <Tabs
@@ -42,7 +41,7 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
               id: String(group.id),
               label: <span className="whitespace-nowrap">{group.name}</span>,
             }))}
-            activeTabId={String(activeGroup) || ''}
+            activeTabId={String(currentGroup?.id || '')}
             onTabChange={handleSelectTab}
             onSave={(id: string, name: string) => {
               updateGroup.mutate({ id: Number(id), name });
@@ -78,7 +77,7 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
         {groups &&
           groups.map(
             (group) =>
-              activeGroup === group.id && (
+              currentGroup?.id === group.id && (
                 <GroupDropDown
                   key={group.id}
                   group={group}

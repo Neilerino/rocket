@@ -21,7 +21,7 @@ export const useCreatePrescription = () => {
     onSuccess: (_, variables) => {
       // Invalidate relevant queries
 
-      throw new Error('Not implemented');
+      return;
       queryClient.invalidateQueries({
         queryKey: createPrescriptionCacheKey({
           filters: { groupId: variables.groupId },

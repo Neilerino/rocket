@@ -75,10 +75,10 @@ SELECT
 FROM
     exercise_variations ev
     JOIN exercises e ON e.id = ev.exercise_id
-    JOIN exercise_variation_params evp ON evp.exercise_variation_id = ev.id
-    JOIN parameter_types pt ON pt.id = evp.parameter_type_id
-    JOIN interval_exercise_prescriptions iep ON iep.exercise_variation_id = ev.id
-    JOIN plan_intervals pi ON pi.id = iep.plan_interval_id
+    LEFT OUTER JOIN exercise_variation_params evp ON evp.exercise_variation_id = ev.id
+    LEFT OUTER JOIN parameter_types pt ON pt.id = evp.parameter_type_id
+    LEFT OUTER JOIN interval_exercise_prescriptions iep ON iep.exercise_variation_id = ev.id
+    LEFT OUTER JOIN plan_intervals pi ON pi.id = iep.plan_interval_id
 WHERE
     (ev.exercise_id = ANY($1::BIGINT[]) or cardinality($1::bigint[]) = 0) 
     AND (e.user_id = $2::BIGINT or $2::bigint = 0)
@@ -111,13 +111,13 @@ type ExerciseVariations_ListWithDetailsRow struct {
 	EUserID         pgtype.Int8
 	ECreatedAt      pgtype.Timestamp
 	EUpdatedAt      pgtype.Timestamp
-	EvpID           int64
-	ParameterTypeID int64
-	Locked          bool
-	PtID            int64
-	PtName          string
-	PtDataType      string
-	PtDefaultUnit   string
+	EvpID           pgtype.Int8
+	ParameterTypeID pgtype.Int8
+	Locked          pgtype.Bool
+	PtID            pgtype.Int8
+	PtName          pgtype.Text
+	PtDataType      pgtype.Text
+	PtDefaultUnit   pgtype.Text
 	PtMinValue      pgtype.Float8
 	PtMaxValue      pgtype.Float8
 }

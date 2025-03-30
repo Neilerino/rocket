@@ -3,33 +3,25 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@herou
 import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
 import { Textarea } from '@heroui/input';
-import { PlanInterval } from './types';
+import { PlanInterval } from '@/services/types';
+
+import { useUpdateInterval } from '@/services/hooks';
 
 interface IntervalEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
   interval: PlanInterval;
-  onSave: (updatedInterval: PlanInterval) => void;
 }
 
-const IntervalEditDialog: React.FC<IntervalEditDialogProps> = ({
-  isOpen,
-  onClose,
-  interval,
-  onSave,
-}) => {
+const IntervalEditDialog: React.FC<IntervalEditDialogProps> = ({ isOpen, onClose, interval }) => {
   const [name, setName] = useState(interval.name);
   const [description, setDescription] = useState(interval.description || '');
   const [duration, setDuration] = useState(interval.duration);
 
+  const { mutate: updateInterval } = useUpdateInterval();
+
   const handleSave = () => {
-    const updatedInterval: PlanInterval = {
-      ...interval,
-      name,
-      description,
-      duration,
-    };
-    onSave(updatedInterval);
+    updateInterval({ id: interval.id, name, description, duration });
     onClose();
   };
 

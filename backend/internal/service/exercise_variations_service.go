@@ -6,6 +6,7 @@ import (
 	"backend/internal/types"
 	"context"
 	"errors"
+	"log"
 )
 
 type ExerciseVariationsService struct {
@@ -15,12 +16,12 @@ type ExerciseVariationsService struct {
 }
 
 type ExerciseVariationListParams struct {
-	ExerciseId     []int64
-	GroupId        []int64
-	PlanId         []int64
-	PlanIntervalId []int64
-	UserId         int64
-	VariationId    []int64
+	ExerciseId     *[]int64
+	GroupId        *[]int64
+	PlanId         *[]int64
+	PlanIntervalId *[]int64
+	UserId         *int64
+	VariationId    *[]int64
 	Limit          int32
 	Offset         int32
 }
@@ -49,21 +50,22 @@ func NewExerciseVariationsService(queries *db.Queries) *ExerciseVariationsServic
 }
 
 func (s *ExerciseVariationsService) List(ctx context.Context, params ExerciseVariationListParams) ([]types.ExerciseVariation, error) {
-	repoParams := repository.ExerciseVariationListParams{
-		ExerciseId:     params.ExerciseId,
-		GroupId:        params.GroupId,
-		PlanId:         params.PlanId,
-		PlanIntervalId: params.PlanIntervalId,
-		UserId:         params.UserId,
-		VariationId:    params.VariationId,
+	log.Printf("Listing exercise variations with params: %v", params)
+	rows, err := s.VariationRepo.List(ctx, repository.ExerciseVariationListParams{
+		ExerciseId:     DerefOrDefault(params.ExerciseId, []int64{}),
+		GroupId:        DerefOrDefault(params.GroupId, []int64{}),
+		PlanId:         DerefOrDefault(params.PlanId, []int64{}),
+		PlanIntervalId: DerefOrDefault(params.PlanIntervalId, []int64{}),
+		UserId:         DerefOrDefault(params.UserId, 0),
+		VariationId:    DerefOrDefault(params.VariationId, []int64{}),
 		Limit:          params.Limit,
 		Offset:         params.Offset,
-	}
-
-	rows, err := s.VariationRepo.List(ctx, repoParams)
+	})
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Successfully retrieved exercise variations, count: %d", len(rows))
 
 	variations := ExerciseVariationRowToApi(rows)
 

@@ -5,6 +5,7 @@ import (
 	api_utils "backend/internal/api/utils"
 	"backend/internal/service"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -57,6 +58,7 @@ func (h *IntervalExercisePrescriptionsHandler) List(w http.ResponseWriter, r *ht
 func (h *IntervalExercisePrescriptionsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var args CreateIntervalExercisePrescriptionApiArgs
 	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+		log.Printf("Error decoding request body: %v", err)
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}

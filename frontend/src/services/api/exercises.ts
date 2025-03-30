@@ -1,6 +1,12 @@
 import apiClient from './client';
 import { ApiResponse } from './errorHandler';
-import { Exercise, CreateExerciseDto, UpdateExerciseDto, ExerciseVariation, CreateExerciseVariationDto } from '../types';
+import {
+  Exercise,
+  CreateExerciseDto,
+  UpdateExerciseDto,
+  ExerciseVariation,
+  CreateExerciseVariationDto,
+} from '../types';
 
 export interface ExerciseFilters {
   id?: number;
@@ -66,10 +72,9 @@ export const ExerciseService = {
   },
 
   async createExerciseVariation(
-    exerciseId: number, 
-    variationData: CreateExerciseVariationDto
+    variationData: CreateExerciseVariationDto,
   ): Promise<ApiResponse<ExerciseVariation>> {
-    return apiClient.post(`/exercises/${exerciseId}/create-variation`, variationData);
+    return apiClient.post(`/exercises/${variationData.exerciseId}/create-variation`, variationData);
   },
 
   async deleteExerciseVariation(id: number): Promise<ApiResponse<void>> {

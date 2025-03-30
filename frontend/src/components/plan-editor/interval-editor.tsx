@@ -17,20 +17,14 @@ interface IntervalEditorProps {
   interval: ServicePlanInterval;
   isExpanded: boolean;
   onToggle: () => void;
-  allExercises: ServiceExercise[];
-  allGroups: ServiceGroup[];
   onDeleteInterval?: (intervalId: number) => void;
-  onUpdateInterval?: (updatedInterval: ServicePlanInterval) => void;
 }
 
 const IntervalEditor: React.FC<IntervalEditorProps> = ({
   interval,
   isExpanded,
   onToggle,
-  allExercises,
-  allGroups,
   onDeleteInterval,
-  onUpdateInterval,
 }) => {
   const groupContext = { intervalId: interval.id, planId: interval.planId };
 
@@ -51,19 +45,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
   const handleEditInterval = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowEditDialog(true);
-  };
-
-  const handleSaveInterval = (updatedInterval: ServicePlanInterval) => {
-    if (onUpdateInterval) {
-      onUpdateInterval(updatedInterval);
-    }
-  };
-
-  const handleSavePrescription = (formData: ExerciseFormData) => {
-    console.log('Saving prescription:', formData);
-    setExerciseDrawerOpen(false);
-    setSelectedPrescriptionToEdit(null);
-    setCurrentGroup(null);
   };
 
   const handleSetSelectedExercise = (exercise: ServiceExercise | null) => {
@@ -127,7 +108,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
         isOpen={showEditDialog}
         onClose={() => setShowEditDialog(false)}
         interval={interval}
-        onSave={handleSaveInterval}
       />
 
       <AnimatePresence>
@@ -144,6 +124,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
               onGroupDrawerOpen={() => setGroupDrawerOpen(true)}
               onExerciseDrawerOpen={() => setExerciseDrawerOpen(true)}
               setSelectedExercise={handleSetSelectedExercise}
+              currentGroup={currentGroup}
               setCurrentGroup={setCurrentGroup}
             />
           </motion.div>
@@ -152,15 +133,14 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
 
       <ExerciseSidebar
         prescriptionToEdit={selectedPrescriptionToEdit}
-        allExercises={allExercises}
-        allGroups={allGroups}
         onClose={() => {
           setSelectedPrescriptionToEdit(null);
           setCurrentGroup(null);
           setExerciseDrawerOpen(false);
         }}
         isOpen={exerciseDrawerOpen}
-        onSave={handleSavePrescription}
+        currentGroup={currentGroup}
+        interval={interval}
       />
       <GroupSidebar
         group={currentGroup}

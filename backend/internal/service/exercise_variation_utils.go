@@ -21,15 +21,15 @@ func ExerciseVariationRowToApi(rows []db.ExerciseVariations_ListWithDetailsRow) 
 		}
 
 		param := types.ExerciseVariationParam{
-			ID:                  row.EvpID,
+			ID:                  row.EvpID.Int64,
 			ExerciseVariationId: row.ID,
-			Locked:              row.Locked,
-			ParameterTypeId:     row.PtID,
+			Locked:              row.Locked.Bool,
+			ParameterTypeId:     row.PtID.Int64,
 			ParameterType: types.ParameterType{
-				ID:          row.PtID,
-				Name:        row.PtName,
-				DataType:    row.PtDataType,
-				DefaultUnit: row.PtDefaultUnit,
+				ID:          row.PtID.Int64,
+				Name:        row.PtName.String,
+				DataType:    row.PtDataType.String,
+				DefaultUnit: row.PtDefaultUnit.String,
 				MinValue:    row.PtMinValue.Float64,
 				MaxValue:    row.PtMaxValue.Float64,
 			},

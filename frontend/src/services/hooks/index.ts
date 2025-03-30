@@ -4,3 +4,4 @@ export * from './groups';
 export * from './exercises';
 export * from './exerciseVariations';
 export * from './prescriptions';
+export * from './parameterTypes';

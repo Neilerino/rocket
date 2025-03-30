@@ -1,29 +1,15 @@
-import { Exercise, ExercisePrescription, ParameterType } from './types';
-import { useState, useEffect, useRef } from 'react';
-import { Search, X } from 'lucide-react';
+import { Exercise, ExerciseVariation } from '@/services/types';
+import { useState, useRef } from 'react';
 import { Input } from '@heroui/input';
 import ExpandableExerciseCard from './expandable-exercise-card';
-
-interface ExerciseVariant {
-  id: string;
-  name?: string;
-  prescription: ExercisePrescription;
-}
+import { X } from 'lucide-react';
 
 interface ReuseExerciseTabProps {
   exercises: Exercise[];
-  exerciseVariants?: Record<string, ExerciseVariant[]>;
-  parameterTypes?: ParameterType[];
-  onSelect: (exercise: Exercise, variant?: ExerciseVariant) => void;
+  onSelect: (variant: ExerciseVariation) => void;
 }
 
-const ReuseExerciseTab = ({
-  exercises,
-  exerciseVariants = {},
-  parameterTypes = [],
-  onSelect,
-}: ReuseExerciseTabProps) => {
-  const [selectedVariant, setSelectedVariant] = useState<ExerciseVariant | null>(null);
+const ReuseExerciseTab = ({ exercises, onSelect }: ReuseExerciseTabProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,26 +20,6 @@ const ReuseExerciseTab = ({
       (exercise.description &&
         exercise.description.toLowerCase().includes(searchTerm.toLowerCase())),
   );
-
-  // Handle variant selection
-  const handleVariantSelect = (variant: ExerciseVariant) => {
-    setSelectedVariant(variant);
-
-    // Find the parent exercise of the selected variant
-    const exerciseEntry = Object.entries(exerciseVariants).find(([_, variants]) =>
-      variants.some((v) => v.id === variant.id),
-    );
-
-    if (!exerciseEntry) return;
-
-    const exerciseId = exerciseEntry[0];
-    const exercise = exercises.find((e) => e.id === exerciseId);
-
-    if (!exercise) return;
-
-    // Auto-select the exercise and variant when a variant is clicked
-    onSelect(exercise, variant);
-  };
 
   const clearSearch = () => {
     setSearchTerm('');
@@ -105,9 +71,7 @@ const ReuseExerciseTab = ({
               <ExpandableExerciseCard
                 key={exercise.id}
                 exercise={exercise}
-                variants={exerciseVariants[exercise.id] || []}
-                parameterTypes={parameterTypes}
-                onVariantSelect={handleVariantSelect}
+                onVariantSelect={onSelect}
                 className={index < filteredExercises.length - 1 ? 'mb-3' : ''}
               />
             ))}

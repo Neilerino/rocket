@@ -5,6 +5,12 @@ export interface BaseEntity {
   updatedAt: string;
 }
 
+// Pagination Params
+export interface PaginationParams {
+  page?: number;
+  pageSize?: number;
+}
+
 // Plan Types
 export interface Plan extends BaseEntity {
   name: string;
@@ -102,8 +108,9 @@ export interface ExerciseVariationParam {
 
 export interface ExerciseVariation extends BaseEntity {
   exerciseId: number;
+  name: string;
   parameters: ExerciseVariationParam[];
-  exercise?: Exercise;
+  exercise: Exercise;
 }
 
 export interface CreateExerciseParameterTypeDto {
