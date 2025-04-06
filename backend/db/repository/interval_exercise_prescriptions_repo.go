@@ -26,11 +26,11 @@ type PrescriptionCreateData struct {
 	GroupId        int64
 	VariationId    int64
 	PlanIntervalId int64
-	RPE            int32
+	RPE            *int32
 	Sets           int32
-	Reps           int32
-	Duration       string
-	Rest           string
+	Reps           *int32
+	Duration       *string
+	Rest           *string
 }
 
 func NewIntervalExercisePrescriptionsRepository(queries *db.Queries) *IntervalExercisePrescriptionsRepository {
@@ -53,25 +53,52 @@ func (r *IntervalExercisePrescriptionsRepository) List(ctx context.Context, para
 }
 
 func (r *IntervalExercisePrescriptionsRepository) CreateOne(ctx context.Context, prescription PrescriptionCreateData) (*db.IntervalExercisePrescription, error) {
-	duration, err := utils.StringToInterval(prescription.Duration)
-	if err != nil {
-		return nil, err
+	var duration pgtype.Interval
+	var rest pgtype.Interval
+	var rpe pgtype.Int4
+	var reps pgtype.Int4
+
+	if prescription.Duration == nil {
+		duration = pgtype.Interval{Valid: false}
+	} else {
+		durationRef, err := utils.StringToInterval(*prescription.Duration)
+		if err != nil {
+			return nil, err
+		}
+		duration = durationRef
 	}
 
-	rest, err := utils.StringToInterval(prescription.Rest)
-	if err != nil {
-		return nil, err
+	if prescription.Rest == nil {
+		rest = pgtype.Interval{Valid: false}
+	} else {
+		restRef, err := utils.StringToInterval(*prescription.Rest)
+		if err != nil {
+			return nil, err
+		}
+		rest = restRef
+	}
+
+	if prescription.RPE == nil {
+		rpe = pgtype.Int4{Valid: false}
+	} else {
+		rpe = pgtype.Int4{Int32: int32(*prescription.RPE), Valid: true}
+	}
+
+	if prescription.Reps == nil {
+		reps = pgtype.Int4{Valid: false}
+	} else {
+		reps = pgtype.Int4{Int32: int32(*prescription.Reps), Valid: true}
 	}
 
 	row, err := r.Queries.IntervalExercisePrescriptions_CreateOne(ctx, db.IntervalExercisePrescriptions_CreateOneParams{
-		GroupID:             prescription.GroupId,
-		ExerciseVariationID: prescription.VariationId,
-		PlanIntervalID:      prescription.PlanIntervalId,
-		Rpe:                 pgtype.Int4{Int32: int32(prescription.RPE), Valid: prescription.RPE > 0},
-		Sets:                prescription.Sets,
-		Reps:                pgtype.Int4{Int32: prescription.Reps, Valid: prescription.Reps > 0},
-		Duration:            duration,
-		Rest:                rest,
+		GroupID:     prescription.GroupId,
+		VariationID: prescription.VariationId,
+		IntervalID:  prescription.PlanIntervalId,
+		Rpe:         rpe,
+		Sets:        prescription.Sets,
+		Reps:        reps,
+		Duration:    duration,
+		Rest:        rest,
 	})
 	if err != nil {
 		return nil, err

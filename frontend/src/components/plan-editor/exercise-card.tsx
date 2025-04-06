@@ -19,23 +19,36 @@ const ExerciseCard = ({
   selected = false,
   compact = false,
 }: ExerciseCardProps) => {
-  // Helper function to format time intervals (accepts seconds, returns M:SS or H:MM:SS)
-  const formatTimeInterval = (seconds?: number): string => {
-    if (seconds === undefined || seconds === null || isNaN(seconds) || seconds < 0) return '';
+  const formatIntervalString = (timeString: string): string => {
+    if (!timeString) return '';
 
-    const totalSeconds = Math.round(seconds);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
+    // Handle format like "5 minutes 30 seconds" or variations
+    if (timeString.includes('minute') || timeString.includes('second')) {
+      const minutesMatch = timeString.match(/(\d+)\s*minutes?/);
+      const secondsMatch = timeString.match(/(\d+)\s*seconds?/);
 
+      const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+      const seconds = secondsMatch ? parseInt(secondsMatch[1], 10) : 0;
+
+      if (minutes > 0) {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      } else {
+        return `0:${seconds.toString().padStart(2, '0')}`;
+      }
+    }
+
+    // Fallback to original time format handling (HH:MM:SS)
+    const parts = timeString.split(':').map(Number);
+    if (parts.length !== 3) return timeString;
+
+    const [hours, mins, secs] = parts;
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     } else {
-      return `${minutes}:${secs.toString().padStart(2, '0')}`;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
   };
 
-  // Determine if we should render parameter details based on service type structure
   const shouldRenderParameters =
     prescription?.exerciseVariation?.parameters &&
     prescription.exerciseVariation.parameters.length > 0;
@@ -130,7 +143,7 @@ const ExerciseCard = ({
                   <div>
                     <div className="text-xs text-gray-500 font-medium">Duration</div>
                     <div className="font-semibold text-gray-800">
-                      {formatTimeInterval(prescription.duration)}
+                      {formatIntervalString(prescription.duration)}
                     </div>
                   </div>
                 </div>
@@ -145,7 +158,7 @@ const ExerciseCard = ({
                   <div>
                     <div className="text-xs text-gray-500 font-medium">Rest</div>
                     <div className="font-semibold text-gray-800">
-                      {formatTimeInterval(prescription.rest)}
+                      {formatIntervalString(prescription.rest)}
                     </div>
                   </div>
                 </div>
@@ -157,7 +170,12 @@ const ExerciseCard = ({
           {compact && prescription && (
             <div className="flex flex-wrap gap-2">
               {prescription.reps && (
-                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                <Badge
+                  variant="flat"
+                  color="default"
+                  size="sm"
+                  className="flex items-center py-0.5 px-2"
+                >
                   <div className="flex items-center">
                     <Repeat className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
                     <span className="relative top-px">{prescription.reps} reps</span>
@@ -166,7 +184,12 @@ const ExerciseCard = ({
               )}
 
               {prescription.rpe !== undefined && (
-                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                <Badge
+                  variant="flat"
+                  color="default"
+                  size="sm"
+                  className="flex items-center py-0.5 px-2"
+                >
                   <div className="flex items-center">
                     <BarChart className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
                     <span className="relative top-px">RPE: {prescription.rpe}</span>
@@ -175,19 +198,33 @@ const ExerciseCard = ({
               )}
 
               {prescription.duration && (
-                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                <Badge
+                  variant="flat"
+                  color="default"
+                  size="sm"
+                  className="flex items-center py-0.5 px-2"
+                >
                   <div className="flex items-center">
                     <Timer className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
-                    <span className="relative top-px">{formatTimeInterval(prescription.duration)}</span>
+                    <span className="relative top-px">
+                      {formatIntervalString(prescription.duration)}
+                    </span>
                   </div>
                 </Badge>
               )}
 
               {prescription.rest && (
-                <Badge variant="flat" color="default" size="sm" className="flex items-center py-0.5 px-2">
+                <Badge
+                  variant="flat"
+                  color="default"
+                  size="sm"
+                  className="flex items-center py-0.5 px-2"
+                >
                   <div className="flex items-center">
                     <Clock className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 relative top-px" />
-                    <span className="relative top-px">Rest: {formatTimeInterval(prescription.rest)}</span>
+                    <span className="relative top-px">
+                      Rest: {formatIntervalString(prescription.rest)}
+                    </span>
                   </div>
                 </Badge>
               )}
@@ -222,7 +259,7 @@ const ExerciseCard = ({
                     >
                       <span className="text-gray-600 font-medium">{name}</span>
                       {/* Display unit or locked status instead of value */}
-                      <Badge variant="flat" color={isLocked ? "default" : "primary"} size="sm">
+                      <Badge variant="flat" color={isLocked ? 'default' : 'primary'} size="sm">
                         {isLocked ? `Locked (${unit})` : unit}
                       </Badge>
                     </div>

@@ -3,6 +3,7 @@ package repository
 import (
 	"backend/db"
 	"context"
+	"log"
 )
 
 type ExerciseVariationsRepository struct {
@@ -38,6 +39,8 @@ func (r *ExerciseVariationsRepository) List(ctx context.Context, params Exercise
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Successfully retrieved exercise variations, count: %d", len(rows))
 
 	return rows, nil
 }

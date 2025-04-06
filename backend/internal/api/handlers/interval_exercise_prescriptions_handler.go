@@ -17,11 +17,11 @@ type CreateIntervalExercisePrescriptionApiArgs struct {
 	GroupId             int64   `json:"groupId"`
 	ExerciseVariationId int64   `json:"exerciseVariationId"`
 	PlanIntervalId      int64   `json:"planIntervalId"`
-	RPE                 float64 `json:"rpe"`
+	RPE                 *int32  `json:"rpe"`
 	Sets                int32   `json:"sets"`
-	Reps                int32   `json:"reps"`
-	Duration            string  `json:"duration"`
-	Rest                string  `json:"rest"`
+	Reps                *int32  `json:"reps"`
+	Duration            *string `json:"duration"`
+	Rest                *string `json:"rest"`
 }
 
 func (h *IntervalExercisePrescriptionsHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,7 @@ func (h *IntervalExercisePrescriptionsHandler) Create(w http.ResponseWriter, r *
 			GroupId:        args.GroupId,
 			VariationId:    args.ExerciseVariationId,
 			PlanIntervalId: args.PlanIntervalId,
-			Rpe:            int32(args.RPE),
+			Rpe:            args.RPE,
 			Sets:           args.Sets,
 			Reps:           args.Reps,
 			Duration:       args.Duration,

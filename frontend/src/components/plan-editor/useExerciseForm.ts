@@ -128,7 +128,7 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
             exerciseVariationId: newVariation.id,
             sets: value.sets,
             reps: value.reps,
-            rpe: value.rpe,
+            rpe: value.rpe ? Math.round(value.rpe) : null,
             duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
             rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
           });
@@ -139,7 +139,7 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
             exerciseVariationId: value.variationId,
             sets: value.sets,
             reps: value.reps,
-            rpe: value.rpe,
+            rpe: value.rpe ? Math.round(value.rpe) : null,
             duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
             rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
           });

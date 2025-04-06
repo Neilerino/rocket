@@ -229,7 +229,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                   </Label>
                   <div className="flex items-center">
                     <span className="text-sm font-medium bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded">
-                      {rpe?.toFixed(1)}
+                      {rpe?.toFixed(0)}
                     </span>
                   </div>
                 </div>
@@ -237,7 +237,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                   value={[rpe ?? 5]}
                   min={0}
                   max={10}
-                  step={0.5}
+                  step={0.1}
                   className="mt-2"
                   onValueChange={(value) => form.setFieldValue('rpe', value[0])}
                 />

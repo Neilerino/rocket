@@ -18,26 +18,15 @@ export const useCreatePrescription = () => {
       }
       return response.data as IntervalExercisePrescription;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate relevant queries
-
-      return;
-      queryClient.invalidateQueries({
-        queryKey: createPrescriptionCacheKey({
-          filters: { groupId: variables.groupId },
-        }),
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: createPrescriptionCacheKey({
-          filters: { intervalId: variables.planIntervalId },
-        }),
-      });
-
-      // Invalidate all prescriptions queries
-      queryClient.invalidateQueries({
-        queryKey: createPrescriptionCacheKey(),
-      });
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        [
+          createPrescriptionCacheKey({
+            filters: { groupId: data.groupId },
+          }),
+        ],
+        (old: IntervalExercisePrescription[] | undefined) => (old ? [...old, data] : [data]),
+      );
     },
   });
 };

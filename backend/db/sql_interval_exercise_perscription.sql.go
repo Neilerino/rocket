@@ -24,11 +24,11 @@ INSERT INTO
         rest
     )
 VALUES (
-        $1,
-        $2,
-        $3,
+        $1::BIGINT,
+        $2::BIGINT,
+        $3::BIGINT,
         $4,
-        $5,
+        $5::INT,
         $6,
         $7,
         $8
@@ -36,21 +36,21 @@ VALUES (
 `
 
 type IntervalExercisePrescriptions_CreateOneParams struct {
-	GroupID             int64
-	ExerciseVariationID int64
-	PlanIntervalID      int64
-	Rpe                 pgtype.Int4
-	Sets                int32
-	Reps                pgtype.Int4
-	Duration            pgtype.Interval
-	Rest                pgtype.Interval
+	GroupID     int64
+	VariationID int64
+	IntervalID  int64
+	Rpe         pgtype.Int4
+	Sets        int32
+	Reps        pgtype.Int4
+	Duration    pgtype.Interval
+	Rest        pgtype.Interval
 }
 
 func (q *Queries) IntervalExercisePrescriptions_CreateOne(ctx context.Context, arg IntervalExercisePrescriptions_CreateOneParams) (IntervalExercisePrescription, error) {
 	row := q.db.QueryRow(ctx, intervalExercisePrescriptions_CreateOne,
 		arg.GroupID,
-		arg.ExerciseVariationID,
-		arg.PlanIntervalID,
+		arg.VariationID,
+		arg.IntervalID,
 		arg.Rpe,
 		arg.Sets,
 		arg.Reps,

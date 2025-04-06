@@ -7,6 +7,7 @@ import (
 	"backend/internal/utils"
 	"context"
 	"errors"
+	"log"
 )
 
 type IntervalExercisePrescriptionsService struct {
@@ -41,11 +42,11 @@ type PrescriptionCreateData struct {
 	GroupId        int64
 	VariationId    int64
 	PlanIntervalId int64
-	Rpe            int32
+	Rpe            *int32
 	Sets           int32
-	Reps           int32
-	Duration       string
-	Rest           string
+	Reps           *int32
+	Duration       *string
+	Rest           *string
 }
 
 func NewIntervalExercisePrescriptionsService(queries *db.Queries) *IntervalExercisePrescriptionsService {
@@ -80,8 +81,17 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 	}
 
 	variation_rows, err := s.VariationRepo.List(ctx, repository.ExerciseVariationListParams{
-		VariationId: variationIds,
+		VariationId:    variationIds,
+		ExerciseId:     []int64{},
+		GroupId:        []int64{},
+		PlanId:         []int64{},
+		PlanIntervalId: []int64{},
+		UserId:         0,
+		Limit:          params.Limit,
+		Offset:         0,
 	})
+
+	log.Printf("Successfully retrieved exercise variations for prescriptions, count: %d", len(variation_rows))
 	if err != nil {
 		return nil, err
 	}
@@ -95,16 +105,39 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 
 	var prescriptions []types.IntervalExercisePrescription
 	for _, row := range rows {
+		var duration *string
+		var rest *string
+
+		if row.Duration.Valid {
+			durationVal, err := utils.IntervalToString(row.Duration)
+			if err != nil {
+				return nil, err
+			}
+			duration = &durationVal
+		} else {
+			duration = nil
+		}
+
+		if row.Rest.Valid {
+			restVal, err := utils.IntervalToString(row.Rest)
+			if err != nil {
+				return nil, err
+			}
+			rest = &restVal
+		} else {
+			rest = nil
+		}
+
 		prescriptions = append(prescriptions, types.IntervalExercisePrescription{
 			ID:                  row.ID,
 			GroupId:             row.GroupID,
 			ExerciseVariationId: row.ExerciseVariationID,
 			PlanIntervalId:      row.PlanIntervalID,
-			RPE:                 float64(row.Rpe.Int32),
+			RPE:                 utils.If(row.Rpe.Valid, &row.Rpe.Int32, nil),
 			Sets:                row.Sets,
-			Reps:                row.Reps.Int32,
-			Duration:            utils.IntervalToString(row.Duration),
-			Rest:                utils.IntervalToString(row.Rest),
+			Reps:                utils.If(row.Reps.Valid, &row.Reps.Int32, nil),
+			Duration:            duration,
+			Rest:                rest,
 			ExerciseVariation:   variationMap[row.ExerciseVariationID],
 		})
 	}
@@ -113,8 +146,11 @@ func (s *IntervalExercisePrescriptionsService) List(ctx context.Context, params 
 }
 
 func (s *IntervalExercisePrescriptionsService) CreateOne(ctx context.Context, params PrescriptionCreateData) (*types.IntervalExercisePrescription, error) {
-	variations, err := s.VariationRepo.List(ctx, repository.ExerciseVariationListParams{
-		VariationId: []int64{params.VariationId},
+	variationService := NewExerciseVariationsService(s.VariationRepo.Queries)
+
+	variations, err := variationService.List(ctx, ExerciseVariationListParams{
+		VariationId: &[]int64{params.VariationId},
+		Limit:       1,
 	})
 	if err != nil {
 		return nil, err
@@ -140,6 +176,7 @@ func (s *IntervalExercisePrescriptionsService) CreateOne(ctx context.Context, pa
 
 	prescriptions, err := s.List(ctx, IntervalExercisePrescriptionListParams{
 		PrescriptionId: &row.ID,
+		GroupId:        &params.GroupId,
 		Limit:          1,
 		Offset:         0,
 	})

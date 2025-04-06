@@ -29,10 +29,15 @@ func (s *PlanIntervalsService) ListPlanIntervals(ctx context.Context, planId int
 
 	var result []types.PlanInterval
 	for _, planInterval := range planIntervals {
+		durationString, err := utils.IntervalToString(planInterval.Duration)
+		if err != nil {
+			return nil, err
+		}
+
 		result = append(result, types.PlanInterval{
 			ID:          planInterval.ID,
 			PlanID:      planInterval.PlanID,
-			Duration:    utils.IntervalToString(planInterval.Duration),
+			Duration:    durationString,
 			Name:        planInterval.Name.String,
 			Description: planInterval.Description.String,
 			Order:       planInterval.Order,
@@ -50,10 +55,15 @@ func (s *PlanIntervalsService) CreatePlanInterval(ctx context.Context, planId in
 		return nil, err
 	}
 
+	durationString, err := utils.IntervalToString(planInterval.Duration)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.PlanInterval{
 		ID:          planInterval.ID,
 		PlanID:      planInterval.PlanID,
-		Duration:    utils.IntervalToString(planInterval.Duration),
+		Duration:    durationString,
 		Name:        planInterval.Name.String,
 		Order:       planInterval.Order,
 		Description: planInterval.Description.String,
@@ -69,10 +79,15 @@ func (s *PlanIntervalsService) DeletePlanInterval(ctx context.Context, id int64)
 		return nil, err
 	}
 
+	durationStr, err := utils.IntervalToString(planInterval.Duration)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.PlanInterval{
 		ID:          planInterval.ID,
 		PlanID:      planInterval.PlanID,
-		Duration:    utils.IntervalToString(planInterval.Duration),
+		Duration:    durationStr,
 		Name:        planInterval.Name.String,
 		Order:       planInterval.Order,
 		Description: planInterval.Description.String,

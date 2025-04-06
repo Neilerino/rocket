@@ -49,8 +49,6 @@ const GroupDropDown: React.FC<GroupDropDownProps> = ({
     );
   }
 
-  const safePrescriptions = Array.isArray(prescriptions) ? prescriptions : [];
-
   return (
     <div key={group.id} className="space-y-4">
       <div
@@ -69,34 +67,35 @@ const GroupDropDown: React.FC<GroupDropDownProps> = ({
         </div>
       </div>
 
-      {safePrescriptions.map((prescription: IntervalExercisePrescription) => {
-        // Directly get the service exercise data, handle if it's missing
-        const exerciseData = prescription.exerciseVariation?.exercise;
+      {prescriptions &&
+        prescriptions.map((prescription: IntervalExercisePrescription) => {
+          // Directly get the service exercise data, handle if it's missing
+          const exerciseData = prescription.exerciseVariation?.exercise;
 
-        // If exercise data is missing, potentially skip or render a placeholder
-        if (!exerciseData) {
-          console.warn(`Missing exercise data for prescription ID: ${prescription.id}`);
-          // Optionally return a placeholder or null
-          // return <div key={prescription.id}>Missing exercise details</div>;
-          return null; // Skip rendering this card
-        }
+          // If exercise data is missing, potentially skip or render a placeholder
+          if (!exerciseData) {
+            console.warn(`Missing exercise data for prescription ID: ${prescription.id}`);
+            // Optionally return a placeholder or null
+            // return <div key={prescription.id}>Missing exercise details</div>;
+            return null; // Skip rendering this card
+          }
 
-        return (
-          <div key={prescription.id} className="mb-4">
-            {/* Pass service types directly to ExerciseCard */}
-            <ExerciseCard
-              exercise={exerciseData} // Pass ServiceExercise object
-              prescription={prescription} // Pass IntervalExercisePrescription object
-              onClick={() => {
-                // Pass the service exercise object (or null) to the handler
-                setSelectedExercise(exerciseData || null);
-                setCurrentGroup(group);
-                setExerciseDrawerOpen(true);
-              }}
-            />
-          </div>
-        );
-      })}
+          return (
+            <div key={prescription.id} className="mb-4">
+              {/* Pass service types directly to ExerciseCard */}
+              <ExerciseCard
+                exercise={exerciseData} // Pass ServiceExercise object
+                prescription={prescription} // Pass IntervalExercisePrescription object
+                onClick={() => {
+                  // Pass the service exercise object (or null) to the handler
+                  setSelectedExercise(exerciseData || null);
+                  setCurrentGroup(group);
+                  setExerciseDrawerOpen(true);
+                }}
+              />
+            </div>
+          );
+        })}
     </div>
   );
 };

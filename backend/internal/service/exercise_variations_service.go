@@ -58,8 +58,8 @@ func (s *ExerciseVariationsService) List(ctx context.Context, params ExerciseVar
 		PlanIntervalId: DerefOrDefault(params.PlanIntervalId, []int64{}),
 		UserId:         DerefOrDefault(params.UserId, 0),
 		VariationId:    DerefOrDefault(params.VariationId, []int64{}),
-		Limit:          params.Limit,
-		Offset:         params.Offset,
+		Limit:          DerefOrDefault(&params.Limit, 100),
+		Offset:         DerefOrDefault(&params.Offset, 0),
 	})
 	if err != nil {
 		return nil, err

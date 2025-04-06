@@ -79,28 +79,28 @@ type ExerciseVariationParam struct {
 type ExerciseVariation struct {
 	ID         int64                    `json:"id"`
 	ExerciseId int64                    `json:"exerciseId"`
-	Exercise   *Exercise                `json:"exercise,omitempty"`
-	Parameters []ExerciseVariationParam `json:"parameters"`
+	Exercise   Exercise                 `json:"exercise"`
+	Parameters []ExerciseVariationParam `json:"parameters,omitempty"`
 }
 
 type IntervalExercisePrescription struct {
 	ID                  int64             `json:"id"`
-	GroupId             int64             `json:"group_id"`
-	ExerciseVariationId int64             `json:"exercise_variation_id"`
-	PlanIntervalId      int64             `json:"plan_interval_id"`
-	RPE                 float64           `json:"rpe"`
+	GroupId             int64             `json:"groupId"`
+	ExerciseVariationId int64             `json:"exerciseVariationId"`
+	PlanIntervalId      int64             `json:"planIntervalId"`
+	RPE                 *int32            `json:"rpe"`
 	Sets                int32             `json:"sets"`
-	Reps                int32             `json:"reps"`
-	Duration            string            `json:"duration"`
-	Rest                string            `json:"rest"`
-	ExerciseVariation   ExerciseVariation `json:"exercise_variation,omitempty"`
+	Reps                *int32            `json:"reps"`
+	Duration            *string           `json:"duration"`
+	Rest                *string           `json:"rest"`
+	ExerciseVariation   ExerciseVariation `json:"exerciseVariation,omitempty"`
 }
 
 type IntervalGroupAssignment struct {
 	ID             int64         `json:"id"`
-	PlanIntervalId int64         `json:"plan_interval_id"`
-	GroupId        int64         `json:"group_id"`
+	PlanIntervalId int64         `json:"planIntervalId"`
+	GroupId        int64         `json:"groupId"`
 	Frequency      int32         `json:"frequency"`
 	Group          *Group        `json:"group,omitempty"`
-	PlanInterval   *PlanInterval `json:"plan_interval,omitempty"`
+	PlanInterval   *PlanInterval `json:"planInterval,omitempty"`
 }

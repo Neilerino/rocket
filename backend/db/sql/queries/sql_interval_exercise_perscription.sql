@@ -11,14 +11,14 @@ INSERT INTO
         rest
     )
 VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7,
-        $8
+        @group_id::BIGINT,
+        @variation_id::BIGINT,
+        @interval_id::BIGINT,
+        sqlc.narg(rpe),
+        @sets::INT,
+        sqlc.narg(reps),
+        sqlc.narg(duration),
+        sqlc.narg(rest)
     ) RETURNING *;
 
 -- name: IntervalExercisePrescriptions_DeleteOne :exec
