@@ -2,25 +2,27 @@ import { Exercise, ExerciseVariation } from '@/services/types';
 import { useState, useRef } from 'react';
 import { Input } from '@heroui/input';
 import ExpandableExerciseCard from './expandable-exercise-card';
+import { useExercises } from '@/services/hooks';
 import { X } from 'lucide-react';
-import { ExerciseForm } from './useExerciseForm';
 
 interface ReuseExerciseTabProps {
-  form: ExerciseForm;
-  exercises: Exercise[];
   onSelect: (variant: ExerciseVariation) => void;
 }
 
-const ReuseExerciseTab = ({ form, exercises, onSelect }: ReuseExerciseTabProps) => {
+const ReuseExerciseTab = ({ onSelect }: ReuseExerciseTabProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredExercises = exercises.filter(
-    (exercise) =>
-      exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (exercise.description &&
-        exercise.description.toLowerCase().includes(searchTerm.toLowerCase())),
-  );
+  const { data: exercises } = useExercises({ userId: 1 });
+
+  const filteredExercises = exercises
+    ? exercises.filter(
+        (exercise) =>
+          exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (exercise.description &&
+            exercise.description.toLowerCase().includes(searchTerm.toLowerCase())),
+      )
+    : [];
 
   const clearSearch = () => {
     setSearchTerm('');

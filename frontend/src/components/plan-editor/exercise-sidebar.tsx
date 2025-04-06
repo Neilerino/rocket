@@ -100,7 +100,7 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
           {activeTab === 'new' && <NewExerciseTab form={form} parameterTypes={[]} />}
 
           {activeTab === 'reuse' && (
-            <ReuseExerciseTab form={form} exercises={[]} onSelect={() => {}} /> // Come back to this
+            <ReuseExerciseTab onSelect={() => {}} /> // Come back to this
           )}
         </DrawerBody>
 
