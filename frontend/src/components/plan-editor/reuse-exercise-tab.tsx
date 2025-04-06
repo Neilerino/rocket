@@ -3,17 +3,18 @@ import { useState, useRef } from 'react';
 import { Input } from '@heroui/input';
 import ExpandableExerciseCard from './expandable-exercise-card';
 import { X } from 'lucide-react';
+import { ExerciseForm } from './useExerciseForm';
 
 interface ReuseExerciseTabProps {
+  form: ExerciseForm;
   exercises: Exercise[];
   onSelect: (variant: ExerciseVariation) => void;
 }
 
-const ReuseExerciseTab = ({ exercises, onSelect }: ReuseExerciseTabProps) => {
+const ReuseExerciseTab = ({ form, exercises, onSelect }: ReuseExerciseTabProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Filter exercises based on search term
   const filteredExercises = exercises.filter(
     (exercise) =>
       exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

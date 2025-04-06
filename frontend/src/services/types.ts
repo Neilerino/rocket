@@ -136,8 +136,8 @@ export interface IntervalExercisePrescription extends BaseEntity {
   rpe?: number;
   sets: number;
   reps?: number;
-  duration?: number;
-  rest?: number;
+  duration: number | null;
+  rest: number | null;
   exerciseVariation?: ExerciseVariation;
 }
 
@@ -148,6 +148,6 @@ export interface CreatePrescriptionDto {
   rpe?: number;
   sets: number;
   reps?: number;
-  duration?: number;
-  rest?: number;
+  duration: number | null;
+  rest: number | null;
 }
