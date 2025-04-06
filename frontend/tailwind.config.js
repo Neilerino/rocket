@@ -177,6 +177,6 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate'), heroui()],
+  plugins: [],
   darkMode: 'class',
 };
