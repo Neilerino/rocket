@@ -24,7 +24,6 @@ type IntervalExercisePrescriptionListParams struct {
 
 type PrescriptionCreateData struct {
 	GroupId        int64
-	ExerciseId     int64
 	VariationId    int64
 	PlanIntervalId int64
 	RPE            int32

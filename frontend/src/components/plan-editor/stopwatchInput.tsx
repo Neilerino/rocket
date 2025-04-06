@@ -6,7 +6,7 @@ import { Label } from 'shad/components/ui/label';
 
 interface StopwatchInputGroupProps {
   id?: string; // Optional id for the group label association
-  label: string;
+  label?: string;
   children: React.ReactNode;
   errorDisplay?: React.ReactNode;
   className?: string;
@@ -24,8 +24,8 @@ export const StopwatchInputGroup: React.FC<StopwatchInputGroupProps> = ({
 }) => {
   return (
     <div className={`space-y-1 ${className || ''}`}>
-      {/* Associate label with the first input if id is provided */}
-      <Label htmlFor={id ? `${id}-minutes` : undefined}>{label}</Label>
+      {/* Associate label with the first input if id is provided and label exists */}
+      {label && <Label htmlFor={id ? `${id}-minutes` : undefined}>{label}</Label>}
       <div className="flex items-stretch gap-2">{children}</div>
       {errorDisplay && <div className="mt-1">{errorDisplay}</div>}
     </div>

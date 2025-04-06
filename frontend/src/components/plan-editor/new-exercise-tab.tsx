@@ -89,13 +89,6 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
 
       {/* Sets and Repetitions */}
       <div className="space-y-4">
-        <div className="flex items-center">
-          <div className="mr-2 flex-shrink-0 text-gray-700">
-            <Repeat className="h-5 w-5" />
-          </div>
-          <h3 className="text-base font-medium text-gray-900">Sets and Repetitions</h3>
-        </div>
-
         <div className="space-y-4">
           <div className="space-y-2">
             <form.Field
@@ -153,46 +146,40 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
             />
           </div>
           <form.Subscribe
-            selector={(state) => state.values.duration}
-            children={(duration) => (
+            selector={(state) => ({
+              durationMinutes: state.values.durationMinutes,
+              durationSeconds: state.values.durationSeconds,
+            })}
+            children={({ durationMinutes, durationSeconds }) => (
               <AccordionItem
                 value="duration"
                 title="Duration"
-                checked={duration !== null}
+                checked={durationMinutes !== null && durationSeconds !== null}
                 onCheckChange={(checked: boolean) => {
-                  form.setFieldValue('duration', checked ? (duration ?? 5) : null);
+                  form.setFieldValue('durationMinutes', checked ? (durationMinutes ?? 5) : null);
+                  form.setFieldValue('durationSeconds', checked ? (durationSeconds ?? 0) : null);
                 }}
               >
-                {duration !== null && (
-                  <div className="space-y-2">
-                    <form.Field
-                      name="duration"
-                      validators={{
-                        onChange: ({ value }: { value: number | null | undefined }) =>
-                          form.state.values.duration !== null &&
-                          (value === null || value === undefined || value < 0)
-                            ? 'Duration cannot be negative.'
-                            : undefined,
-                      }}
-                      children={(field) => (
-                        <div className="space-y-1.5">
-                          <Label htmlFor={field.name}>Active Time (minutes)</Label>
-                          <Input
-                            type="number"
-                            id={field.name}
-                            name={field.name}
-                            value={field.state.value ?? ''} // Handle null
-                            min={0}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
-                            className={field.state.meta.errors.length ? 'border-destructive' : ''}
-                          />
-                          <FieldError field={field} />
-                        </div>
-                      )}
-                    />
-                  </div>
-                )}
+                <StopwatchInputGroup id="duration">
+                  <form.Field
+                    name="durationMinutes"
+                    children={(field) => (
+                      <StopwatchMinutesInput
+                        value={field.state.value ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
+                      />
+                    )}
+                  />
+                  <form.Field
+                    name="durationSeconds"
+                    children={(field) => (
+                      <StopwatchSecondsInput
+                        value={field.state.value ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
+                      />
+                    )}
+                  />
+                </StopwatchInputGroup>
               </AccordionItem>
             )}
           />
@@ -201,13 +188,6 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
 
       {/* Rest and RPE Section */}
       <div className="space-y-4">
-        <div className="flex items-center">
-          <div className="mr-2 flex-shrink-0 text-gray-700">
-            <Clock className="h-5 w-5" />
-          </div>
-          <h3 className="text-base font-medium text-gray-900">Rest and Intensity</h3>
-        </div>
-
         <div className="space-y-4">
           <div className="space-y-2">
             <form.Subscribe
