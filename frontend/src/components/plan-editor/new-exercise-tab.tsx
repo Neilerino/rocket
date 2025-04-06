@@ -2,23 +2,29 @@ import React from 'react';
 import { Input } from 'shad/components/ui/input';
 import { Label } from 'shad/components/ui/label';
 import { Textarea } from 'shad/components/ui/textarea';
-import { ExerciseParameterFormData, ExerciseForm, ExerciseFormData } from './useExerciseForm';
+import { ExerciseParameterFormData, ExerciseForm } from './useExerciseForm';
 import { ParameterType, CreateExerciseParameterTypeDto } from '@/services/types';
 import { AccordionItem } from './exercise-accordion';
 import ParameterManager from './parameter-manager';
 import { Clock, Repeat, Settings } from 'lucide-react';
 import { Slider } from 'shad/components/ui/slider';
-import { FieldApi } from '@tanstack/react-form';
+import { AnyFieldApi } from '@tanstack/react-form';
+import {
+  StopwatchInputGroup,
+  StopwatchMinutesInput,
+  StopwatchSecondsInput,
+} from './stopwatchInput';
 
 interface NewExerciseTabProps {
   form: ExerciseForm;
   parameterTypes: ParameterType[];
 }
 
-function FieldError({ errors }: { errors: string[] }) {
-  if (!errors.length) return null;
-  return <em className="text-sm text-destructive">{errors.join(', ')}</em>;
-}
+const FieldError = ({ field }: { field: AnyFieldApi }) => {
+  if (field.state.meta.errors.length === 0) return;
+
+  return <em className="text-sm text-destructive">{field.state.meta.errors.join(', ')}</em>;
+};
 
 const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes }) => {
   const formatRestTime = (totalSeconds: number | null | undefined) => {
@@ -54,7 +60,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                 placeholder="E.g., Barbell Bench Press, Hangboard 20mm Repeater"
                 className={field.state.meta.errors.length ? 'border-destructive' : ''}
               />
-              <FieldError errors={field.state.meta.errors} />
+              <FieldError field={field} />
             </div>
           )}
         />
@@ -75,8 +81,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="Description of the selected exercise"
               />
-              {/* No error display needed for optional field? */}
-              {/* <FieldError errors={field.state.meta.errors} /> */}
+              <FieldError field={field} />
             </div>
           )}
         />
@@ -114,90 +119,83 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                     onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
                     className={field.state.meta.errors.length ? 'border-destructive' : ''}
                   />
-                  <FieldError errors={field.state.meta.errors} />
+                  <FieldError field={field} />
                 </div>
               )}
             />
           </div>
-          <AccordionItem
-            value="reps"
-            title="Repetitions"
-            checked={form.state.values.reps !== null}
-            onCheckChange={(checked: boolean) => {
-              form.setFieldValue('reps', checked ? (form.state.values.reps ?? 10) : null);
-            }}
-          >
-            {form.state.values.reps !== null && (
-              <div className="space-y-2">
-                <form.Field
-                  name="reps"
-                  validators={{
-                    onChange: ({ value }: { value: number | null | undefined }) =>
-                      form.state.values.reps !== null &&
-                      (value === null || value === undefined || value < 1)
-                        ? 'Reps must be at least 1.'
-                        : undefined,
-                  }}
-                  children={(field) => (
-                    <div className="space-y-1.5">
-                      <Label htmlFor={field.name}>Reps per Set</Label>
-                      <Input
-                        type="number"
-                        id={field.name}
-                        name={field.name}
-                        value={field.state.value ?? ''} // Handle null
-                        min={1}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
-                        className={field.state.meta.errors.length ? 'border-destructive' : ''}
-                      />
-                      <FieldError errors={field.state.meta.errors} />
-                    </div>
-                  )}
-                />
-              </div>
+          <div className="space-y-2">
+            <form.Field
+              name="reps"
+              validators={{
+                onChange: ({ value }: { value: number | null | undefined }) =>
+                  form.state.values.reps !== null &&
+                  (value === null || value === undefined || value < 1)
+                    ? 'Reps must be at least 1.'
+                    : undefined,
+              }}
+              children={(field) => (
+                <div className="space-y-1.5">
+                  <Label htmlFor={field.name}>Reps per Set</Label>
+                  <Input
+                    type="number"
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value ?? ''}
+                    min={1}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
+                    className={field.state.meta.errors.length ? 'border-destructive' : ''}
+                  />
+                  <FieldError field={field} />
+                </div>
+              )}
+            />
+          </div>
+          <form.Subscribe
+            selector={(state) => state.values.duration}
+            children={(duration) => (
+              <AccordionItem
+                value="duration"
+                title="Duration"
+                checked={duration !== null}
+                onCheckChange={(checked: boolean) => {
+                  form.setFieldValue('duration', checked ? (duration ?? 5) : null);
+                }}
+              >
+                {duration !== null && (
+                  <div className="space-y-2">
+                    <form.Field
+                      name="duration"
+                      validators={{
+                        onChange: ({ value }: { value: number | null | undefined }) =>
+                          form.state.values.duration !== null &&
+                          (value === null || value === undefined || value < 0)
+                            ? 'Duration cannot be negative.'
+                            : undefined,
+                      }}
+                      children={(field) => (
+                        <div className="space-y-1.5">
+                          <Label htmlFor={field.name}>Active Time (minutes)</Label>
+                          <Input
+                            type="number"
+                            id={field.name}
+                            name={field.name}
+                            value={field.state.value ?? ''} // Handle null
+                            min={0}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
+                            className={field.state.meta.errors.length ? 'border-destructive' : ''}
+                          />
+                          <FieldError field={field} />
+                        </div>
+                      )}
+                    />
+                  </div>
+                )}
+              </AccordionItem>
             )}
-          </AccordionItem>
-
-          <AccordionItem
-            value="duration"
-            title="Duration"
-            checked={form.state.values.duration !== null}
-            onCheckChange={(checked: boolean) => {
-              form.setFieldValue('duration', checked ? (form.state.values.duration ?? 5) : null);
-            }}
-          >
-            {form.state.values.duration !== null && (
-              <div className="space-y-2">
-                <form.Field
-                  name="duration"
-                  validators={{
-                    onChange: ({ value }: { value: number | null | undefined }) =>
-                      form.state.values.duration !== null &&
-                      (value === null || value === undefined || value < 0)
-                        ? 'Duration cannot be negative.'
-                        : undefined,
-                  }}
-                  children={(field) => (
-                    <div className="space-y-1.5">
-                      <Label htmlFor={field.name}>Active Time (minutes)</Label>
-                      <Input
-                        type="number"
-                        id={field.name}
-                        name={field.name}
-                        value={field.state.value ?? ''} // Handle null
-                        min={0}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
-                        className={field.state.meta.errors.length ? 'border-destructive' : ''}
-                      />
-                      <FieldError errors={field.state.meta.errors} />
-                    </div>
-                  )}
-                />
-              </div>
-            )}
-          </AccordionItem>
+          />
         </div>
       </div>
 
@@ -212,84 +210,65 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <form.Field
-              name="rest"
-              validators={{
-                onChange: ({ value }: { value: number | null | undefined }) =>
-                  value === null || value === undefined || value < 0
-                    ? 'Rest time cannot be negative.'
-                    : undefined,
-              }}
-              children={(field) => (
-                <div className="space-y-1.5">
-                  <Label>Rest Between Sets</Label>
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <Label htmlFor="rest-minutes" className="text-xs text-gray-500">
-                        Minutes
-                      </Label>
-                      <Input
-                        type="number"
-                        id="rest-minutes"
-                        min={0}
-                        value={currentRestMinutes}
-                        onBlur={field.handleBlur} // Trigger validation on blur
-                        onChange={(e) => {
-                          const mins = parseInt(e.target.value, 10) || 0;
-                          field.handleChange(mins * 60 + currentRestSeconds);
-                        }}
-                        className={field.state.meta.errors.length ? 'border-destructive' : ''} // Show error state on both?
+            <form.Subscribe
+              selector={(state) => ({
+                restMinutes: state.values.restMinutes,
+                restSeconds: state.values.restSeconds,
+              })}
+              children={({ restMinutes, restSeconds }) => (
+                <StopwatchInputGroup id="rest" label="Rest Between Sets">
+                  <form.Field
+                    name="restMinutes"
+                    children={(field) => (
+                      <StopwatchMinutesInput
+                        value={restMinutes ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
                       />
-                    </div>
-                    <div className="flex-1">
-                      <Label htmlFor="rest-seconds" className="text-xs text-gray-500">
-                        Seconds
-                      </Label>
-                      <Input
-                        type="number"
-                        id="rest-seconds"
-                        min={0}
-                        max={59}
-                        step={5} // Suggest steps for seconds
-                        value={currentRestSeconds}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => {
-                          const secs = parseInt(e.target.value, 10) || 0;
-                          field.handleChange(currentRestMinutes * 60 + Math.min(secs, 59)); // Ensure seconds don't exceed 59
-                        }}
-                        className={field.state.meta.errors.length ? 'border-destructive' : ''}
+                    )}
+                  />
+                  <form.Field
+                    name="restSeconds"
+                    children={(field) => (
+                      <StopwatchSecondsInput
+                        value={restSeconds ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
                       />
-                    </div>
-                  </div>
-                  <FieldError errors={field.state.meta.errors} />
-                </div>
+                    )}
+                  />
+                </StopwatchInputGroup>
               )}
             />
           </div>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="rpe" className="text-sm font-medium text-gray-700">
-              RPE (Rate of Perceived Exertion)
-            </Label>
-            <div className="flex items-center">
-              <span className="text-sm font-medium bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded">
-                {form.state.values.rpe?.toFixed(1)}
-              </span>
-            </div>
-          </div>
-          <Slider
-            value={[form.state.values.rpe ?? 7]}
-            min={0}
-            max={10}
-            step={0.5}
-            className="mt-2"
-            onValueChange={(value) => form.setFieldValue('rpe', value[0])}
+          <form.Subscribe
+            selector={(state) => state.values.rpe}
+            children={(rpe) => (
+              <>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="rpe" className="text-sm font-medium text-gray-700">
+                    RPE (Rate of Perceived Exertion)
+                  </Label>
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded">
+                      {rpe?.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+                <Slider
+                  value={[rpe ?? 5]}
+                  min={0}
+                  max={10}
+                  step={0.5}
+                  className="mt-2"
+                  onValueChange={(value) => form.setFieldValue('rpe', value[0])}
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Easy</span>
+                  <span>Moderate</span>
+                  <span>Maximum</span>
+                </div>
+              </>
+            )}
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>Easy</span>
-            <span>Moderate</span>
-            <span>Maximum</span>
-          </div>
         </div>
       </div>
 
@@ -326,10 +305,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                     form.setFieldValue('parameters', mappedParams);
                   }}
                 />
-                <form.Field
-                  name="parameters"
-                  children={(field) => <FieldError errors={field.state.meta.errors} />}
-                />
+                <form.Field name="parameters" children={(field) => <FieldError field={field} />} />
               </>
             )}
           </div>

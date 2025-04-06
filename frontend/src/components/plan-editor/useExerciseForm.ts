@@ -16,16 +16,18 @@ export type ExerciseParameterFormData = z.infer<typeof exerciseParameterSchema>;
 
 // Define the COMPLETE schema for form validation using Zod
 const exerciseFormSchema = z.object({
-  id: z.number().optional(), // For editing existing prescription
-  variationId: z.number().optional(), // For reusing existing variation
+  id: z.number().nullable(), // For editing existing prescription
+  variationId: z.number().nullable(), // For reusing existing variation
   name: z.string().min(1, 'Exercise name cannot be empty.'),
-  description: z.string().optional(),
+  description: z.string().nullable(),
   sets: z.number().min(1, 'Sets must be at least 1'),
   reps: z.number().min(1, 'Reps must be at least 1'),
-  rest: z.number().min(0, 'Rest cannot be negative').optional(), // Rest in seconds
-  rpe: z.number().min(0).max(10).optional(),
-  duration: z.number().min(0, 'Duration cannot be negative').optional(),
-  parameters: z.array(exerciseParameterSchema).optional(),
+  restMinutes: z.number().min(0, 'Rest cannot be negative').nullable(),
+  restSeconds: z.number().min(0, 'Rest cannot be negative').nullable(),
+  rpe: z.number().min(0).max(10).nullable(),
+  durationMinutes: z.number().min(0, 'Duration cannot be negative').nullable(),
+  durationSeconds: z.number().min(0, 'Duration cannot be negative').nullable(),
+  parameters: z.array(exerciseParameterSchema),
 });
 
 // Type for the form values based on the schema
@@ -40,15 +42,17 @@ interface UseExerciseFormProps {
 
 // Default values for a new form
 export const defaultExerciseValues: ExerciseFormData = {
-  id: undefined,
-  variationId: undefined,
+  id: null,
+  variationId: null,
   name: '',
   description: '',
   sets: 3,
   reps: 10,
-  rest: 60,
-  rpe: 7.0,
-  duration: undefined,
+  restMinutes: null,
+  restSeconds: null,
+  rpe: 5.0,
+  durationMinutes: null,
+  durationSeconds: null,
   parameters: [],
 };
 
@@ -59,15 +63,33 @@ const defaultFormValues = (initialValues: Partial<ExerciseFormData> | undefined)
       ...initialValues,
       sets: initialValues.sets ?? defaultExerciseValues.sets,
       reps: initialValues.reps !== undefined ? initialValues.reps : defaultExerciseValues.reps,
-      rest: initialValues.rest !== undefined ? initialValues.rest : defaultExerciseValues.rest,
+      restMinutes:
+        initialValues.restMinutes !== undefined
+          ? initialValues.restMinutes
+          : defaultExerciseValues.restMinutes,
+      restSeconds:
+        initialValues.restSeconds !== undefined
+          ? initialValues.restSeconds
+          : defaultExerciseValues.restSeconds,
       rpe: initialValues.rpe !== undefined ? initialValues.rpe : defaultExerciseValues.rpe,
-      duration:
-        initialValues.duration !== undefined
-          ? initialValues.duration
-          : defaultExerciseValues.duration,
+      durationMinutes:
+        initialValues.durationMinutes !== undefined
+          ? initialValues.durationMinutes
+          : defaultExerciseValues.durationMinutes,
+      durationSeconds:
+        initialValues.durationSeconds !== undefined
+          ? initialValues.durationSeconds
+          : defaultExerciseValues.durationSeconds,
       parameters: initialValues.parameters ?? defaultExerciseValues.parameters,
     }),
   };
+};
+
+const handleDuration = (minutes: number, seconds: number) => {
+  if (!minutes && !seconds) return null;
+  if (!minutes) return `${seconds} seconds`;
+  if (!seconds) return `${minutes} minutes`;
+  return `${minutes} minutes ${seconds} seconds`;
 };
 
 export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerciseFormProps) => {
@@ -84,7 +106,7 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
     },
     onSubmit: async ({ value }) => {
       try {
-        if (value.variationId === undefined) {
+        if (value.variationId === null) {
           const newExercise = await createExercise({
             name: value.name,
             description: value.description ?? '',
@@ -106,8 +128,9 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
             exerciseVariationId: newVariation.id,
             sets: value.sets,
             reps: value.reps,
-            duration: value.duration ?? null,
-            rest: value.rest ?? null,
+            rpe: value.rpe,
+            duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
+            rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
           });
         } else {
           await createPrescription({
@@ -116,8 +139,9 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
             exerciseVariationId: value.variationId,
             sets: value.sets,
             reps: value.reps,
-            duration: value.duration ?? null,
-            rest: value.rest ?? null,
+            rpe: value.rpe,
+            duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
+            rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
           });
         }
       } catch (error) {
@@ -126,7 +150,6 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
     },
   });
 
-  // Reset form when initialValues change (e.g., editing a different item)
   useEffect(() => {
     form.reset(defaultFormValues(initialValues));
   }, [initialValues, form]);

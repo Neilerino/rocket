@@ -133,11 +133,11 @@ export interface IntervalExercisePrescription extends BaseEntity {
   groupId: number;
   exerciseVariationId: number;
   planIntervalId: number;
-  rpe?: number;
+  rpe: number | null;
   sets: number;
-  reps?: number;
-  duration: number | null;
-  rest: number | null;
+  reps: number | null;
+  duration: string | null;
+  rest: string | null;
   exerciseVariation?: ExerciseVariation;
 }
 
@@ -145,9 +145,9 @@ export interface CreatePrescriptionDto {
   groupId: number;
   exerciseVariationId: number;
   planIntervalId: number;
-  rpe?: number;
+  rpe: number | null;
   sets: number;
-  reps?: number;
-  duration: number | null;
-  rest: number | null;
+  reps: number | null;
+  duration: string | null;
+  rest: string | null;
 }

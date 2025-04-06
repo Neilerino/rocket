@@ -111,7 +111,7 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
             </Button>
             <Button
               onClick={form.handleSubmit}
-              disabled={!form.state.isDirty || !form.state.isValid || form.state.isSubmitting}
+              disabled={!form.state.isValid || form.state.isSubmitting}
             >
               Save
             </Button>
