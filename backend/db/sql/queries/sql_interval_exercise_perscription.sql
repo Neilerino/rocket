@@ -8,6 +8,9 @@ INSERT INTO
         sets,
         reps,
         duration,
+        sub_reps,
+        sub_rep_work_duration,
+        sub_rep_rest_duration,
         rest
     )
 VALUES (
@@ -18,6 +21,9 @@ VALUES (
         @sets::INT,
         sqlc.narg(reps),
         sqlc.narg(duration),
+        sqlc.narg(sub_reps),
+        sqlc.narg(sub_rep_work_duration),
+        sqlc.narg(sub_rep_rest_duration),
         sqlc.narg(rest)
     ) RETURNING *;
 
@@ -34,6 +40,9 @@ SELECT
     iep.sets,
     iep.reps,
     iep.duration,
+    iep.sub_reps,
+    iep.sub_rep_work_duration,
+    iep.sub_rep_rest_duration,
     iep.rest
 FROM
     interval_exercise_prescriptions iep

@@ -23,14 +23,17 @@ type IntervalExercisePrescriptionListParams struct {
 }
 
 type PrescriptionCreateData struct {
-	GroupId        int64
-	VariationId    int64
-	PlanIntervalId int64
-	RPE            *int32
-	Sets           int32
-	Reps           *int32
-	Duration       *string
-	Rest           *string
+	GroupId            int64
+	VariationId        int64
+	PlanIntervalId     int64
+	RPE                *int32
+	Sets               int32
+	Reps               *int32
+	Duration           *string
+	SubReps            *int32
+	SubRepWorkDuration *string
+	SubRepRestDuration *string
+	Rest               *string
 }
 
 func NewIntervalExercisePrescriptionsRepository(queries *db.Queries) *IntervalExercisePrescriptionsRepository {
@@ -57,6 +60,9 @@ func (r *IntervalExercisePrescriptionsRepository) CreateOne(ctx context.Context,
 	var rest pgtype.Interval
 	var rpe pgtype.Int4
 	var reps pgtype.Int4
+	var subRepWorkDuration pgtype.Interval
+	var subRepRestDuration pgtype.Interval
+	var subReps pgtype.Int4
 
 	if prescription.Duration == nil {
 		duration = pgtype.Interval{Valid: false}
@@ -66,6 +72,32 @@ func (r *IntervalExercisePrescriptionsRepository) CreateOne(ctx context.Context,
 			return nil, err
 		}
 		duration = durationRef
+	}
+
+	if prescription.SubRepWorkDuration == nil {
+		subRepWorkDuration = pgtype.Interval{Valid: false}
+	} else {
+		subRepWorkDurationRef, err := utils.StringToInterval(*prescription.SubRepWorkDuration)
+		if err != nil {
+			return nil, err
+		}
+		subRepWorkDuration = subRepWorkDurationRef
+	}
+
+	if prescription.SubRepRestDuration == nil {
+		subRepRestDuration = pgtype.Interval{Valid: false}
+	} else {
+		subRepRestDurationRef, err := utils.StringToInterval(*prescription.SubRepRestDuration)
+		if err != nil {
+			return nil, err
+		}
+		subRepRestDuration = subRepRestDurationRef
+	}
+
+	if prescription.SubReps == nil {
+		subReps = pgtype.Int4{Valid: false}
+	} else {
+		subReps = pgtype.Int4{Int32: int32(*prescription.SubReps), Valid: true}
 	}
 
 	if prescription.Rest == nil {
@@ -91,14 +123,17 @@ func (r *IntervalExercisePrescriptionsRepository) CreateOne(ctx context.Context,
 	}
 
 	row, err := r.Queries.IntervalExercisePrescriptions_CreateOne(ctx, db.IntervalExercisePrescriptions_CreateOneParams{
-		GroupID:     prescription.GroupId,
-		VariationID: prescription.VariationId,
-		IntervalID:  prescription.PlanIntervalId,
-		Rpe:         rpe,
-		Sets:        prescription.Sets,
-		Reps:        reps,
-		Duration:    duration,
-		Rest:        rest,
+		GroupID:            prescription.GroupId,
+		VariationID:        prescription.VariationId,
+		IntervalID:         prescription.PlanIntervalId,
+		Rpe:                rpe,
+		Sets:               prescription.Sets,
+		Reps:               reps,
+		Duration:           duration,
+		SubReps:            subReps,
+		SubRepWorkDuration: subRepWorkDuration,
+		SubRepRestDuration: subRepRestDuration,
+		Rest:               rest,
 	})
 	if err != nil {
 		return nil, err

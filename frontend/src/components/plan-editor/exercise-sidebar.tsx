@@ -104,7 +104,7 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
           )}
         </DrawerBody>
 
-        <DrawerFooter className="border-t p-4 bg-gray-50">
+        <DrawerFooter className="border-t p-4 bg-gray-5 0">
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
               Cancel

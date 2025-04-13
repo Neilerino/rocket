@@ -21,6 +21,9 @@ INSERT INTO
         sets,
         reps,
         duration,
+        sub_reps,
+        sub_rep_work_duration,
+        sub_rep_rest_duration,
         rest
     )
 VALUES (
@@ -31,19 +34,25 @@ VALUES (
         $5::INT,
         $6,
         $7,
-        $8
-    ) RETURNING id, group_id, exercise_variation_id, plan_interval_id, rpe, sets, reps, duration, rest
+        $8,
+        $9,
+        $10,
+        $11
+    ) RETURNING id, group_id, exercise_variation_id, plan_interval_id, rpe, sets, reps, duration, sub_reps, sub_rep_work_duration, sub_rep_rest_duration, rest
 `
 
 type IntervalExercisePrescriptions_CreateOneParams struct {
-	GroupID     int64
-	VariationID int64
-	IntervalID  int64
-	Rpe         pgtype.Int4
-	Sets        int32
-	Reps        pgtype.Int4
-	Duration    pgtype.Interval
-	Rest        pgtype.Interval
+	GroupID            int64
+	VariationID        int64
+	IntervalID         int64
+	Rpe                pgtype.Int4
+	Sets               int32
+	Reps               pgtype.Int4
+	Duration           pgtype.Interval
+	SubReps            pgtype.Int4
+	SubRepWorkDuration pgtype.Interval
+	SubRepRestDuration pgtype.Interval
+	Rest               pgtype.Interval
 }
 
 func (q *Queries) IntervalExercisePrescriptions_CreateOne(ctx context.Context, arg IntervalExercisePrescriptions_CreateOneParams) (IntervalExercisePrescription, error) {
@@ -55,6 +64,9 @@ func (q *Queries) IntervalExercisePrescriptions_CreateOne(ctx context.Context, a
 		arg.Sets,
 		arg.Reps,
 		arg.Duration,
+		arg.SubReps,
+		arg.SubRepWorkDuration,
+		arg.SubRepRestDuration,
 		arg.Rest,
 	)
 	var i IntervalExercisePrescription
@@ -67,6 +79,9 @@ func (q *Queries) IntervalExercisePrescriptions_CreateOne(ctx context.Context, a
 		&i.Sets,
 		&i.Reps,
 		&i.Duration,
+		&i.SubReps,
+		&i.SubRepWorkDuration,
+		&i.SubRepRestDuration,
 		&i.Rest,
 	)
 	return i, err
@@ -91,6 +106,9 @@ SELECT
     iep.sets,
     iep.reps,
     iep.duration,
+    iep.sub_reps,
+    iep.sub_rep_work_duration,
+    iep.sub_rep_rest_duration,
     iep.rest
 FROM
     interval_exercise_prescriptions iep
@@ -137,6 +155,9 @@ func (q *Queries) IntervalExercisePrescriptions_List(ctx context.Context, arg In
 			&i.Sets,
 			&i.Reps,
 			&i.Duration,
+			&i.SubReps,
+			&i.SubRepWorkDuration,
+			&i.SubRepRestDuration,
 			&i.Rest,
 		); err != nil {
 			return nil, err

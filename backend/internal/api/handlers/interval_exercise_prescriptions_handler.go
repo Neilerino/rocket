@@ -21,6 +21,9 @@ type CreateIntervalExercisePrescriptionApiArgs struct {
 	Sets                int32   `json:"sets"`
 	Reps                *int32  `json:"reps"`
 	Duration            *string `json:"duration"`
+	SubReps             *int32  `json:"subReps"`
+	SubRepWorkDuration  *string `json:"subRepWorkDuration"`
+	SubRepRestDuration  *string `json:"subRepRestDuration"`
 	Rest                *string `json:"rest"`
 }
 

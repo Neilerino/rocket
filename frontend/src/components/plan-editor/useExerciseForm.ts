@@ -27,6 +27,11 @@ const exerciseFormSchema = z.object({
   rpe: z.number().min(0).max(10).nullable(),
   durationMinutes: z.number().min(0, 'Duration cannot be negative').nullable(),
   durationSeconds: z.number().min(0, 'Duration cannot be negative').nullable(),
+  subReps: z.number().min(0, 'Sub-reps cannot be negative').nullable(),
+  subWorkDurationMinutes: z.number().min(0, 'Sub-work duration cannot be negative').nullable(),
+  subWorkDurationSeconds: z.number().min(0, 'Sub-work duration cannot be negative').nullable(),
+  subRestDurationMinutes: z.number().min(0, 'Sub-rest duration cannot be negative').nullable(),
+  subRestDurationSeconds: z.number().min(0, 'Sub-rest duration cannot be negative').nullable(),
   parameters: z.array(exerciseParameterSchema),
 });
 
@@ -53,6 +58,11 @@ export const defaultExerciseValues: ExerciseFormData = {
   rpe: 5.0,
   durationMinutes: null,
   durationSeconds: null,
+  subReps: null,
+  subWorkDurationMinutes: null,
+  subWorkDurationSeconds: null,
+  subRestDurationMinutes: null,
+  subRestDurationSeconds: null,
   parameters: [],
 };
 
@@ -80,6 +90,23 @@ const defaultFormValues = (initialValues: Partial<ExerciseFormData> | undefined)
         initialValues.durationSeconds !== undefined
           ? initialValues.durationSeconds
           : defaultExerciseValues.durationSeconds,
+      subReps: initialValues.subReps ?? defaultExerciseValues.subReps,
+      subWorkDurationMinutes:
+        initialValues.subWorkDurationMinutes !== undefined
+          ? initialValues.subWorkDurationMinutes
+          : defaultExerciseValues.subWorkDurationMinutes,
+      subWorkDurationSeconds:
+        initialValues.subWorkDurationSeconds !== undefined
+          ? initialValues.subWorkDurationSeconds
+          : defaultExerciseValues.subWorkDurationSeconds,
+      subRestDurationMinutes:
+        initialValues.subRestDurationMinutes !== undefined
+          ? initialValues.subRestDurationMinutes
+          : defaultExerciseValues.subRestDurationMinutes,
+      subRestDurationSeconds:
+        initialValues.subRestDurationSeconds !== undefined
+          ? initialValues.subRestDurationSeconds
+          : defaultExerciseValues.subRestDurationSeconds,
       parameters: initialValues.parameters ?? defaultExerciseValues.parameters,
     }),
   };
@@ -106,6 +133,7 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
     },
     onSubmit: async ({ value }) => {
       try {
+        let variationId: number | null = null;
         if (value.variationId === null) {
           const newExercise = await createExercise({
             name: value.name,
@@ -121,27 +149,57 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
                 locked: p.locked,
               })) ?? [],
           });
-
-          await createPrescription({
-            groupId: groupId,
-            planIntervalId: intervalId,
-            exerciseVariationId: newVariation.id,
-            sets: value.sets,
-            reps: value.reps,
-            rpe: value.rpe ? Math.round(value.rpe) : null,
-            duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
-            rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
-          });
+          variationId = newVariation.id;
         } else {
-          await createPrescription({
-            groupId: groupId,
-            planIntervalId: intervalId,
-            exerciseVariationId: value.variationId,
-            sets: value.sets,
+          variationId = value.variationId;
+        }
+
+        await createPrescription({
+          groupId: groupId,
+          planIntervalId: intervalId,
+          exerciseVariationId: variationId,
+          sets: value.sets,
+          reps: value.reps,
+          rpe: value.rpe ? Math.round(value.rpe) : null,
+          duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
+          rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
+          subReps: value.subReps,
+          subWorkDuration: handleDuration(
+            value.subWorkDurationMinutes ?? 0,
+            value.subWorkDurationSeconds ?? 0,
+          ),
+          subRestDuration: handleDuration(
+            value.subRestDurationMinutes ?? 0,
+            value.subRestDurationSeconds ?? 0,
+          ),
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+  });
+
+  useEffect(() => {
+    form.reset(defaultFormValues(initialValues));
+  }, [initialValues, form]);
+
+  return form;
+};
+
+export type ExerciseForm = ReturnType<typeof useExerciseForm>;
             reps: value.reps,
             rpe: value.rpe ? Math.round(value.rpe) : null,
             duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
             rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
+            subReps: value.subReps,
+            subWorkDuration: handleDuration(
+              value.subWorkDurationMinutes ?? 0,
+              value.subWorkDurationSeconds ?? 0,
+            ),
+            subRestDuration: handleDuration(
+              value.subRestDurationMinutes ?? 0,
+              value.subRestDurationSeconds ?? 0,
+            ),
           });
         }
       } catch (error) {

@@ -93,6 +93,9 @@ type IntervalExercisePrescription struct {
 	Reps                *int32            `json:"reps"`
 	Duration            *string           `json:"duration"`
 	Rest                *string           `json:"rest"`
+	SubReps             *int32            `json:"subReps"`
+	SubRepWorkDuration  *string           `json:"subRepWorkDuration"`
+	SubRepRestDuration  *string           `json:"subRepRestDuration"`
 	ExerciseVariation   ExerciseVariation `json:"exerciseVariation,omitempty"`
 }
 

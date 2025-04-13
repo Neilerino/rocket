@@ -57,6 +57,9 @@ type IntervalExercisePrescription struct {
 	Sets                int32
 	Reps                pgtype.Int4
 	Duration            pgtype.Interval
+	SubReps             pgtype.Int4
+	SubRepWorkDuration  pgtype.Interval
+	SubRepRestDuration  pgtype.Interval
 	Rest                pgtype.Interval
 }
 

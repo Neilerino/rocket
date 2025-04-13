@@ -5,14 +5,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 )
 
 // Simple test script to verify the Plans List API with different filter combinations
 func main() {
 	baseURL := "http://localhost:8080/api/plans"
-	
+
 	// Test cases for different filter combinations
 	testCases := []struct {
 		name   string
@@ -47,13 +46,13 @@ func main() {
 	// Run each test case
 	for _, tc := range testCases {
 		fmt.Printf("\n=== Testing: %s ===\n", tc.name)
-		
+
 		// Build the URL with query parameters
 		fullURL := baseURL
 		if len(tc.params) > 0 {
 			fullURL += "?" + tc.params.Encode()
 		}
-		
+
 		// Make the request
 		fmt.Printf("Request URL: %s\n", fullURL)
 		resp, err := http.Get(fullURL)
@@ -61,13 +60,13 @@ func main() {
 			log.Printf("Error making request: %v\n", err)
 			continue
 		}
-		
+
 		// Print the response status
 		fmt.Printf("Response Status: %s\n", resp.Status)
-		
+
 		// Close the response body
 		resp.Body.Close()
-		
+
 		// Add a small delay between requests
 		time.Sleep(500 * time.Millisecond)
 	}

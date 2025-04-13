@@ -130,6 +130,9 @@ CREATE TABLE IF NOT EXISTS interval_exercise_prescriptions (
     sets INTEGER NOT NULL,
     reps INTEGER,
     duration INTERVAL,
+    sub_reps INTEGER,
+    sub_rep_work_duration INTERVAL,
+    sub_rep_rest_duration INTERVAL,
     rest INTERVAL
 );
 
