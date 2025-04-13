@@ -14,6 +14,7 @@ import {
   StopwatchMinutesInput,
   StopwatchSecondsInput,
 } from './stopwatchInput';
+import ToggleFormHeader from '../ui/toggle-form-header';
 
 interface NewExerciseTabProps {
   form: ExerciseForm;
@@ -151,15 +152,15 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
               durationSeconds: state.values.durationSeconds,
             })}
             children={({ durationMinutes, durationSeconds }) => (
-              <AccordionItem
-                value="duration"
-                title="Duration"
-                checked={durationMinutes !== null && durationSeconds !== null}
-                onCheckChange={(checked: boolean) => {
-                  form.setFieldValue('durationMinutes', checked ? (durationMinutes ?? 5) : null);
-                  form.setFieldValue('durationSeconds', checked ? (durationSeconds ?? 0) : null);
-                }}
-              >
+              <>
+                <ToggleFormHeader
+                  title="Duration"
+                  isToggled={durationMinutes !== null && durationSeconds !== null}
+                  onToggle={(toggled: boolean) => {
+                    form.setFieldValue('durationMinutes', toggled ? (durationMinutes ?? 5) : null);
+                    form.setFieldValue('durationSeconds', toggled ? (durationSeconds ?? 0) : null);
+                  }}
+                />
                 <StopwatchInputGroup id="duration">
                   <form.Field
                     name="durationMinutes"
@@ -180,7 +181,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                     )}
                   />
                 </StopwatchInputGroup>
-              </AccordionItem>
+              </>
             )}
           />
         </div>

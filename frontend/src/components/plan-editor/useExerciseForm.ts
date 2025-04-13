@@ -187,32 +187,3 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
 };
 
 export type ExerciseForm = ReturnType<typeof useExerciseForm>;
-            reps: value.reps,
-            rpe: value.rpe ? Math.round(value.rpe) : null,
-            duration: handleDuration(value.durationMinutes ?? 0, value.durationSeconds ?? 0),
-            rest: handleDuration(value.restMinutes ?? 0, value.restSeconds ?? 0),
-            subReps: value.subReps,
-            subWorkDuration: handleDuration(
-              value.subWorkDurationMinutes ?? 0,
-              value.subWorkDurationSeconds ?? 0,
-            ),
-            subRestDuration: handleDuration(
-              value.subRestDurationMinutes ?? 0,
-              value.subRestDurationSeconds ?? 0,
-            ),
-          });
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    },
-  });
-
-  useEffect(() => {
-    form.reset(defaultFormValues(initialValues));
-  }, [initialValues, form]);
-
-  return form;
-};
-
-export type ExerciseForm = ReturnType<typeof useExerciseForm>;
