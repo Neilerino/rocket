@@ -369,7 +369,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form }) => {
       </div>
 
       {/* Parameter Types Section - Now using our new ParameterManager component */}
-      {parameterTypes && parameterTypes.length > 0 && (
+      {parameterTypes && (
         <div className="space-y-4">
           <div className="flex items-center">
             <div className="mr-2 flex-shrink-0 text-gray-700">
@@ -383,24 +383,10 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form }) => {
               <>
                 <ParameterManager
                   allParameterTypes={parameterTypes}
-                  selectedParameters={form.state.values.parameters?.map((p) => ({
-                    parameterTypeId: p.parameterTypeId,
-                    locked: p.locked,
-                    name: p.name,
-                    dataType: p.dataType,
-                    defaultUnit: p.defaultUnit,
-                    minValue: p.minValue,
-                    maxValue: p.maxValue,
-                  }))}
-                  onParametersChange={(newParams: CreateExerciseParameterTypeDto[]) => {
-                    if (
-                      !newParams ||
-                      newParams.length === 0 ||
-                      newParams[0].parameterTypeId === undefined
-                    )
-                      return;
-                    form.setFieldValue('parameters', newParams);
-                  }}
+                  selectedParameters={form.state.values.parameters}
+                  onParametersChange={(newParams: CreateExerciseParameterTypeDto[]) =>
+                    form.setFieldValue('parameters', newParams)
+                  }
                 />
                 <form.Field name="parameters" children={(field) => <FieldError field={field} />} />
               </>

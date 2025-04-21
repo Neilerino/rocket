@@ -16,6 +16,7 @@
     "@heroui/chip": "^2.2.11",
     "@heroui/drawer": "^2.2.12",
     "@heroui/input": "^2.4.16",
+    "@heroui/radio": "^2.3.16",
     "@heroui/react": "^2.7.4",
     "@heroui/select": "^2.4.15",
     "@heroui/switch": "^2.2.15",
