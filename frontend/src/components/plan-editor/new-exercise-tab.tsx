@@ -4,7 +4,6 @@ import { Label } from 'shad/components/ui/label';
 import { Textarea } from 'shad/components/ui/textarea';
 import { ExerciseParameterFormData, ExerciseForm } from './useExerciseForm';
 import { ParameterType, CreateExerciseParameterTypeDto } from '@/services/types';
-import { AccordionItem } from './exercise-accordion';
 import ParameterManager from './parameter-manager';
 import { Clock, Repeat, Settings } from 'lucide-react';
 import { Slider } from 'shad/components/ui/slider';
@@ -28,18 +27,6 @@ const FieldError = ({ field }: { field: AnyFieldApi }) => {
 };
 
 const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes }) => {
-  const formatRestTime = (totalSeconds: number | null | undefined) => {
-    if (totalSeconds === null || totalSeconds === undefined || totalSeconds < 0)
-      return { minutes: 0, seconds: 0 };
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return { minutes, seconds };
-  };
-
-  const { minutes: currentRestMinutes, seconds: currentRestSeconds } = formatRestTime(
-    form.state.values.rest,
-  );
-
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -121,13 +108,6 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
           <div className="space-y-2">
             <form.Field
               name="reps"
-              validators={{
-                onChange: ({ value }: { value: number | null | undefined }) =>
-                  form.state.values.reps !== null &&
-                  (value === null || value === undefined || value < 1)
-                    ? 'Reps must be at least 1.'
-                    : undefined,
-              }}
               children={(field) => (
                 <div className="space-y-1.5">
                   <Label htmlFor={field.name}>Reps per Set</Label>
@@ -166,6 +146,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                     name="durationMinutes"
                     children={(field) => (
                       <StopwatchMinutesInput
+                        disabled={durationMinutes === null && durationSeconds === null}
                         value={field.state.value ?? 0}
                         onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
                       />
@@ -175,6 +156,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                     name="durationSeconds"
                     children={(field) => (
                       <StopwatchSecondsInput
+                        disabled={durationMinutes === null && durationSeconds === null}
                         value={field.state.value ?? 0}
                         onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
                       />
@@ -187,7 +169,6 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
         </div>
       </div>
 
-      {/* Rest and RPE Section */}
       <div className="space-y-4">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -224,10 +205,12 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
             selector={(state) => state.values.rpe}
             children={(rpe) => (
               <>
+                <ToggleFormHeader
+                  title="RPE (Rate of Perceived Exertion)"
+                  isToggled={rpe !== null}
+                  onToggle={(toggled: boolean) => form.setFieldValue('rpe', toggled ? 5 : null)}
+                />
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="rpe" className="text-sm font-medium text-gray-700">
-                    RPE (Rate of Perceived Exertion)
-                  </Label>
                   <div className="flex items-center">
                     <span className="text-sm font-medium bg-primary-50 text-primary-700 py-0.5 px-1.5 rounded">
                       {rpe?.toFixed(0)}
@@ -235,6 +218,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                   </div>
                 </div>
                 <Slider
+                  disabled={rpe === null}
                   value={[rpe ?? 5]}
                   min={0}
                   max={10}
@@ -251,6 +235,135 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
             )}
           />
         </div>
+      </div>
+
+      {/* Interval Training Section */}
+      <div className="space-y-4">
+        <form.Subscribe
+          selector={(state) => ({
+            subReps: state.values.subReps,
+            subWorkDurationMinutes: state.values.subWorkDurationMinutes,
+            subWorkDurationSeconds: state.values.subWorkDurationSeconds,
+            subRestDurationMinutes: state.values.subRestDurationMinutes,
+            subRestDurationSeconds: state.values.subRestDurationSeconds,
+          })}
+          children={({
+            subReps,
+            subWorkDurationMinutes,
+            subWorkDurationSeconds,
+            subRestDurationMinutes,
+            subRestDurationSeconds,
+          }) => {
+            const isIntervalEnabled =
+              subReps !== null ||
+              subWorkDurationMinutes !== null ||
+              subWorkDurationSeconds !== null ||
+              subRestDurationMinutes !== null ||
+              subRestDurationSeconds !== null;
+            return (
+              <>
+                <ToggleFormHeader
+                  title="Interval Training (e.g., Repeaters)"
+                  isToggled={isIntervalEnabled}
+                  onToggle={(toggled) => {
+                    if (toggled) {
+                      // Set defaults if enabling
+                      form.setFieldValue('subReps', subReps ?? 1);
+                      form.setFieldValue('subWorkDurationMinutes', subWorkDurationMinutes ?? 0);
+                      form.setFieldValue('subWorkDurationSeconds', subWorkDurationSeconds ?? 7);
+                      form.setFieldValue('subRestDurationMinutes', subRestDurationMinutes ?? 0);
+                      form.setFieldValue('subRestDurationSeconds', subRestDurationSeconds ?? 3);
+                    } else {
+                      // Clear values if disabling
+                      form.setFieldValue('subReps', null);
+                      form.setFieldValue('subWorkDurationMinutes', null);
+                      form.setFieldValue('subWorkDurationSeconds', null);
+                      form.setFieldValue('subRestDurationMinutes', null);
+                      form.setFieldValue('subRestDurationSeconds', null);
+                    }
+                  }}
+                />
+                {/* Sub Reps */}
+                <div className="space-y-2">
+                  <form.Field
+                    name="subReps"
+                    validators={{
+                      onChange: ({ value }: { value: number | null | undefined }) =>
+                        isIntervalEnabled && (value === null || value === undefined || value < 1)
+                          ? 'Sub-reps must be at least 1.'
+                          : undefined,
+                    }}
+                    children={(field) => (
+                      <div className="space-y-1.5">
+                        <Label htmlFor={field.name}>Reps per Interval (Sub-Reps)</Label>
+                        <Input
+                          type="number"
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value ?? ''}
+                          min={1}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
+                          disabled={!isIntervalEnabled}
+                          className={field.state.meta.errors.length ? 'border-destructive' : ''}
+                        />
+                        <FieldError field={field} />
+                      </div>
+                    )}
+                  />
+                </div>
+
+                {/* Sub-Work Duration */}
+                <StopwatchInputGroup id="subWorkDuration" label="Work Duration per Sub-Rep">
+                  <form.Field
+                    name="subWorkDurationMinutes"
+                    children={(field) => (
+                      <StopwatchMinutesInput
+                        disabled={!isIntervalEnabled}
+                        value={field.state.value ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
+                      />
+                    )}
+                  />
+                  <form.Field
+                    name="subWorkDurationSeconds"
+                    children={(field) => (
+                      <StopwatchSecondsInput
+                        disabled={!isIntervalEnabled}
+                        value={field.state.value ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
+                      />
+                    )}
+                  />
+                </StopwatchInputGroup>
+
+                {/* Sub-Rest Duration */}
+                <StopwatchInputGroup id="subRestDuration" label="Rest Duration per Sub-Rep">
+                  <form.Field
+                    name="subRestDurationMinutes"
+                    children={(field) => (
+                      <StopwatchMinutesInput
+                        disabled={!isIntervalEnabled}
+                        value={field.state.value ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
+                      />
+                    )}
+                  />
+                  <form.Field
+                    name="subRestDurationSeconds"
+                    children={(field) => (
+                      <StopwatchSecondsInput
+                        disabled={!isIntervalEnabled}
+                        value={field.state.value ?? 0}
+                        onChange={(e) => field.setValue(parseInt(e.target.value, 10) || 0)}
+                      />
+                    )}
+                  />
+                </StopwatchInputGroup>
+              </>
+            );
+          }}
+        />
       </div>
 
       {/* Parameter Types Section - Now using our new ParameterManager component */}
