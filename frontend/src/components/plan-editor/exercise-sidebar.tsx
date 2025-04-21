@@ -100,7 +100,7 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
           {activeTab === 'reuse' && (
             <ReuseExerciseTab onSelect={() => {}} /> // Come back to this
           )}
-          {activeTab === 'new' && <NewExerciseTab form={form} parameterTypes={[]} />}
+          {activeTab === 'new' && <NewExerciseTab form={form} />}
         </DrawerBody>
 
         <DrawerFooter className="border-t p-4 bg-gray-5 0">

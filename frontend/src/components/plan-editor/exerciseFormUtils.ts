@@ -18,6 +18,11 @@ export function mapVariationToFormData(variation: ExerciseVariation): ExerciseFo
   const parameters: ExerciseParameterFormData[] = (variation.parameters || []).map(
     (pt: ExerciseVariationParam) => ({
       parameterTypeId: pt.parameterTypeId,
+      name: pt.parameterType.name,
+      dataType: pt.parameterType.dataType,
+      defaultUnit: pt.parameterType.defaultUnit,
+      minValue: pt.parameterType.minValue ?? null,
+      maxValue: pt.parameterType.maxValue ?? null,
       locked: pt.locked,
     }),
   );
@@ -33,8 +38,11 @@ export function mapVariationToFormData(variation: ExerciseVariation): ExerciseFo
     restMinutes: null,
     restSeconds: null,
     rpe: null,
-    durationMinutes: null,
-    durationSeconds: null,
+    subReps: null,
+    subWorkDurationMinutes: null,
+    subWorkDurationSeconds: null,
+    subRestDurationMinutes: null,
+    subRestDurationSeconds: null,
     parameters,
   };
 }
@@ -52,6 +60,11 @@ export function mapPrescriptionToFormData(
   const parameters: ExerciseParameterFormData[] = (variation?.parameters || []).map(
     (pt: ExerciseVariationParam) => ({
       parameterTypeId: pt.parameterTypeId,
+      name: pt.parameterType.name,
+      dataType: pt.parameterType.dataType,
+      defaultUnit: pt.parameterType.defaultUnit,
+      minValue: pt.parameterType.minValue ?? null,
+      maxValue: pt.parameterType.maxValue ?? null,
       locked: pt.locked,
     }),
   );
