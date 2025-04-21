@@ -11,54 +11,38 @@ import { ParameterType, CreateExerciseParameterTypeDto } from '@/services/types'
 import { Lock, Unlock, Trash2, PlusCircle } from 'lucide-react';
 
 interface ParameterManagerProps {
-  parameters: CreateExerciseParameterTypeDto[];
+  selectedParameters: CreateExerciseParameterTypeDto[];
   allParameterTypes: ParameterType[];
   onParametersChange: (newParameters: CreateExerciseParameterTypeDto[]) => void;
 }
 
 const ParameterManager: React.FC<ParameterManagerProps> = ({
-  parameters = [],
+  selectedParameters = [],
   allParameterTypes = [],
   onParametersChange,
 }) => {
-  const [newParameterId, setNewParameterId] = useState<string>('');
-
-  const availableParameterTypes = allParameterTypes.filter(
-    (pt) => !parameters.some((p) => p.parameterTypeId === pt.id),
-  );
-
   const handleAddParameter = () => {
-    if (newParameterId) {
-      const paramId = parseInt(newParameterId, 10);
-      const updatedParameters = [
-        ...parameters,
-        { parameterTypeId: paramId, locked: false, value: 0 },
-      ];
-      onParametersChange(updatedParameters);
-    }
-  };
-
-  const handleToggleLock = (paramId: number) => {
-    const updatedParameters = parameters.map((p) =>
-      p.parameterTypeId === paramId ? { ...p, locked: !p.locked } : p,
-    );
+    const paramId = parseInt(newParameterId, 10);
+    const updatedParameters = [
+      ...selectedParameters,
+      { parameterTypeId: paramId, locked: false, value: 0 },
+    ];
     onParametersChange(updatedParameters);
   };
 
-  const getParameterName = (paramId: number): string => {
-    return allParameterTypes.find((pt) => pt.id === paramId)?.name || 'Unknown';
-  };
-
-  const getParameterUnit = (paramId: number): string => {
-    return allParameterTypes.find((pt) => pt.id === paramId)?.defaultUnit || '';
+  const handleToggleLock = (paramId: number) => {
+    const updatedParameters = selectedParameters.map((p) =>
+      p.parameterTypeId === paramId ? { ...p, locked: !p.locked } : p,
+    );
+    onParametersChange(updatedParameters);
   };
 
   return (
     <div className="space-y-4">
       <h4 className="font-medium text-sm mb-2">Manage Parameters</h4>
       <div className="space-y-2 min-h-[50px]">
-        {parameters.length > 0 ? (
-          parameters.map((param) => {
+        {selectedParameters.length > 0 ? (
+          selectedParameters.map((param) => {
             const paramId = param.parameterTypeId;
 
             if (!paramId) {
@@ -66,17 +50,13 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
               return null;
             }
 
-            const isLocked = param.locked;
-            const name = getParameterName(paramId);
-            const unit = getParameterUnit(paramId);
-
             return (
               <div
                 key={paramId}
                 className="flex items-center justify-between p-2 border rounded-md bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
               >
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {name} {unit && `(${unit})`}
+                  {param.name} {param.defaultUnit}
                 </span>
                 <div className="flex items-center gap-2">
                   <Button
@@ -85,13 +65,13 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
                     onClick={() => handleToggleLock(paramId)}
                     className="h-8 w-8 text-gray-500 hover:text-gray-700"
                   >
-                    {isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                    {param.locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      const updatedParameters = parameters.filter(
+                      const updatedParameters = selectedParameters.filter(
                         (p) => p.parameterTypeId !== paramId,
                       );
                       onParametersChange(updatedParameters);
@@ -113,23 +93,23 @@ const ParameterManager: React.FC<ParameterManagerProps> = ({
         <Select
           value={newParameterId}
           onValueChange={setNewParameterId}
-          disabled={availableParameterTypes.length === 0}
+          disabled={allParameterTypes.length === 0}
         >
           <SelectTrigger className="flex-grow">
             <SelectValue placeholder="Select a parameter to add..." />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">Select a parameter...</SelectItem>
-            {availableParameterTypes.map((pt) => (
+            {allParameterTypes.map((pt) => (
               <SelectItem key={pt.id} value={String(pt.id)}>
-                {pt.name} {pt.defaultUnit ? `(${pt.defaultUnit})` : ''}
+                {pt.name} {pt.defaultUnit && `(${pt.defaultUnit})`}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Button
           onClick={handleAddParameter}
-          disabled={!newParameterId || availableParameterTypes.length === 0}
+          disabled={!newParameterId || allParameterTypes.length === 0}
           size="sm"
           variant="outline"
         >

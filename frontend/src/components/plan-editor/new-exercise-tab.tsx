@@ -3,9 +3,9 @@ import { Input } from 'shad/components/ui/input';
 import { Label } from 'shad/components/ui/label';
 import { Textarea } from 'shad/components/ui/textarea';
 import { ExerciseParameterFormData, ExerciseForm } from './useExerciseForm';
-import { ParameterType, CreateExerciseParameterTypeDto } from '@/services/types';
+import { CreateExerciseParameterTypeDto } from '@/services/types';
 import ParameterManager from './parameter-manager';
-import { Clock, Repeat, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Slider } from 'shad/components/ui/slider';
 import { AnyFieldApi } from '@tanstack/react-form';
 import {
@@ -14,10 +14,10 @@ import {
   StopwatchSecondsInput,
 } from './stopwatchInput';
 import ToggleFormHeader from '../ui/toggle-form-header';
+import { useParameterTypes } from '@/services/hooks';
 
 interface NewExerciseTabProps {
   form: ExerciseForm;
-  parameterTypes: ParameterType[];
 }
 
 const FieldError = ({ field }: { field: AnyFieldApi }) => {
@@ -26,7 +26,9 @@ const FieldError = ({ field }: { field: AnyFieldApi }) => {
   return <em className="text-sm text-destructive">{field.state.meta.errors.join(', ')}</em>;
 };
 
-const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes }) => {
+const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form }) => {
+  const { data: parameterTypes } = useParameterTypes({ userId: 1 });
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -367,7 +369,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
       </div>
 
       {/* Parameter Types Section - Now using our new ParameterManager component */}
-      {parameterTypes.length > 0 && (
+      {parameterTypes && parameterTypes.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center">
             <div className="mr-2 flex-shrink-0 text-gray-700">
@@ -381,9 +383,14 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
               <>
                 <ParameterManager
                   allParameterTypes={parameterTypes}
-                  parameters={form.state.values.parameters?.map((p) => ({
+                  selectedParameters={form.state.values.parameters?.map((p) => ({
                     parameterTypeId: p.parameterTypeId,
                     locked: p.locked,
+                    name: p.name,
+                    dataType: p.dataType,
+                    defaultUnit: p.defaultUnit,
+                    minValue: p.minValue,
+                    maxValue: p.maxValue,
                   }))}
                   onParametersChange={(newParams: CreateExerciseParameterTypeDto[]) => {
                     if (
@@ -392,11 +399,7 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form, parameterTypes })
                       newParams[0].parameterTypeId === undefined
                     )
                       return;
-                    const mappedParams: ExerciseParameterFormData[] = newParams.map((p) => ({
-                      parameterTypeId: p.parameterTypeId,
-                      locked: p.locked,
-                    }));
-                    form.setFieldValue('parameters', mappedParams);
+                    form.setFieldValue('parameters', newParams);
                   }}
                 />
                 <form.Field name="parameters" children={(field) => <FieldError field={field} />} />

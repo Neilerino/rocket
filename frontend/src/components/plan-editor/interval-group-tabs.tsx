@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Exercise, Group } from '@/services/types';
 import { useGroups, useUpdateGroup } from '@/services/hooks';
@@ -27,6 +27,14 @@ const IntervalGroupTabs: React.FC<IntervalGroupTabsProps> = ({
   const { data: groups, isLoading } = useGroups(groupContext);
 
   const updateGroup = useUpdateGroup({ filters: groupContext });
+
+  useEffect(() => {
+    if (groups && groups.length > 0 && !currentGroup) {
+      setCurrentGroup(groups[0]);
+    } else if (!groups || groups.length === 0) {
+      setCurrentGroup(null);
+    }
+  }, [groups, setCurrentGroup, currentGroup]);
 
   const handleSelectTab = (id: string) => {
     setCurrentGroup(groups?.find((group) => group.id === Number(id)) || null);

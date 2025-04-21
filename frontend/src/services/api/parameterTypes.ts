@@ -44,8 +44,4 @@ export const ParameterTypeService = {
       params: { ...filters, ...pagination },
     });
   },
-
-  async createParameterType(data: CreateParameterTypeDto): Promise<ApiResponse<ParameterType>> {
-    return apiClient.post('/parameter-types', data);
-  },
 };

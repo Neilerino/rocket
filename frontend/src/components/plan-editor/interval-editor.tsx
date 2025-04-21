@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
-  Group as ServiceGroup,
+  Group,
   PlanInterval as ServicePlanInterval,
   IntervalExercisePrescription,
   Exercise as ServiceExercise,
 } from '@/services/types';
-import ExerciseSidebar, { ExerciseFormData } from './exercise-sidebar';
+import ExerciseSidebar from './exercise-sidebar';
 import GroupSidebar from './group-sidebar';
 import { AnimatePresence } from 'framer-motion';
 import { ChevronRight, Trash2, Edit } from 'lucide-react';
@@ -32,7 +32,7 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   const [selectedPrescriptionToEdit, setSelectedPrescriptionToEdit] =
     useState<IntervalExercisePrescription | null>(null);
-  const [currentGroup, setCurrentGroup] = useState<ServiceGroup | null>(null);
+  const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleDeleteInterval = (e: React.MouseEvent) => {
@@ -135,7 +135,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
         prescriptionToEdit={selectedPrescriptionToEdit}
         onClose={() => {
           setSelectedPrescriptionToEdit(null);
-          setCurrentGroup(null);
           setExerciseDrawerOpen(false);
         }}
         isOpen={exerciseDrawerOpen}
@@ -145,7 +144,6 @@ const IntervalEditor: React.FC<IntervalEditorProps> = ({
       <GroupSidebar
         group={currentGroup}
         onClose={() => {
-          setCurrentGroup(null);
           setGroupDrawerOpen(false);
         }}
         isOpen={groupDrawerOpen}

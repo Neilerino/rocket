@@ -114,12 +114,12 @@ export interface ExerciseVariation extends BaseEntity {
 }
 
 export interface CreateExerciseParameterTypeDto {
-  parameterTypeId?: number;
-  name?: string;
-  dataType?: string;
-  defaultUnit?: string;
-  minValue?: number;
-  maxValue?: number;
+  parameterTypeId: number | null;
+  name: string;
+  dataType: string;
+  defaultUnit: string;
+  minValue: number | null;
+  maxValue: number | null;
   locked: boolean;
 }
 

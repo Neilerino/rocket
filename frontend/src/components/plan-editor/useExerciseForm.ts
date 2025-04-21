@@ -7,10 +7,34 @@ import {
 } from '@/services/hooks/exercises/useExerciseMutations';
 import { useCreatePrescription } from '@/services/hooks/prescriptions/usePrescriptionMutations';
 
-export const exerciseParameterSchema = z.object({
-  parameterTypeId: z.number(),
-  locked: z.boolean(),
-});
+export const exerciseParameterSchema = z
+  .object({
+    parameterTypeId: z.number().nullable(),
+    name: z.string(),
+    dataType: z.string(),
+    defaultUnit: z.string(),
+    minValue: z.number().nullable(),
+    maxValue: z.number().nullable(),
+    locked: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.parameterTypeId === null) {
+      if (!data.name) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Name is required when creating a new parameter type.',
+          path: ['name'],
+        });
+      }
+      if (!data.dataType) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Data type is required when creating a new parameter type.',
+          path: ['dataType'],
+        });
+      }
+    }
+  });
 
 export type ExerciseParameterFormData = z.infer<typeof exerciseParameterSchema>;
 

@@ -85,8 +85,8 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
         <div className="border-b">
           <Tabs
             tabs={[
+              { id: 'reuse', label: 'Exercises' },
               { id: 'new', label: 'New Exercise' },
-              { id: 'reuse', label: 'Reuse Exercise' },
             ]}
             activeTabId={activeTab}
             onTabChange={(tabId) => setActiveTab(tabId as 'new' | 'reuse')}
@@ -97,11 +97,10 @@ const ExerciseSidebar: React.FC<ExerciseSidebarProps> = ({
         <DrawerBody
           className={`flex-1 ${activeTab === 'reuse' ? 'overflow-hidden p-6 pb-0' : 'overflow-auto p-6'}`}
         >
-          {activeTab === 'new' && <NewExerciseTab form={form} parameterTypes={[]} />}
-
           {activeTab === 'reuse' && (
             <ReuseExerciseTab onSelect={() => {}} /> // Come back to this
           )}
+          {activeTab === 'new' && <NewExerciseTab form={form} parameterTypes={[]} />}
         </DrawerBody>
 
         <DrawerFooter className="border-t p-4 bg-gray-5 0">
