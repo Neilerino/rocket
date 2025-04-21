@@ -5,6 +5,7 @@ import TrainingPlanner from '@/pages/planning/training';
 import { RootComponent } from '../components/rootComponent';
 import { ROUTES } from './routeConstants';
 import PlanEditor from '@/pages/editPlan';
+import ActiveWorkout from '@/pages/training/ActiveWorkout';
 
 const rootRoot = createRootRoute({ component: RootComponent });
 
@@ -17,7 +18,7 @@ const homeRoute = createRoute({
 const trainingRoute = createRoute({
   getParentRoute: () => rootRoot,
   path: ROUTES.TRAINING.path,
-  component: PlanBuilder,
+  component: ActiveWorkout,
 });
 
 const planningRoute = createRoute({
