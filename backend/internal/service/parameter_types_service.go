@@ -57,11 +57,11 @@ func (s *ParameterTypesService) List(ctx context.Context, params ListParameterTy
 
 func (s *ParameterTypesService) Create(ctx context.Context, params CreateParameterTypeParams) (*types.ParameterType, error) {
 	row, err := s.repo.Create(ctx, repository.CreateParameterTypeParams{
-		Name:        DerefOrDefault(params.Name, ""),
-		DataType:    DerefOrDefault(params.DataType, ""),
-		DefaultUnit: DerefOrDefault(params.DefaultUnit, ""),
-		MinValue:    DerefOrDefault(params.MinValue, 0.0),
-		MaxValue:    DerefOrDefault(params.MaxValue, 0.0),
+		Name:        params.Name,
+		DataType:    params.DataType,
+		DefaultUnit: params.DefaultUnit,
+		MinValue:    params.MinValue,
+		MaxValue:    params.MaxValue,
 	})
 	if err != nil {
 		return nil, err

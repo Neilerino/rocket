@@ -170,6 +170,11 @@ export const useExerciseForm = ({ intervalId, groupId, initialValues }: UseExerc
             parameterTypes:
               value.parameters?.map((p) => ({
                 parameterTypeId: p.parameterTypeId,
+                name: p.name,
+                dataType: p.dataType,
+                defaultUnit: p.defaultUnit,
+                minValue: p.minValue,
+                maxValue: p.maxValue,
                 locked: p.locked,
               })) ?? [],
           });

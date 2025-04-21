@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from 'shad/components/ui/input';
 import { Label } from 'shad/components/ui/label';
 import { Textarea } from 'shad/components/ui/textarea';
-import { ExerciseParameterFormData, ExerciseForm } from './useExerciseForm';
+import { ExerciseForm } from './useExerciseForm';
 import { CreateExerciseParameterTypeDto } from '@/services/types';
 import ParameterManager from './parameter-manager';
 import { Settings } from 'lucide-react';
@@ -369,31 +369,30 @@ const NewExerciseTab: React.FC<NewExerciseTabProps> = ({ form }) => {
       </div>
 
       {/* Parameter Types Section - Now using our new ParameterManager component */}
-      {parameterTypes && (
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <div className="mr-2 flex-shrink-0 text-gray-700">
-              <Settings className="h-5 w-5" />
+      <form.Subscribe
+        selector={(state) => state.values.parameters}
+        children={(parameters) => (
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <div className="mr-2 flex-shrink-0 text-gray-700">
+                <Settings className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-medium text-gray-900">Exercise Parameters</h3>
             </div>
-            <h3 className="text-base font-medium text-gray-900">Exercise Parameters</h3>
-          </div>
 
-          <div className="space-y-1.5">
-            {form.state.values.parameters && (
-              <>
-                <ParameterManager
-                  allParameterTypes={parameterTypes}
-                  selectedParameters={form.state.values.parameters}
-                  onParametersChange={(newParams: CreateExerciseParameterTypeDto[]) =>
-                    form.setFieldValue('parameters', newParams)
-                  }
-                />
-                <form.Field name="parameters" children={(field) => <FieldError field={field} />} />
-              </>
-            )}
+            <div className="space-y-1.5">
+              <ParameterManager
+                allParameterTypes={parameterTypes ?? []}
+                selectedParameters={parameters}
+                onParametersChange={(newParams: CreateExerciseParameterTypeDto[]) =>
+                  form.setFieldValue('parameters', newParams)
+                }
+              />
+              <form.Field name="parameters" children={(field) => <FieldError field={field} />} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      />
     </div>
   );
 };

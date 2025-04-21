@@ -12,11 +12,11 @@ type ParameterTypesRepository struct {
 }
 
 type CreateParameterTypeParams struct {
-	Name        string
-	DataType    string
-	DefaultUnit string
-	MinValue    float64
-	MaxValue    float64
+	Name        *string
+	DataType    *string
+	DefaultUnit *string
+	MinValue    *float64
+	MaxValue    *float64
 }
 
 type ListParameterTypesParams struct {
@@ -31,12 +31,22 @@ func NewParameterTypesRepository(queries *db.Queries) *ParameterTypesRepository 
 }
 
 func (r *ParameterTypesRepository) Create(ctx context.Context, params CreateParameterTypeParams) (db.ParameterType, error) {
+	var pgMinValue pgtype.Float8 = pgtype.Float8{Valid: false}
+	if params.MinValue != nil {
+		pgMinValue = pgtype.Float8{Float64: *params.MinValue, Valid: true}
+	}
+
+	var pgMaxValue pgtype.Float8 = pgtype.Float8{Valid: false}
+	if params.MaxValue != nil {
+		pgMaxValue = pgtype.Float8{Float64: *params.MaxValue, Valid: true}
+	}
+
 	return r.Queries.ParameterTypes_CreateOne(ctx, db.ParameterTypes_CreateOneParams{
-		Name:        params.Name,
-		DataType:    params.DataType,
-		DefaultUnit: params.DefaultUnit,
-		MinValue:    pgtype.Float8{Float64: params.MinValue, Valid: true},
-		MaxValue:    pgtype.Float8{Float64: params.MaxValue, Valid: true},
+		Name:        *params.Name,
+		DataType:    *params.DataType,
+		DefaultUnit: *params.DefaultUnit,
+		MinValue:    pgMinValue,
+		MaxValue:    pgMaxValue,
 	})
 }
 

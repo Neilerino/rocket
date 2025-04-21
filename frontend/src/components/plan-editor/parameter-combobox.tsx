@@ -3,7 +3,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@heroui/popover';
 import { Button } from 'shad/components/ui/button';
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -57,12 +56,6 @@ const ParameterCombobox: React.FC<ParameterComboboxProps> = ({
     setSearch('');
   };
 
-  // Determine if the search term exactly matches an available parameter name (case-insensitive)
-  const searchMatchesExisting = useMemo(() => {
-    if (!search) return false;
-    return availableParameterTypes.some((pt) => pt.name.toLowerCase() === search.toLowerCase());
-  }, [search, availableParameterTypes]);
-
   return (
     <Popover isOpen={open} onOpenChange={setOpen}>
       <PopoverTrigger>
@@ -82,28 +75,22 @@ const ParameterCombobox: React.FC<ParameterComboboxProps> = ({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command shouldFilter={false}>
           {' '}
-          {/* Disable default filtering */}
           <CommandInput
             placeholder="Search or type name..."
             value={search}
             onValueChange={setSearch}
           />
           <CommandList>
-            <CommandEmpty>
-              {search && !searchMatchesExisting ? (
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start px-2 py-1.5 text-sm"
-                  onClick={handleAddNew}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create new parameter "{search}"
-                </Button>
-              ) : (
-                'No parameters found.'
-              )}
-            </CommandEmpty>
             <CommandGroup>
+              <CommandItem
+                key="add-new"
+                value="add-new"
+                onSelect={handleAddNew}
+                className="text-blue-600 hover:cursor-pointer hover:bg-gray-50"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create a new parameter...
+              </CommandItem>
               {availableParameterTypes
                 .filter((pt) => pt.name.toLowerCase().includes(search.toLowerCase()))
                 .map((pt) => (
@@ -111,6 +98,7 @@ const ParameterCombobox: React.FC<ParameterComboboxProps> = ({
                     key={pt.id}
                     value={String(pt.id)} // Store ID as value
                     onSelect={handleSelect}
+                    className="hover:cursor-pointer hover:bg-gray-50"
                   >
                     <Check
                       className={cn(
@@ -121,18 +109,6 @@ const ParameterCombobox: React.FC<ParameterComboboxProps> = ({
                     {pt.name} {pt.defaultUnit && `(${pt.defaultUnit})`}
                   </CommandItem>
                 ))}
-              {/* Add new button when search is empty or matches */}
-              {(!search || searchMatchesExisting) && (
-                <CommandItem
-                  key="add-new-empty-search"
-                  value="add-new"
-                  onSelect={handleAddNew}
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create a new parameter...
-                </CommandItem>
-              )}
             </CommandGroup>
           </CommandList>
         </Command>

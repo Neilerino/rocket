@@ -97,11 +97,11 @@ func (s *ExerciseVariationsService) CreateVariation(ctx context.Context, exercis
 		}
 		if parameterTypeArg.ParameterTypeId == nil {
 			p, err := s.ParameterTypesRepo.Create(ctx, repository.CreateParameterTypeParams{
-				Name:        *parameterTypeArg.Name,
-				DataType:    *parameterTypeArg.DataType,
-				DefaultUnit: *parameterTypeArg.DefaultUnit,
-				MinValue:    *parameterTypeArg.MinValue,
-				MaxValue:    *parameterTypeArg.MaxValue,
+				Name:        parameterTypeArg.Name,
+				DataType:    parameterTypeArg.DataType,
+				DefaultUnit: parameterTypeArg.DefaultUnit,
+				MinValue:    parameterTypeArg.MinValue,
+				MaxValue:    parameterTypeArg.MaxValue,
 			})
 			if err != nil {
 				return nil, err

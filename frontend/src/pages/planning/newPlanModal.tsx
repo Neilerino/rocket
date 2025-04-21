@@ -11,13 +11,7 @@ import { Input } from 'shad/components/ui/input';
 import { Textarea } from 'shad/components/ui/textarea';
 import { Label } from 'shad/components/ui/label';
 import { useHandlePlanCreation } from './useHandlePlanCreation';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from 'shad/components/ui/select';
+import { Select, SelectSection, SelectItem } from '@heroui/select';
 
 interface INewPlanModalProps {
   setShowNewPlanDialog: (show: boolean) => void;
