@@ -10,13 +10,11 @@ import {
   ChevronDown,
   ChevronUp,
   SkipForward,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import RestTimer from '@/components/training/RestTimer';
-import { Input } from 'shad/components/ui/input';
-import { Label } from 'shad/components/ui/label';
 import { Progress } from '@heroui/progress';
 import WorkoutTimer from '@/components/training/WorkoutTimer';
-import ExerciseCarousel from '@/components/training/ExerciseCarousel';
 import WorkoutCompletionScreen from '@/components/training/WorkoutCompletionScreen';
 
 interface MockExerciseParameter {
@@ -121,7 +119,6 @@ const ActiveWorkout: React.FC = () => {
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(true);
   const [results, setResults] = useState<ExerciseResult[]>([]);
   const [showRpeInput, setShowRpeInput] = useState(false);
   const [currentRpe, setCurrentRpe] = useState<number | null>(null);
@@ -246,42 +243,6 @@ const ActiveWorkout: React.FC = () => {
   // Determine if the current exercise is timed
   const isTimedExercise = getExerciseDuration() > 0;
 
-  // Get the completion status of each exercise
-  const getExerciseStatus = (index: number) => {
-    const exerciseId = mockPlan.exercises[index].id;
-    const result = results.find((r) => r.exerciseId === exerciseId);
-
-    if (result) {
-      return { isCompleted: true };
-    }
-
-    if (index < currentExerciseIndex) {
-      // Exercise was skipped
-      return { isCompleted: true };
-    }
-
-    return { isCompleted: false };
-  };
-
-  // Prepare exercises for the carousel
-  const carouselExercises = mockPlan.exercises.map((exercise, index) => {
-    const status = getExerciseStatus(index);
-    return {
-      ...exercise,
-      isCompleted: status.isCompleted,
-      isCurrent: index === currentExerciseIndex,
-    };
-  });
-
-  // Handle selecting an exercise from the carousel
-  const handleSelectExercise = (index: number) => {
-    // Only allow selecting completed exercises or the current one
-    if (index <= currentExerciseIndex) {
-      setCurrentExerciseIndex(index);
-      setCurrentSetIndex(0);
-    }
-  };
-
   // Handle saving the completed workout
   const handleSaveWorkout = (notes: string) => {
     console.log('Saving workout with notes:', notes);
@@ -352,20 +313,63 @@ const ActiveWorkout: React.FC = () => {
             <Progress value={progressPercentage} className="h-3" />
             <span className="text-sm font-medium">{progressPercentage}%</span>
           </div>
-          <div className="text-sm text-muted-foreground">
-            {completedSets} of {totalSets} sets completed
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              {completedSets} of {totalSets} sets completed
+            </div>
+
+            {/* Exercise Navigation with Next Exercise Preview */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  disabled={currentExerciseIndex === 0}
+                  onPress={() => {
+                    if (currentExerciseIndex > 0) {
+                      setCurrentExerciseIndex(currentExerciseIndex - 1);
+                      setCurrentSetIndex(0);
+                    }
+                  }}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                <span className="text-xs text-muted-foreground">
+                  {currentExerciseIndex + 1} / {mockPlan.exercises.length}
+                </span>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  disabled={currentExerciseIndex === mockPlan.exercises.length - 1}
+                  onClick={() => {
+                    if (currentExerciseIndex < mockPlan.exercises.length - 1) {
+                      setCurrentExerciseIndex(currentExerciseIndex + 1);
+                      setCurrentSetIndex(0);
+                    }
+                  }}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {currentExerciseIndex < mockPlan.exercises.length - 1 && (
+                <div className="text-xs">
+                  <span className="text-muted-foreground">Next: </span>
+                  <span className="font-medium">
+                    {mockPlan.exercises[currentExerciseIndex + 1].name}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Exercise Carousel */}
-      <ExerciseCarousel
-        exercises={carouselExercises}
-        currentIndex={currentExerciseIndex}
-        onSelectExercise={handleSelectExercise}
-      />
-
-      {/* Main Exercise Display */}
+      {/* Main Exercise Display with focus on current exercise */}
       {!isResting ? (
         <Card className="mb-6">
           <CardHeader>
@@ -416,11 +420,6 @@ const ActiveWorkout: React.FC = () => {
               </div>
             ) : (
               <>
-                {/* Exercise Visualization Placeholder */}
-                <div className="bg-muted rounded-lg h-48 mb-4 flex items-center justify-center">
-                  <p className="text-muted-foreground">Exercise Visualization</p>
-                </div>
-
                 {/* Timer for timed exercises */}
                 {isTimedExercise && (
                   <div className="flex justify-center mb-6">
@@ -435,8 +434,16 @@ const ActiveWorkout: React.FC = () => {
                   </div>
                 )}
 
-                {/* Exercise Details */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Collapsible Instructions */}
+                <div className="mb-6">
+                  <div className="p-3 border rounded-lg mt-2 text-sm">
+                    <p>Perform {currentExercise.reps} repetitions with proper form.</p>
+                    <p>Focus on controlled movement and full range of motion.</p>
+                  </div>
+                </div>
+
+                {/* Exercise Details - Improved layout */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-muted/50 p-3 rounded-lg">
                     <div className="text-sm text-muted-foreground">Reps</div>
                     <div className="text-2xl font-bold">{currentExercise.reps}</div>
@@ -459,31 +466,9 @@ const ActiveWorkout: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Collapsible Instructions */}
-                <div className="mb-4">
-                  <button
-                    className="flex w-full justify-between items-center p-2 bg-muted/30 rounded-lg"
-                    onClick={() => setShowInstructions(!showInstructions)}
-                  >
-                    <span className="font-medium">Instructions</span>
-                    {showInstructions ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </button>
-
-                  {showInstructions && (
-                    <div className="p-3 border rounded-lg mt-2 text-sm">
-                      <p>Perform {currentExercise.reps} repetitions with proper form.</p>
-                      <p>Focus on controlled movement and full range of motion.</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Previous Performance */}
+                {/* Previous Performance - Moved up for better visibility */}
                 {currentPreviousResult && (
-                  <div className="mb-4 p-3 border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-900 rounded-lg">
+                  <div className="mb-6 p-3 border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-900 rounded-lg">
                     <h4 className="text-sm font-medium mb-1">Last Session</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {Object.entries(currentPreviousResult.parameterValues).map(
@@ -507,8 +492,8 @@ const ActiveWorkout: React.FC = () => {
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex justify-between gap-2">
+                {/* Action Buttons - Made more prominent */}
+                <div className="flex justify-between gap-4">
                   <Button variant="ghost" className="flex-1">
                     <RefreshCw className="h-4 w-4 mr-2" /> Modify
                   </Button>
@@ -561,11 +546,11 @@ const ActiveWorkout: React.FC = () => {
       )}
 
       {/* Workout Controls */}
-      <div className="flex justify-between">
-        <Button variant="ghost" className="w-1/3" onClick={handleEndWorkout}>
+      <div className="flex justify-between gap-4">
+        <Button variant="ghost" className="flex-1" onClick={handleEndWorkout}>
           End Workout
         </Button>
-        <Button variant="ghost" className="w-1/3">
+        <Button variant="ghost" className="flex-1">
           <Save className="h-4 w-4 mr-2" /> Save Progress
         </Button>
       </div>
