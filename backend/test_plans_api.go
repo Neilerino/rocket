@@ -9,7 +9,7 @@ import (
 )
 
 // Simple test script to verify the Plans List API with different filter combinations
-func main() {
+func test_main() {
 	baseURL := "http://localhost:8080/api/plans"
 
 	// Test cases for different filter combinations

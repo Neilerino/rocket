@@ -1,0 +1,32 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+
+[
+  {
+    "label": "Run server",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    // For Delve, the program can be a package name
+    "program": "./backend/main",
+    "args": ["server"]
+    // "buildFlags": [],
+  },
+  {
+    "build": {
+      "cwd": "/Users/neilwadden/Programming/rocket/backend",
+      "command": "go build -o rocket"
+    },
+    "adapter": "Delve",
+    "label": "main.go (Delve)",
+    "request": "launch",
+    "mode": "exec",
+    "program": "rocket",
+    "cwd": "/Users/neilwadden/Programming/rocket/backend",
+    "args": ["server"],
+    "env": {},
+    "stopOnEntry": false
+  }
+]
