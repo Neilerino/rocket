@@ -49,9 +49,15 @@ func (suite *IntegrationTestSuite) TearDownSuite() {
 
 // SetupTest runs before each individual test
 func (suite *IntegrationTestSuite) SetupTest() {
-	// Reset and re-seed data to ensure clean state for each test
-	err := suite.testDB.ResetAndSeed(suite.ctx)
-	suite.Require().NoError(err, "Failed to reset and seed test data")
+	err := suite.testDB.QuickReset(suite.ctx)
+	suite.Require().NoError(err, "Failed to quick reset test data")
+}
+
+// TearDownTest runs after each individual test to ensure cleanup
+func (suite *IntegrationTestSuite) TearDownTest() {
+	if suite.testDB != nil && suite.testDB.DB != nil {
+		_ = suite.testDB.Health(suite.ctx)
+	}
 }
 
 // HTTP Request Helpers
@@ -68,7 +74,7 @@ func (suite *IntegrationTestSuite) GET(path string) *httptest.ResponseRecorder {
 func (suite *IntegrationTestSuite) POST(path string, body interface{}) *httptest.ResponseRecorder {
 	jsonBody, err := json.Marshal(body)
 	suite.Require().NoError(err, "Failed to marshal request body")
-	
+
 	req := httptest.NewRequest("POST", path, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 	recorder := httptest.NewRecorder()
@@ -80,7 +86,7 @@ func (suite *IntegrationTestSuite) POST(path string, body interface{}) *httptest
 func (suite *IntegrationTestSuite) PUT(path string, body interface{}) *httptest.ResponseRecorder {
 	jsonBody, err := json.Marshal(body)
 	suite.Require().NoError(err, "Failed to marshal request body")
-	
+
 	req := httptest.NewRequest("PUT", path, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 	recorder := httptest.NewRecorder()
@@ -100,37 +106,33 @@ func (suite *IntegrationTestSuite) DELETE(path string) *httptest.ResponseRecorde
 
 // AssertStatusCode verifies the HTTP status code
 func (suite *IntegrationTestSuite) AssertStatusCode(recorder *httptest.ResponseRecorder, expectedCode int) {
-	suite.Equal(expectedCode, recorder.Code, 
-		fmt.Sprintf("Expected status %d, got %d. Response body: %s", 
+	suite.Equal(expectedCode, recorder.Code,
+		fmt.Sprintf("Expected status %d, got %d. Response body: %s",
 			expectedCode, recorder.Code, recorder.Body.String()))
 }
 
-// AssertJSON unmarshals the response body into the provided interface
 func (suite *IntegrationTestSuite) AssertJSON(recorder *httptest.ResponseRecorder, target interface{}) {
 	err := json.Unmarshal(recorder.Body.Bytes(), target)
-	suite.Require().NoError(err, 
+	suite.Require().NoError(err,
 		fmt.Sprintf("Failed to unmarshal response body: %s", recorder.Body.String()))
 }
 
-// AssertErrorResponse verifies that the response contains an error with the expected code
 func (suite *IntegrationTestSuite) AssertErrorResponse(recorder *httptest.ResponseRecorder, expectedCode int, expectedMessage ...string) {
 	suite.AssertStatusCode(recorder, expectedCode)
-	
+
 	if len(expectedMessage) > 0 {
 		suite.Contains(recorder.Body.String(), expectedMessage[0],
-			fmt.Sprintf("Expected error message to contain '%s', got: %s", 
+			fmt.Sprintf("Expected error message to contain '%s', got: %s",
 				expectedMessage[0], recorder.Body.String()))
 	}
 }
 
-// AssertSuccessResponse verifies that the response is successful (200-299)
 func (suite *IntegrationTestSuite) AssertSuccessResponse(recorder *httptest.ResponseRecorder) {
 	suite.True(recorder.Code >= 200 && recorder.Code < 300,
 		fmt.Sprintf("Expected success status (200-299), got %d. Response body: %s",
 			recorder.Code, recorder.Body.String()))
 }
 
-// GetResponseData extracts the 'data' field from a standardized API response
 func (suite *IntegrationTestSuite) GetResponseData(recorder *httptest.ResponseRecorder, target interface{}) {
 	var response struct {
 		Data interface{} `json:"data"`
@@ -139,7 +141,6 @@ func (suite *IntegrationTestSuite) GetResponseData(recorder *httptest.ResponseRe
 	suite.AssertJSON(recorder, &response)
 }
 
-// TestSuiteSetup verifies the test suite setup works correctly
 func (suite *IntegrationTestSuite) TestSuiteSetup() {
 	// Test that database is healthy
 	err := suite.testDB.Health(suite.ctx)

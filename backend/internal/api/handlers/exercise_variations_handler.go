@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"backend/db"
+	"backend/db/repository"
 	api_utils "backend/internal/api/utils"
-	"backend/internal/service"
+	"backend/internal/types"
 	"encoding/json"
 	"errors"
 	"log"
@@ -27,7 +28,77 @@ type CreateExerciseParameterTypeApiArgs struct {
 }
 
 // ToServiceParams converts the API arguments to service parameters
-func (args *CreateExerciseParameterTypeApiArgs) ToServiceParams() service.CreateExerciseParameterTypeParams {
+// Helper function to convert DB ExerciseVariation rows to API ExerciseVariations
+func dbExerciseVariationRowsToApiExerciseVariations(rows []db.ExerciseVariations_ListWithDetailsRow) []types.ExerciseVariation {
+	variationsMap := make(map[int64]*types.ExerciseVariation)
+
+	for _, row := range rows {
+		variation, exists := variationsMap[row.ID]
+
+		if !exists {
+			variation = &types.ExerciseVariation{
+				ID:         row.ID,
+				ExerciseId: row.ExerciseID,
+				Exercise: types.Exercise{
+					ID:          row.EID,
+					Name:        row.EName,
+					Description: row.EDescription,
+					UserID:      row.EUserID.Int64,
+					CreatedAt:   row.ECreatedAt.Time.String(),
+					UpdatedAt:   row.EUpdatedAt.Time.String(),
+				},
+			}
+			variationsMap[row.ID] = variation
+		}
+
+		if row.EvpID.Valid {
+			param := types.ExerciseVariationParam{
+				ID:                  row.EvpID.Int64,
+				ExerciseVariationId: row.ID,
+				Locked:              row.Locked.Bool,
+				ParameterTypeId:     row.PtID.Int64,
+				ParameterType: types.ParameterType{
+					ID:          row.PtID.Int64,
+					Name:        row.PtName.String,
+					DataType:    row.PtDataType.String,
+					DefaultUnit: row.PtDefaultUnit.String,
+					MinValue:    row.PtMinValue.Float64,
+					MaxValue:    row.PtMaxValue.Float64,
+				},
+			}
+			if variationsMap[row.ID].Parameters == nil {
+				variationsMap[row.ID].Parameters = []types.ExerciseVariationParam{}
+			}
+			variation.Parameters = append(variation.Parameters, param)
+		}
+	}
+
+	variations := make([]types.ExerciseVariation, 0, len(variationsMap))
+	for _, variation := range variationsMap {
+		variations = append(variations, *variation)
+	}
+
+	return variations
+}
+
+type CreateExerciseVariationApiArgs struct {
+	Name           string                               `json:"name"`
+	ParameterTypes []CreateExerciseParameterTypeApiArgs `json:"parameterTypes"`
+}
+
+// Helper struct for repository parameter type creation
+type CreateExerciseParameterTypeRepoParams struct {
+	ParameterTypeId *int64
+	Name            *string
+	DataType        *string
+	DefaultUnit     *string
+	MinValue        *float64
+	MaxValue        *float64
+	Locked          bool
+}
+
+// Convert API args to repository params
+func (args *CreateExerciseParameterTypeApiArgs) ToRepoParams() CreateExerciseParameterTypeRepoParams {
 	var paramTypeId *int64
 	var name, dataType, defaultUnit *string
 	var minValue, maxValue *float64
@@ -52,7 +123,7 @@ func (args *CreateExerciseParameterTypeApiArgs) ToServiceParams() service.Create
 		maxValue = &args.MaxValue
 	}
 
-	return service.CreateExerciseParameterTypeParams{
+	return CreateExerciseParameterTypeRepoParams{
 		ParameterTypeId: paramTypeId,
 		Name:            name,
 		DataType:        dataType,
@@ -60,23 +131,6 @@ func (args *CreateExerciseParameterTypeApiArgs) ToServiceParams() service.Create
 		MinValue:        minValue,
 		MaxValue:        maxValue,
 		Locked:          args.Locked,
-	}
-}
-
-type CreateExerciseVariationApiArgs struct {
-	Name           string                               `json:"name"`
-	ParameterTypes []CreateExerciseParameterTypeApiArgs `json:"parameterTypes"`
-}
-
-func (args *CreateExerciseVariationApiArgs) ToServiceParams(exerciseId int64) service.ExerciseVariationCreateParams {
-	parameterTypes := make([]service.CreateExerciseParameterTypeParams, len(args.ParameterTypes))
-	for i, pt := range args.ParameterTypes {
-		parameterTypes[i] = pt.ToServiceParams()
-	}
-
-	return service.ExerciseVariationCreateParams{
-		ExerciseId:     exerciseId,
-		ParameterTypes: parameterTypes,
 	}
 }
 
@@ -102,32 +156,58 @@ func (h *ExerciseVariationsHandler) List(w http.ResponseWriter, r *http.Request)
 	offset := filterParser.GetIntFilterOrZero("offset")
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		variation_service := service.NewExerciseVariationsService(queries)
+		// Create repository directly - no service layer needed
+		variationRepo := repository.NewExerciseVariationsRepository(queries)
 
-		log.Printf("Calling variation_service.List with exerciseId=%d, userId=%d, planId=%d, groupId=%d, intervalId=%d, limit=%d, offset=%d",
+		log.Printf("Calling variationRepo.List with exerciseId=%d, userId=%d, planId=%d, groupId=%d, intervalId=%d, limit=%d, offset=%d",
 			exerciseId, userId, planId, groupId, planIntervalId, limit, offset)
 
-		params := service.ExerciseVariationListParams{
-			ExerciseId:     &[]int64{exerciseId},
-			UserId:         &userId,
-			PlanId:         &[]int64{planId},
-			GroupId:        &[]int64{groupId},
-			PlanIntervalId: &[]int64{planIntervalId},
-			VariationId:    &[]int64{variationId},
+		// Convert single values to slices for the repository layer
+		exerciseIds := []int64{}
+		if exerciseId != 0 {
+			exerciseIds = []int64{exerciseId}
+		}
+		planIds := []int64{}
+		if planId != 0 {
+			planIds = []int64{planId}
+		}
+		groupIds := []int64{}
+		if groupId != 0 {
+			groupIds = []int64{groupId}
+		}
+		intervalIds := []int64{}
+		if planIntervalId != 0 {
+			intervalIds = []int64{planIntervalId}
+		}
+		variationIds := []int64{}
+		if variationId != 0 {
+			variationIds = []int64{variationId}
+		}
+
+		params := repository.ExerciseVariationListParams{
+			ExerciseId:     exerciseIds,
+			UserId:         userId,
+			PlanId:         planIds,
+			GroupId:        groupIds,
+			PlanIntervalId: intervalIds,
+			VariationId:    variationIds,
 			Limit:          int32(limit),
 			Offset:         int32(offset),
 		}
 
-		variations, err := variation_service.List(r.Context(), params)
+		dbVariations, err := variationRepo.List(r.Context(), params)
 		if err != nil {
 			log.Printf("Error retrieving exercise variations: %v", err)
 			return err
 		}
 
-		log.Printf("Successfully retrieved exercise variations, count: %d", len(variations))
+		// Convert DB variations to API variations
+		apiVariations := dbExerciseVariationRowsToApiExerciseVariations(dbVariations)
+
+		log.Printf("Successfully retrieved exercise variations, count: %d", len(apiVariations))
 
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(variations)
+		return json.NewEncoder(w).Encode(apiVariations)
 	})
 
 	if success {
@@ -149,29 +229,78 @@ func (h *ExerciseVariationsHandler) Create(w http.ResponseWriter, r *http.Reques
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		variation_service := service.NewExerciseVariationsService(queries)
+		// Create repositories directly - no service layer needed
+		variationRepo := repository.NewExerciseVariationsRepository(queries)
+		exerciseRepo := repository.NewExercisesRepository(queries)
+		parameterTypesRepo := repository.NewParameterTypesRepository(queries)
 
-		variation_ret, err := variation_service.CreateVariation(r.Context(), exerciseId, args.ToServiceParams(exerciseId))
+		// Check if exercise exists
+		exercise, err := exerciseRepo.GetExerciseById(r.Context(), exerciseId)
+		if err != nil {
+			return err
+		}
+		if exercise == nil {
+			return errors.New("exercise not found")
+		}
+
+		// Create the exercise variation
+		exerciseVariation, err := variationRepo.CreateExerciseVariation(r.Context(), exerciseId, args.Name)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("Successfully created variation: %v", variation_ret)
+		// Add parameter types to the variation
+		for _, parameterTypeArg := range args.ParameterTypes {
+			repoParams := parameterTypeArg.ToRepoParams()
+			
+			if repoParams.ParameterTypeId != nil {
+				// Use existing parameter type
+				_, err = variationRepo.AddParam(r.Context(), exerciseVariation.ID, *repoParams.ParameterTypeId, repoParams.Locked)
+				if err != nil {
+					return err
+				}
+			} else {
+				// Create new parameter type
+				newParamType, err := parameterTypesRepo.Create(r.Context(), repository.CreateParameterTypeParams{
+					Name:        repoParams.Name,
+					DataType:    repoParams.DataType,
+					DefaultUnit: repoParams.DefaultUnit,
+					MinValue:    repoParams.MinValue,
+					MaxValue:    repoParams.MaxValue,
+				})
+				if err != nil {
+					return err
+				}
+				_, err = variationRepo.AddParam(r.Context(), exerciseVariation.ID, newParamType.ID, repoParams.Locked)
+				if err != nil {
+					return err
+				}
+			}
+		}
 
-		variations, err := variation_service.List(r.Context(), service.ExerciseVariationListParams{
-			VariationId: &[]int64{variation_ret.ID},
+		log.Printf("Successfully created variation with ID: %d", exerciseVariation.ID)
+
+		// Get the complete variation with details to return
+		dbVariations, err := variationRepo.List(r.Context(), repository.ExerciseVariationListParams{
+			VariationId: []int64{exerciseVariation.ID},
 			Limit:       1,
 		})
 		if err != nil {
 			return err
 		}
 
-		if len(variations) == 0 {
+		if len(dbVariations) == 0 {
 			return errors.New("variation not found")
 		}
 
+		// Convert to API format
+		apiVariations := dbExerciseVariationRowsToApiExerciseVariations(dbVariations)
+		if len(apiVariations) == 0 {
+			return errors.New("variation conversion failed")
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(variations[0])
+		return json.NewEncoder(w).Encode(apiVariations[0])
 	})
 
 	if success {
@@ -187,8 +316,9 @@ func (h *ExerciseVariationsHandler) Delete(w http.ResponseWriter, r *http.Reques
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		variation_service := service.NewExerciseVariationsService(queries)
-		return variation_service.DeleteOne(r.Context(), id)
+		// Create repository directly - no service layer needed
+		variationRepo := repository.NewExerciseVariationsRepository(queries)
+		return variationRepo.DeleteOne(r.Context(), id)
 	})
 
 	if success {

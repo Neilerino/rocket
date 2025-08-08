@@ -169,3 +169,152 @@ func (q *Queries) IntervalExercisePrescriptions_List(ctx context.Context, arg In
 	}
 	return items, nil
 }
+
+const intervalExercisePrescriptions_ListWithDetails = `-- name: IntervalExercisePrescriptions_ListWithDetails :many
+SELECT
+    iep.id,
+    iep.group_id,
+    iep.exercise_variation_id,
+    iep.plan_interval_id,
+    iep.rpe,
+    iep.sets,
+    iep.reps,
+    iep.duration,
+    iep.sub_reps,
+    iep.sub_rep_work_duration,
+    iep.sub_rep_rest_duration,
+    iep.rest,
+    -- Exercise Variation details
+    ev.id as ev_id,
+    ev.exercise_id as ev_exercise_id,
+    ev.name as ev_name,
+    -- Exercise details
+    e.id as e_id,
+    e.name as e_name,
+    e.description as e_description,
+    e.user_id as e_user_id,
+    e.created_at as e_created_at,
+    e.updated_at as e_updated_at,
+    -- Exercise Variation Parameters
+    evp.id as evp_id,
+    evp.locked as evp_locked,
+    -- Parameter Type details  
+    pt.id as pt_id,
+    pt.name as pt_name,
+    pt.data_type as pt_data_type,
+    pt.default_unit as pt_default_unit,
+    pt.min_value as pt_min_value,
+    pt.max_value as pt_max_value
+FROM
+    interval_exercise_prescriptions iep
+    JOIN exercise_variations ev ON iep.exercise_variation_id = ev.id
+    JOIN exercises e ON ev.exercise_id = e.id
+    LEFT JOIN exercise_variation_params evp ON ev.id = evp.exercise_variation_id
+    LEFT JOIN parameter_types pt ON evp.parameter_type_id = pt.id
+WHERE
+    (iep.group_id = $1::BIGINT or $1::bigint = 0)
+    AND (iep.id = $2::BIGINT or $2::bigint = 0)
+    AND (iep.exercise_variation_id = $3::BIGINT or $3::bigint = 0)
+    AND (iep.plan_interval_id = $4::BIGINT or $4::bigint = 0)
+ORDER BY iep.id, evp.id
+LIMIT $6::int
+OFFSET $5::int
+`
+
+type IntervalExercisePrescriptions_ListWithDetailsParams struct {
+	GroupID        int64
+	PrescriptionID int64
+	VariationID    int64
+	IntervalID     int64
+	Offset         int32
+	Limit          int32
+}
+
+type IntervalExercisePrescriptions_ListWithDetailsRow struct {
+	ID                  int64
+	GroupID             int64
+	ExerciseVariationID int64
+	PlanIntervalID      int64
+	Rpe                 pgtype.Int4
+	Sets                int32
+	Reps                pgtype.Int4
+	Duration            pgtype.Interval
+	SubReps             pgtype.Int4
+	SubRepWorkDuration  pgtype.Interval
+	SubRepRestDuration  pgtype.Interval
+	Rest                pgtype.Interval
+	EvID                int64
+	EvExerciseID        int64
+	EvName              string
+	EID                 int64
+	EName               string
+	EDescription        string
+	EUserID             pgtype.Int8
+	ECreatedAt          pgtype.Timestamp
+	EUpdatedAt          pgtype.Timestamp
+	EvpID               pgtype.Int8
+	EvpLocked           pgtype.Bool
+	PtID                pgtype.Int8
+	PtName              pgtype.Text
+	PtDataType          pgtype.Text
+	PtDefaultUnit       pgtype.Text
+	PtMinValue          pgtype.Float8
+	PtMaxValue          pgtype.Float8
+}
+
+func (q *Queries) IntervalExercisePrescriptions_ListWithDetails(ctx context.Context, arg IntervalExercisePrescriptions_ListWithDetailsParams) ([]IntervalExercisePrescriptions_ListWithDetailsRow, error) {
+	rows, err := q.db.Query(ctx, intervalExercisePrescriptions_ListWithDetails,
+		arg.GroupID,
+		arg.PrescriptionID,
+		arg.VariationID,
+		arg.IntervalID,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IntervalExercisePrescriptions_ListWithDetailsRow
+	for rows.Next() {
+		var i IntervalExercisePrescriptions_ListWithDetailsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.ExerciseVariationID,
+			&i.PlanIntervalID,
+			&i.Rpe,
+			&i.Sets,
+			&i.Reps,
+			&i.Duration,
+			&i.SubReps,
+			&i.SubRepWorkDuration,
+			&i.SubRepRestDuration,
+			&i.Rest,
+			&i.EvID,
+			&i.EvExerciseID,
+			&i.EvName,
+			&i.EID,
+			&i.EName,
+			&i.EDescription,
+			&i.EUserID,
+			&i.ECreatedAt,
+			&i.EUpdatedAt,
+			&i.EvpID,
+			&i.EvpLocked,
+			&i.PtID,
+			&i.PtName,
+			&i.PtDataType,
+			&i.PtDefaultUnit,
+			&i.PtMinValue,
+			&i.PtMaxValue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

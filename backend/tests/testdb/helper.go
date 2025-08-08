@@ -8,6 +8,7 @@ import (
 
 	"backend/db"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -26,9 +27,9 @@ const (
 	TestDBName = "rocket_test"
 	TestDBUser = "test_user"
 	TestDBPass = "test_password"
-	
+
 	// Container configuration
-	PostgresImage = "postgres:15-alpine"
+	PostgresImage         = "postgres:15-alpine"
 	ContainerStartTimeout = 60 * time.Second
 )
 
@@ -37,6 +38,7 @@ type TestDatabase struct {
 	DB        *db.Database
 	Container *postgres.PostgresContainer
 	ConnStr   string
+	testTx    pgx.Tx // Transaction for test isolation
 }
 
 // SetupTestDB creates a new PostgreSQL testcontainer, applies schema, and returns configured database
@@ -116,23 +118,18 @@ func (td *TestDatabase) SeedTestData(ctx context.Context) error {
 	return nil
 }
 
-// CleanupTestDB properly closes database connection and terminates container
 func (td *TestDatabase) CleanupTestDB(ctx context.Context) error {
 	var errs []error
 
-	// Close database connection
-	if td.DB != nil {
-		td.DB.Close()
-	}
-
-	// Terminate container
 	if td.Container != nil {
-		if err := td.Container.Terminate(ctx); err != nil {
+		terminateCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
+
+		if err := td.Container.Terminate(terminateCtx); err != nil {
 			errs = append(errs, fmt.Errorf("failed to terminate container: %w", err))
 		}
 	}
 
-	// Return combined errors if any
 	if len(errs) > 0 {
 		return fmt.Errorf("cleanup errors: %v", errs)
 	}
@@ -145,12 +142,12 @@ func (td *TestDatabase) Reset(ctx context.Context) error {
 	// Get list of all tables to truncate (in dependency order)
 	truncateQueries := []string{
 		"TRUNCATE TABLE interval_exercise_prescriptions CASCADE",
-		"TRUNCATE TABLE exercise_variation_params CASCADE", 
+		"TRUNCATE TABLE exercise_variation_params CASCADE",
 		"TRUNCATE TABLE exercise_variations CASCADE",
 		"TRUNCATE TABLE interval_group_assignments CASCADE",
 		"TRUNCATE TABLE plan_intervals CASCADE",
 		"TRUNCATE TABLE exercises CASCADE",
-		"TRUNCATE TABLE groups CASCADE", 
+		"TRUNCATE TABLE groups CASCADE",
 		"TRUNCATE TABLE plans CASCADE",
 		"TRUNCATE TABLE parameter_types CASCADE",
 		"TRUNCATE TABLE users CASCADE",
@@ -215,4 +212,63 @@ func (td *TestDatabase) Health(ctx context.Context) error {
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (td *TestDatabase) QuickReset(ctx context.Context) error {
+	deleteQueries := []string{
+		"DELETE FROM interval_exercise_prescriptions",
+		"DELETE FROM exercise_variation_params",
+		"DELETE FROM exercise_variations",
+		"DELETE FROM interval_group_assignments",
+		"DELETE FROM plan_intervals",
+		"DELETE FROM exercises",
+		"DELETE FROM groups",
+		"DELETE FROM plans",
+		"DELETE FROM parameter_types",
+		"DELETE FROM users",
+	}
+
+	tx, err := td.DB.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	for _, query := range deleteQueries {
+		if _, err := tx.Exec(ctx, query); err != nil {
+			return fmt.Errorf("failed to execute delete query %q: %w", query, err)
+		}
+	}
+
+	// Reset sequences to start from 1 again
+	resetSequences := []string{
+		"ALTER SEQUENCE users_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE plans_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE plan_intervals_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE groups_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE exercises_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE parameter_types_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE exercise_variations_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE exercise_variation_params_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE interval_group_assignments_id_seq RESTART WITH 1",
+		"ALTER SEQUENCE interval_exercise_prescriptions_id_seq RESTART WITH 1",
+	}
+
+	for _, query := range resetSequences {
+		if _, err := tx.Exec(ctx, query); err != nil {
+			// Sequence might not exist, that's ok
+			continue
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit delete transaction: %w", err)
+	}
+
+	// Then seed fresh test data
+	if err := td.SeedTestData(ctx); err != nil {
+		return fmt.Errorf("failed to seed test data after reset: %w", err)
+	}
+
+	return nil
 }

@@ -55,6 +55,17 @@ func (r *IntervalExercisePrescriptionsRepository) List(ctx context.Context, para
 	})
 }
 
+func (r *IntervalExercisePrescriptionsRepository) ListWithDetails(ctx context.Context, params IntervalExercisePrescriptionListParams) ([]db.IntervalExercisePrescriptions_ListWithDetailsRow, error) {
+	return r.Queries.IntervalExercisePrescriptions_ListWithDetails(ctx, db.IntervalExercisePrescriptions_ListWithDetailsParams{
+		PrescriptionID: params.PrescriptionId,
+		GroupID:        params.GroupId,
+		VariationID:    params.ExerciseId,
+		IntervalID:     params.IntervalId,
+		Offset:         params.Offset,
+		Limit:          params.Limit,
+	})
+}
+
 func (r *IntervalExercisePrescriptionsRepository) CreateOne(ctx context.Context, prescription PrescriptionCreateData) (*db.IntervalExercisePrescription, error) {
 	var duration pgtype.Interval
 	var rest pgtype.Interval
