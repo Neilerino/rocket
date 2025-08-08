@@ -50,7 +50,7 @@ func (r *ParameterTypesRepository) Create(ctx context.Context, params CreatePara
 	})
 }
 
-func (r *ParameterTypesRepository) List(ctx context.Context, params ListParameterTypesParams) ([]db.ParameterTypes_ListRow, error) {
+func (r *ParameterTypesRepository) List(ctx context.Context, params ListParameterTypesParams) ([]db.ParameterType, error) {
 	return r.Queries.ParameterTypes_List(ctx, db.ParameterTypes_ListParams{
 		UserID:          params.UserId,
 		ParameterTypeID: params.ParameterTypeId,

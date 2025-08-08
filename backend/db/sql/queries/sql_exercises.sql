@@ -11,7 +11,7 @@ ORDER BY plan_intervals."order"
 LIMIT $2;
 
 -- name: Exercises_List :many
-SELECT exercises.* FROM exercises 
+SELECT DISTINCT exercises.* FROM exercises 
 JOIN exercise_variations on exercise_variations.exercise_id = exercises.id
 JOIN interval_exercise_prescriptions on exercise_variations.id = interval_exercise_prescriptions.exercise_variation_id
 JOIN plan_intervals on plan_intervals.id = interval_exercise_prescriptions.plan_interval_id

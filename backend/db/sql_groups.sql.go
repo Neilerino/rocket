@@ -166,7 +166,7 @@ func (q *Queries) Groups_GetByUserId(ctx context.Context, arg Groups_GetByUserId
 }
 
 const groups_List = `-- name: Groups_List :many
-SELECT groups.id, groups.name, groups.description, groups.user_id, groups.created_at, groups.updated_at from groups 
+SELECT DISTINCT groups.id, groups.name, groups.description, groups.user_id, groups.created_at, groups.updated_at from groups 
 JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id
 JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id 
 WHERE 

@@ -4,7 +4,7 @@ import (
 	"backend/db"
 	"backend/db/repository"
 	api_utils "backend/internal/api/utils"
-	"backend/internal/service"
+	"backend/internal/types"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -27,6 +27,27 @@ type UpdateExerciseApiArgs struct {
 	Description string `json:"description"`
 }
 
+// Helper function to convert DB Exercise to API Exercise
+func dbExerciseToApiExercise(dbExercise db.Exercise) types.Exercise {
+	return types.Exercise{
+		ID:          dbExercise.ID,
+		Name:        dbExercise.Name,
+		Description: dbExercise.Description,
+		UserID:      dbExercise.UserID.Int64,
+		CreatedAt:   dbExercise.CreatedAt.Time.String(),
+		UpdatedAt:   dbExercise.UpdatedAt.Time.String(),
+	}
+}
+
+// Helper function to convert slice of DB Exercises to API Exercises
+func dbExercisesToApiExercises(dbExercises []db.Exercise) []types.Exercise {
+	result := make([]types.Exercise, len(dbExercises))
+	for i, dbExercise := range dbExercises {
+		result[i] = dbExerciseToApiExercise(dbExercise)
+	}
+	return result
+}
+
 func (h *ExercisesHandler) ListByUserId(w http.ResponseWriter, r *http.Request) {
 	userId, err := api_utils.ParseBigInt(chi.URLParam(r, "userId"))
 	if err != nil {
@@ -35,16 +56,19 @@ func (h *ExercisesHandler) ListByUserId(w http.ResponseWriter, r *http.Request) 
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
-		exercise_service := service.NewExercisesService(&exercise_repo)
 
-		exercises, err := exercise_service.GetExercisesByUserId(r.Context(), userId, 100)
+		dbExercises, err := exercise_repo.GetExercisesByUserId(r.Context(), userId, 100)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB exercises to API exercises
+		apiExercises := dbExercisesToApiExercises(dbExercises)
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(exercises)
+		return json.NewEncoder(w).Encode(apiExercises)
 	})
 
 	if success {
@@ -60,16 +84,19 @@ func (h *ExercisesHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
-		exercise_service := service.NewExercisesService(&exercise_repo)
 
-		exercise, err := exercise_service.GetExerciseById(r.Context(), id)
+		dbExercise, err := exercise_repo.GetExerciseById(r.Context(), id)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB exercise to API exercise
+		apiExercise := dbExerciseToApiExercise(*dbExercise)
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(exercise)
+		return json.NewEncoder(w).Encode(apiExercise)
 	})
 
 	if success {
@@ -85,16 +112,19 @@ func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
-		exercise_service := service.NewExercisesService(&exercise_repo)
 
-		exercise, err := exercise_service.CreateExercise(r.Context(), args.Name, args.Description, args.UserId)
+		dbExercise, err := exercise_repo.CreateExercise(r.Context(), args.Name, args.Description, args.UserId)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB exercise to API exercise
+		apiExercise := dbExerciseToApiExercise(*dbExercise)
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(exercise)
+		return json.NewEncoder(w).Encode(apiExercise)
 	})
 
 	if success {
@@ -116,16 +146,19 @@ func (h *ExercisesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
-		exercise_service := service.NewExercisesService(&exercise_repo)
 
-		exercise, err := exercise_service.UpdateExercise(r.Context(), id, args.Name, args.Description)
+		dbExercise, err := exercise_repo.UpdateExercise(r.Context(), id, args.Name, args.Description)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB exercise to API exercise
+		apiExercise := dbExerciseToApiExercise(*dbExercise)
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(exercise)
+		return json.NewEncoder(w).Encode(apiExercise)
 	})
 
 	if success {
@@ -141,10 +174,10 @@ func (h *ExercisesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
-		exercise_service := service.NewExercisesService(&exercise_repo)
 
-		if err := exercise_service.DeleteExercise(r.Context(), id); err != nil {
+		if err := exercise_repo.DeleteExercise(r.Context(), id); err != nil {
 			return err
 		}
 
@@ -176,22 +209,34 @@ func (h *ExercisesHandler) List(w http.ResponseWriter, r *http.Request) {
 	limit := filterParser.GetLimit(100)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
-		exercise_service := service.NewExercisesService(&exercise_repo)
 
 		log.Printf("Calling ListExercises with exerciseId=%d, userId=%d, planId=%d, groupId=%d, intervalId=%d, limit=%d", 
 			exerciseId, userId, planId, groupId, intervalId, limit)
 		
-		exercises, err := exercise_service.ListExercises(r.Context(), exerciseId, userId, planId, groupId, intervalId, int32(limit))
+		params := repository.ExerciseListParams{
+			ExerciseID: exerciseId,
+			UserID:     userId,
+			PlanID:     planId,
+			GroupID:    groupId,
+			IntervalID: intervalId,
+			Limit:      int32(limit),
+		}
+		
+		dbExercises, err := exercise_repo.ListExercises(r.Context(), params)
 		if err != nil {
 			log.Printf("Error retrieving exercises: %v", err)
 			return err
 		}
 
+		// Convert DB exercises to API exercises
+		apiExercises := dbExercisesToApiExercises(dbExercises)
+
 		log.Printf("Successfully retrieved exercises")
 		
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(exercises)
+		return json.NewEncoder(w).Encode(apiExercises)
 	})
 
 	if success {

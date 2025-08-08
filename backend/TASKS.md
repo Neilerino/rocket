@@ -68,10 +68,10 @@ Remove all manual type conversion code in service layers.
 - `internal/service/exercises_service.go:24-32` (remove type conversion)
 - All other service files with similar patterns
 
-### Phase 2: Remove Service Layer (High Impact, Medium Risk)
+### Phase 2: Remove Service Layer (High Impact, Medium Risk) 🚀 **START HERE**
 
-#### Task 2.1: Refactor Plans Handler to Direct Repository Access
-**Priority: High** | **Effort: Medium**
+#### Task 2.1: Refactor Plans Handler to Direct Repository Access  
+**Priority: CRITICAL - START WITH THIS** | **Effort: Medium** | **Protected by Integration Tests**
 
 Eliminate the service layer for Plans and call repository directly from handlers.
 
@@ -114,10 +114,20 @@ success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Quer
 ```
 
 **Steps:**
-1. Add repository field to PlanHandler struct
-2. Update router.go to inject repository into handler
-3. Remove service layer calls
-4. Delete plans_service.go after migration
+1. **Baseline measurement**: Run integration tests to establish current performance
+2. **Create feature branch**: `refactor/remove-plans-service-layer`
+3. Add repository field to PlanHandler struct
+4. Update router.go to inject repository into handler  
+5. **Gradual migration**: Update one handler method at a time
+6. **Validate continuously**: Run Plans integration tests after each method
+7. Remove service layer calls completely
+8. **Final validation**: Full test suite + performance comparison
+9. Delete plans_service.go after successful migration
+
+**Integration Test Validation:**
+- 12 Plans API tests must continue passing
+- Error scenarios must work identically  
+- Performance should improve or stay the same
 
 #### Task 2.2: Create Repository Factory Pattern
 **Priority: Medium** | **Effort: Low**
@@ -246,13 +256,28 @@ type Cache struct {
 
 Review and optimize database connection pooling settings.
 
-## Migration Order
+## 🎯 **RECOMMENDED MIGRATION ORDER** (Updated Based on Integration Test Coverage)
 
-1. **Week 1**: Tasks 1.1, 1.2 (Type consolidation)
-2. **Week 2**: Tasks 2.1, 2.2 (Remove service layer)  
-3. **Week 3**: Tasks 3.1 (Simplify transactions)
-4. **Week 4**: Tasks 4.1 (Generic handlers) - Optional
-5. **Week 5**: Tasks 5.1, 5.2 (Performance) - Optional
+**Start with service layer removal for maximum immediate impact:**
+
+1. **Week 1**: 
+   - **Task 2.1** - Remove service layer for Plans (PRIORITY: Start here!)
+   - **Task 2.2** - Repository factory pattern
+2. **Week 2**: 
+   - **Task 1.1** - Consolidate Plan types  
+   - **Task 3.1** - Simplify transaction handling
+3. **Week 3**: 
+   - **Task 1.2** - Eliminate manual type conversion
+   - Apply service layer removal to other APIs (Exercises, Groups)
+4. **Week 4**: **Task 4.1** (Generic handlers) - Optional
+5. **Week 5**: **Tasks 5.1, 5.2** (Performance) - Optional
+
+### **Why Start with Service Layer Removal:**
+- ✅ **Immediate 40% code reduction** for Plans API
+- ✅ **Fastest developer velocity win** - see benefits immediately  
+- ✅ **Lower risk than type changes** (which affect all layers)
+- ✅ **Protected by comprehensive integration tests** (12 Plans API tests)
+- ✅ **Plans API has no known bugs** (validated by test suite)
 
 ## Expected Benefits
 
@@ -262,12 +287,34 @@ Review and optimize database connection pooling settings.
 - **Better performance** due to reduced allocations
 - **Easier testing** with direct repository access
 
-## Risk Mitigation
+## 🛡️ **Risk Mitigation Strategy**
 
+### **Integration Test Protection:**
+- ✅ **12 Plans API integration tests** validate complete request/response flow
+- ✅ **Real PostgreSQL database testing** catches issues mocks would miss
+- ✅ **Error scenario coverage** ensures edge cases continue working
+- ✅ **User isolation validation** confirms security isn't broken
+
+### **Gradual Migration Approach:**
 - Keep existing API contracts unchanged
 - Migrate one entity at a time (start with Plans)
-- Maintain backwards compatibility
-- Add integration tests before refactoring
+- Maintain backwards compatibility during transition
+- Use feature branches with descriptive names (`refactor/remove-plans-service-layer`)
+
+### **Validation Steps for Each Phase:**
+```bash
+# Before refactoring
+go test -v ./tests/integration -run "TestIntegrationSuite/TestPlans" -timeout=10m
+
+# After refactoring - same tests must pass
+go test -v ./tests/integration -run "TestIntegrationSuite/TestPlans" -timeout=10m
+```
+
+### **Success Metrics to Track:**
+- **Lines of code** for adding new Plan endpoints  
+- **Number of files** requiring modification for Plan features
+- **Memory allocations** per request (optional performance tracking)
+- **Integration test execution time** (should remain stable)
 
 ## Example: Adding a New Feature (Before vs After)
 
@@ -289,9 +336,37 @@ To add a simple "Get Plan Summary" endpoint:
 
 **Total: 3 files, ~40 lines of code**
 
-## Notes
+## 📝 **Implementation Notes**
 
-- Start with Plans entity as it's representative of the current patterns
-- Keep detailed git history during refactoring
-- Consider this a foundation for future features, not just cleanup
-- Focus on developer experience improvements over premature optimization
+### **Starting with Plans API:**
+- Plans entity is representative of current patterns across the codebase
+- **No known bugs** discovered during integration testing (unlike other APIs)
+- Well-covered by integration tests (12 comprehensive test methods)
+- Clear service layer pattern that can be replicated to other APIs
+
+### **Git Strategy:**
+- Keep detailed commit history during refactoring
+- Use descriptive commit messages: `refactor(plans): remove service layer from List handler`
+- Create PRs for each major step to enable code review
+- Tag major milestones: `refactor-phase-1-complete`
+
+### **Development Approach:**
+- Consider this a **foundation for future features**, not just cleanup
+- Focus on **developer experience improvements** over premature optimization  
+- **Measure before and after** - track the actual velocity improvements
+- **Document the new patterns** for team consistency
+
+### **Future Migration Path:**
+Once Plans refactoring proves successful:
+1. **Exercises API** (8 tests) - has duplicate results bug to fix first
+2. **Groups API** (10 tests) - has multiple known issues to address
+3. **Parameter Types API** (8 tests) - completely broken, needs bug fixes first
+4. **Plan Intervals API** (13 tests) - foreign key constraint issues
+5. **Prescriptions API** (15 tests) - most complex, save for last
+
+### **Success Criteria:**
+- ✅ **40% reduction** in code for Plans CRUD operations
+- ✅ **All 12 integration tests** continue passing
+- ✅ **Same API behavior** from client perspective  
+- ✅ **Improved developer velocity** for new Plan features
+- ✅ **Clear documentation** of new patterns for team adoption

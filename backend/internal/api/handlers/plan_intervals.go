@@ -4,7 +4,8 @@ import (
 	"backend/db"
 	"backend/db/repository"
 	api_utils "backend/internal/api/utils"
-	"backend/internal/service"
+	"backend/internal/types"
+	"backend/internal/utils"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -35,6 +36,59 @@ type CreatePlanIntervalApiArgs struct {
 	Description string `json:"description,omitempty" default:""`
 }
 
+// Helper function to convert DB PlanInterval to API PlanInterval
+func dbPlanIntervalToApiPlanInterval(dbInterval db.PlanIntervals_ListRow) (types.PlanInterval, error) {
+	durationString, err := utils.IntervalToString(dbInterval.Duration)
+	if err != nil {
+		return types.PlanInterval{}, err
+	}
+
+	return types.PlanInterval{
+		ID:          dbInterval.ID,
+		PlanID:      dbInterval.PlanID,
+		Duration:    durationString,
+		Name:        dbInterval.Name.String,
+		Description: dbInterval.Description.String,
+		Order:       dbInterval.Order,
+		CreatedAt:   dbInterval.CreatedAt.Time.String(),
+		UpdatedAt:   dbInterval.UpdatedAt.Time.String(),
+		GroupCount:  int(dbInterval.GroupCount),
+	}, nil
+}
+
+// Helper function to convert slice of DB PlanIntervals to API PlanIntervals
+func dbPlanIntervalsToApiPlanIntervals(dbIntervals []db.PlanIntervals_ListRow) ([]types.PlanInterval, error) {
+	result := make([]types.PlanInterval, len(dbIntervals))
+	for i, dbInterval := range dbIntervals {
+		apiInterval, err := dbPlanIntervalToApiPlanInterval(dbInterval)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = apiInterval
+	}
+	return result, nil
+}
+
+// Helper function to convert simple DB PlanInterval to API PlanInterval (for Create/Delete operations)
+func dbPlanIntervalSimpleToApiPlanInterval(dbInterval db.PlanInterval, groupCount int) (types.PlanInterval, error) {
+	durationString, err := utils.IntervalToString(dbInterval.Duration)
+	if err != nil {
+		return types.PlanInterval{}, err
+	}
+
+	return types.PlanInterval{
+		ID:          dbInterval.ID,
+		PlanID:      dbInterval.PlanID,
+		Duration:    durationString,
+		Name:        dbInterval.Name.String,
+		Description: dbInterval.Description.String,
+		Order:       dbInterval.Order,
+		CreatedAt:   dbInterval.CreatedAt.Time.String(),
+		UpdatedAt:   dbInterval.UpdatedAt.Time.String(),
+		GroupCount:  groupCount,
+	}, nil
+}
+
 // handleListPlanIntervals is a shared handler function for both List and GetById endpoints
 func (h *PlanIntervalHandler) List(w http.ResponseWriter, r *http.Request) {
 	filterParser := api_utils.NewFilterParser(r, true)
@@ -53,22 +107,27 @@ func (h *PlanIntervalHandler) List(w http.ResponseWriter, r *http.Request) {
 	limit := filterParser.GetLimit(100)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		plan_interval_repo := repository.PlanIntervalsRepository{Queries: queries}
-		plan_interval_service := service.NewPlanIntervalsService(&plan_interval_repo)
 
-		log.Printf("Calling service.ListPlanIntervals with planId=%d, intervalId=%d, limit=%d", planId, intervalId, limit)
-		plan_intervals, err := plan_interval_service.ListPlanIntervals(r.Context(), planId, intervalId, int32(limit))
+		log.Printf("Calling repository.ListPlanIntervals with planId=%d, intervalId=%d, limit=%d", planId, intervalId, limit)
+		dbPlanIntervals, err := plan_interval_repo.ListPlanIntervals(r.Context(), planId, intervalId, int32(limit))
 		if err != nil {
 			log.Printf("Error from ListPlanIntervals: %v", err)
 			return err
 		}
 
-		if plan_intervals != nil {
-			log.Printf("Successfully retrieved plan intervals, count: %d", len(plan_intervals))
+		// Convert DB plan intervals to API plan intervals
+		apiPlanIntervals, err := dbPlanIntervalsToApiPlanIntervals(dbPlanIntervals)
+		if err != nil {
+			log.Printf("Error converting plan intervals: %v", err)
+			return err
 		}
 
+		log.Printf("Successfully retrieved plan intervals, count: %d", len(apiPlanIntervals))
+
 		// If we're expecting a single result but got none, return a 404
-		if len(plan_intervals) == 0 {
+		if len(apiPlanIntervals) == 0 {
 			log.Printf("Plan interval not found")
 			api_utils.WriteError(w, http.StatusNotFound, "Plan interval not found")
 			return nil
@@ -77,7 +136,7 @@ func (h *PlanIntervalHandler) List(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		// Otherwise return the whole array
-		return json.NewEncoder(w).Encode(plan_intervals)
+		return json.NewEncoder(w).Encode(apiPlanIntervals)
 	})
 
 	if success {
@@ -116,23 +175,30 @@ func (h *PlanIntervalHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		plan_interval_repo := repository.PlanIntervalsRepository{Queries: queries}
-		plan_interval_service := service.NewPlanIntervalsService(&plan_interval_repo)
 
-		log.Printf("Calling service.CreatePlanInterval")
-		plan_interval, err := plan_interval_service.CreatePlanInterval(r.Context(), args.PlanId, args.Duration, args.Name, args.Order, args.Description)
+		log.Printf("Calling repository.CreatePlanInterval")
+		dbPlanInterval, err := plan_interval_repo.CreatePlanInterval(r.Context(), args.PlanId, args.Duration, args.Name, args.Order, args.Description)
 		if err != nil {
 			log.Printf("Error from CreatePlanInterval: %v", err)
 			return err
 		}
 
-		log.Printf("Successfully created plan interval with ID: %d", plan_interval.ID)
+		// Convert DB plan interval to API plan interval
+		apiPlanInterval, err := dbPlanIntervalSimpleToApiPlanInterval(*dbPlanInterval, 0)
+		if err != nil {
+			log.Printf("Error converting plan interval: %v", err)
+			return err
+		}
+
+		log.Printf("Successfully created plan interval with ID: %d", apiPlanInterval.ID)
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(plan_interval)
+		return json.NewEncoder(w).Encode(apiPlanInterval)
 	})
 
 	if success {
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -168,11 +234,11 @@ func (h *PlanIntervalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Deleting plan interval with ID: %d", planIntervalId)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		plan_interval_repo := repository.PlanIntervalsRepository{Queries: queries}
-		plan_interval_service := service.NewPlanIntervalsService(&plan_interval_repo)
 
-		log.Printf("Calling service.DeletePlanInterval with ID: %d", planIntervalId)
-		_, err := plan_interval_service.DeletePlanInterval(r.Context(), planIntervalId)
+		log.Printf("Calling repository.DeletePlanInterval with ID: %d", planIntervalId)
+		_, err := plan_interval_repo.DeletePlanInterval(r.Context(), planIntervalId)
 		if err != nil {
 			log.Printf("Error from DeletePlanInterval: %v", err)
 			return err
@@ -183,9 +249,6 @@ func (h *PlanIntervalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if success {
-		// Return a successful response with an empty JSON object
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{})
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"backend/db"
 	"backend/db/repository"
 	api_utils "backend/internal/api/utils"
-	"backend/internal/service"
+	"backend/internal/types"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -13,7 +13,8 @@ import (
 )
 
 type PlanHandler struct {
-	Db *db.Database
+	Db       *db.Database
+	planRepo *repository.PlansRepository
 }
 
 type ListPlansResponse struct {
@@ -39,6 +40,29 @@ type CreatePlanApiArgs struct {
 	IsPublic    bool   `json:"isPublic"`
 }
 
+// Helper function to convert DB Plan to API Plan
+func dbPlanToApiPlan(dbPlan db.Plan) types.Plan {
+	return types.Plan{
+		ID:          dbPlan.ID,
+		Name:        dbPlan.Name,
+		Description: dbPlan.Description,
+		UserID:      dbPlan.UserID,
+		CreatedAt:   dbPlan.CreatedAt.Time.String(),
+		UpdatedAt:   dbPlan.UpdatedAt.Time.String(),
+		IsTemplate:  dbPlan.IsTemplate,
+		IsPublic:    dbPlan.IsPublic,
+	}
+}
+
+// Helper function to convert slice of DB Plans to API Plans
+func dbPlansToApiPlans(dbPlans []db.Plan) []types.Plan {
+	result := make([]types.Plan, len(dbPlans))
+	for i, dbPlan := range dbPlans {
+		result[i] = dbPlanToApiPlan(dbPlan)
+	}
+	return result
+}
+
 func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 	// Log the incoming request for debugging
 	log.Printf("Handling plans List request: %s %s", r.Method, r.URL.String())
@@ -58,8 +82,8 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		plan_repo := repository.PlansRepository{Queries: queries}
-		plan_service := service.NewPlansService(&plan_repo)
+		// Create repository directly - no service layer needed
+		planRepo := repository.PlansRepository{Queries: queries}
 
 		// Get limit and offset from query params
 		limit := filterParser.GetLimit(100)
@@ -77,32 +101,45 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Filtering plans by isPublic=%v", *isPublic)
 		}
 
-		// Use the more flexible GetPlans method that can handle both userId and planId filters
 		log.Printf("Filtering plans with userId=%v, planId=%v, limit=%d, offset=%d", userId, planId, int(limit), offset)
 
-		// Prepare the arguments for the service call
-		args := service.ListPlanArgs{
-			UserId:     userId,
-			PlanId:     planId,
-			Limit:      limit,
-			Offset:     int32(offset),
-			IsTemplate: isTemplate,
-			IsPublic:   isPublic,
+		// Handle planId filter - get single plan
+		if planId != nil {
+			dbPlan, err := planRepo.GetPlanById(r.Context(), *planId)
+			if err != nil {
+				log.Printf("Error from GetPlanById: %v", err)
+				return err
+			}
+
+			// Convert DB plan to API plan and return as slice for consistent API response
+			apiPlan := dbPlanToApiPlan(*dbPlan)
+			result := []types.Plan{apiPlan}
+
+			log.Printf("Successfully retrieved plan, ID: %d", apiPlan.ID)
+			w.Header().Set("Content-Type", "application/json")
+			return json.NewEncoder(w).Encode(&result)
 		}
 
-		// Call the service to get plans based on the provided filters
-		plans, err := plan_service.GetPlans(r.Context(), args)
-		if err != nil {
-			log.Printf("Error from GetPlans: %v", err)
-			return err
+		// Handle userId filter - get plans by user
+		if userId != nil {
+			dbPlans, err := planRepo.GetPlansByUserId(r.Context(), *userId, int(limit), int(offset), isTemplate, isPublic)
+			if err != nil {
+				log.Printf("Error from GetPlansByUserId: %v", err)
+				return err
+			}
+
+			// Convert DB plans to API plans
+			apiPlans := dbPlansToApiPlans(dbPlans)
+
+			log.Printf("Successfully retrieved plans, count: %d", len(apiPlans))
+			w.Header().Set("Content-Type", "application/json")
+			return json.NewEncoder(w).Encode(&apiPlans)
 		}
 
-		if plans != nil {
-			log.Printf("Successfully retrieved plans, count: %d", len(*plans))
-		}
-
+		// This shouldn't happen due to earlier validation, but handle gracefully
+		result := []types.Plan{}
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(plans)
+		return json.NewEncoder(w).Encode(&result)
 	})
 
 	if success {
@@ -138,11 +175,11 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 		args.Name, args.UserId, args.IsTemplate, args.IsPublic)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		plan_repo := repository.PlansRepository{Queries: queries}
-		plan_service := service.NewPlansService(&plan_repo)
+		// Create repository directly - no service layer needed
+		planRepo := repository.PlansRepository{Queries: queries}
 
-		// Call service to create plan
-		plan, err := plan_service.CreatePlan(
+		// Call repository to create plan
+		dbPlan, err := planRepo.CreatePlan(
 			r.Context(),
 			args.Name,
 			args.Description,
@@ -155,10 +192,13 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		log.Printf("Successfully created plan with ID: %d", plan.ID)
+		// Convert DB plan to API plan
+		apiPlan := dbPlanToApiPlan(*dbPlan)
+
+		log.Printf("Successfully created plan with ID: %d", apiPlan.ID)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		return json.NewEncoder(w).Encode(plan)
+		return json.NewEncoder(w).Encode(apiPlan)
 	})
 
 	if !success {
@@ -177,17 +217,20 @@ func (h *PlanHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		plan_repo := repository.PlansRepository{Queries: queries}
-		plan_service := service.NewPlansService(&plan_repo)
+		// Create repository directly - no service layer needed
+		planRepo := repository.PlansRepository{Queries: queries}
 
-		plan, err := plan_service.GetByPlanId(r.Context(), id)
+		dbPlan, err := planRepo.GetPlanById(r.Context(), id)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB plan to API plan
+		apiPlan := dbPlanToApiPlan(*dbPlan)
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		return json.NewEncoder(w).Encode(plan)
+		return json.NewEncoder(w).Encode(apiPlan)
 	})
 
 	if !success {
@@ -226,11 +269,11 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		args.Name, args.IsTemplate, args.IsPublic)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		plan_repo := repository.PlansRepository{Queries: queries}
-		plan_service := service.NewPlansService(&plan_repo)
+		// Create repository directly - no service layer needed
+		planRepo := repository.PlansRepository{Queries: queries}
 
-		// Call service to update plan
-		plan, err := plan_service.UpdatePlan(
+		// Call repository to update plan
+		dbPlan, err := planRepo.UpdatePlan(
 			r.Context(),
 			id,
 			args.Name,
@@ -243,10 +286,13 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		log.Printf("Successfully updated plan with ID: %d", plan.ID)
+		// Convert DB plan to API plan
+		apiPlan := dbPlanToApiPlan(*dbPlan)
+
+		log.Printf("Successfully updated plan with ID: %d", apiPlan.ID)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		return json.NewEncoder(w).Encode(plan)
+		return json.NewEncoder(w).Encode(apiPlan)
 	})
 
 	if !success {
@@ -268,10 +314,10 @@ func (h *PlanHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Deleting plan with ID: %d", id)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		plan_repo := repository.PlansRepository{Queries: queries}
-		plan_service := service.NewPlansService(&plan_repo)
+		// Create repository directly - no service layer needed
+		planRepo := repository.PlansRepository{Queries: queries}
 
-		if err := plan_service.DeletePlan(r.Context(), id); err != nil {
+		if err := planRepo.DeletePlan(r.Context(), id); err != nil {
 			log.Printf("Error deleting plan: %v", err)
 			return err
 		}

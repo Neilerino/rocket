@@ -160,7 +160,7 @@ func (q *Queries) Exercises_GetByUserId(ctx context.Context, arg Exercises_GetBy
 }
 
 const exercises_List = `-- name: Exercises_List :many
-SELECT exercises.id, exercises.name, exercises.description, exercises.user_id, exercises.created_at, exercises.updated_at FROM exercises 
+SELECT DISTINCT exercises.id, exercises.name, exercises.description, exercises.user_id, exercises.created_at, exercises.updated_at FROM exercises 
 JOIN exercise_variations on exercise_variations.exercise_id = exercises.id
 JOIN interval_exercise_prescriptions on exercise_variations.id = interval_exercise_prescriptions.exercise_variation_id
 JOIN plan_intervals on plan_intervals.id = interval_exercise_prescriptions.plan_interval_id

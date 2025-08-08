@@ -70,9 +70,9 @@ func (q *Queries) ParameterTypes_GetById(ctx context.Context, id int64) (Paramet
 }
 
 const parameterTypes_List = `-- name: ParameterTypes_List :many
-SELECT id, name, data_type, default_unit, min_value, max_value, user_id, parameter_type_id FROM parameter_types 
-JOIN user_parameter_types on parameter_types.id = user_parameter_types.parameter_type_id
-WHERE (user_parameter_types.user_id = $1::BIGINT or $1::bigint = 0)
+SELECT DISTINCT parameter_types.id, parameter_types.name, parameter_types.data_type, parameter_types.default_unit, parameter_types.min_value, parameter_types.max_value FROM parameter_types 
+LEFT JOIN user_parameter_types on parameter_types.id = user_parameter_types.parameter_type_id
+WHERE (user_parameter_types.user_id = $1::BIGINT OR user_parameter_types.user_id IS NULL OR $1::bigint = 0)
 AND (parameter_types.id = $2::BIGINT or $2::bigint = 0)
 ORDER BY parameter_types.name DESC
 LIMIT $4::int
@@ -86,18 +86,7 @@ type ParameterTypes_ListParams struct {
 	Limit           int32
 }
 
-type ParameterTypes_ListRow struct {
-	ID              int64
-	Name            string
-	DataType        string
-	DefaultUnit     string
-	MinValue        pgtype.Float8
-	MaxValue        pgtype.Float8
-	UserID          int64
-	ParameterTypeID int64
-}
-
-func (q *Queries) ParameterTypes_List(ctx context.Context, arg ParameterTypes_ListParams) ([]ParameterTypes_ListRow, error) {
+func (q *Queries) ParameterTypes_List(ctx context.Context, arg ParameterTypes_ListParams) ([]ParameterType, error) {
 	rows, err := q.db.Query(ctx, parameterTypes_List,
 		arg.UserID,
 		arg.ParameterTypeID,
@@ -108,9 +97,9 @@ func (q *Queries) ParameterTypes_List(ctx context.Context, arg ParameterTypes_Li
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ParameterTypes_ListRow
+	var items []ParameterType
 	for rows.Next() {
-		var i ParameterTypes_ListRow
+		var i ParameterType
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -118,8 +107,6 @@ func (q *Queries) ParameterTypes_List(ctx context.Context, arg ParameterTypes_Li
 			&i.DefaultUnit,
 			&i.MinValue,
 			&i.MaxValue,
-			&i.UserID,
-			&i.ParameterTypeID,
 		); err != nil {
 			return nil, err
 		}

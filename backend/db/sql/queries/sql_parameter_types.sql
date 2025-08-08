@@ -2,9 +2,9 @@
 SELECT * FROM parameter_types WHERE id = $1;
 
 -- name: ParameterTypes_List :many
-SELECT * FROM parameter_types 
-JOIN user_parameter_types on parameter_types.id = user_parameter_types.parameter_type_id
-WHERE (user_parameter_types.user_id = @user_id::BIGINT or @user_id::bigint = 0)
+SELECT DISTINCT parameter_types.* FROM parameter_types 
+LEFT JOIN user_parameter_types on parameter_types.id = user_parameter_types.parameter_type_id
+WHERE (user_parameter_types.user_id = @user_id::BIGINT OR user_parameter_types.user_id IS NULL OR @user_id::bigint = 0)
 AND (parameter_types.id = @parameter_type_id::BIGINT or @parameter_type_id::bigint = 0)
 ORDER BY parameter_types.name DESC
 LIMIT @_limit::int

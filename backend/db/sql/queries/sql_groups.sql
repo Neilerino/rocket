@@ -1,5 +1,5 @@
 -- name: Groups_List :many
-SELECT groups.* from groups 
+SELECT DISTINCT groups.* from groups 
 JOIN interval_group_assignments on groups.id = interval_group_assignments.group_id
 JOIN plan_intervals on interval_group_assignments.plan_interval_id = plan_intervals.id 
 WHERE 

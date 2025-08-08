@@ -5,6 +5,7 @@ import (
 	"backend/db/repository"
 	api_utils "backend/internal/api/utils"
 	"backend/internal/service"
+	"backend/internal/types"
 
 	"encoding/json"
 	"log"
@@ -33,6 +34,27 @@ type ListGroupApiArgs struct {
 	UserId     int64 `json:"userId,omitempty"`
 }
 
+// Helper function to convert DB Group to API Group
+func dbGroupToApiGroup(dbGroup db.Group) types.Group {
+	return types.Group{
+		ID:          dbGroup.ID,
+		Name:        dbGroup.Name,
+		Description: dbGroup.Description,
+		UserID:      dbGroup.UserID,
+		CreatedAt:   dbGroup.CreatedAt.Time.String(),
+		UpdatedAt:   dbGroup.UpdatedAt.Time.String(),
+	}
+}
+
+// Helper function to convert slice of DB Groups to API Groups
+func dbGroupsToApiGroups(dbGroups []db.Group) []types.Group {
+	result := make([]types.Group, len(dbGroups))
+	for i, dbGroup := range dbGroups {
+		result[i] = dbGroupToApiGroup(dbGroup)
+	}
+	return result
+}
+
 func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
 	filterParser := api_utils.NewFilterParser(r, true)
 
@@ -49,28 +71,33 @@ func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
 	limit := filterParser.GetLimit(100)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		group_repo := repository.GroupsRepository{Queries: queries}
-		group_service := service.NewGroupsService(&group_repo)
 
-		log.Printf("Calling service.ListGroups with planId=%d, groupId=%d, intervalId=%d, limit=%d", planId, groupId, intervalId, limit)
-		groups, err := group_service.ListGroups(r.Context(), service.GroupListParams{
-			PlanId:     &planId,
-			GroupId:    &groupId,
-			IntervalId: &intervalId,
-			UserId:     &userId,
+		log.Printf("Calling repository.ListGroups with planId=%d, groupId=%d, intervalId=%d, limit=%d", planId, groupId, intervalId, limit)
+		
+		params := repository.GroupListParams{
+			PlanId:     planId,
+			GroupId:    groupId,
+			IntervalId: intervalId,
+			UserId:     userId,
 			Limit:      int32(limit),
-		})
+			Offset:     0,
+		}
+		
+		dbGroups, err := group_repo.ListGroups(r.Context(), params)
 		if err != nil {
 			log.Printf("Error from ListGroups: %v", err)
 			return err
 		}
 
-		if groups != nil {
-			log.Printf("Successfully retrieved groups, count: %d", len(groups))
-		}
+		// Convert DB groups to API groups
+		apiGroups := dbGroupsToApiGroups(dbGroups)
+
+		log.Printf("Successfully retrieved groups, count: %d", len(apiGroups))
 
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(groups)
+		return json.NewEncoder(w).Encode(apiGroups)
 	})
 
 	if success {
@@ -86,20 +113,23 @@ func (h *GroupsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		group_repo := repository.GroupsRepository{Queries: queries}
-		group_service := service.NewGroupsService(&group_repo)
 
-		group, err := group_service.CreateGroup(r.Context(), args.Name, args.Description, 1)
+		dbGroup, err := group_repo.Create(r.Context(), args.Name, args.Description, 1)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB group to API group
+		apiGroup := dbGroupToApiGroup(*dbGroup)
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(group)
+		return json.NewEncoder(w).Encode(apiGroup)
 	})
 
 	if success {
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -117,16 +147,19 @@ func (h *GroupsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		group_repo := repository.GroupsRepository{Queries: queries}
-		group_service := service.NewGroupsService(&group_repo)
 
-		group, err := group_service.UpdateGroup(r.Context(), groupId, args.Name, args.Description)
+		dbGroup, err := group_repo.Update(r.Context(), groupId, args.Name, args.Description)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB group to API group
+		apiGroup := dbGroupToApiGroup(*dbGroup)
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(group)
+		return json.NewEncoder(w).Encode(apiGroup)
 	})
 
 	if success {
@@ -142,10 +175,10 @@ func (h *GroupsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		group_repo := repository.GroupsRepository{Queries: queries}
-		group_service := service.NewGroupsService(&group_repo)
 
-		_, err := group_service.DeleteGroup(r.Context(), groupId)
+		_, err := group_repo.Delete(r.Context(), groupId)
 		if err != nil {
 			return err
 		}
@@ -154,7 +187,7 @@ func (h *GroupsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if success {
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -166,16 +199,19 @@ func (h *GroupsHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+		// Create repository directly - no service layer needed
 		group_repo := repository.GroupsRepository{Queries: queries}
-		group_service := service.NewGroupsService(&group_repo)
 
-		group, err := group_service.GetGroupById(r.Context(), id)
+		dbGroup, err := group_repo.GetGroupById(r.Context(), id)
 		if err != nil {
 			return err
 		}
 
+		// Convert DB group to API group
+		apiGroup := dbGroupToApiGroup(*dbGroup)
+
 		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(group)
+		return json.NewEncoder(w).Encode(apiGroup)
 	})
 
 	if success {
