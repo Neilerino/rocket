@@ -1,0 +1,107 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/integration-tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/integration-tests.yml'
+
+jobs:
+  integration-tests:
+    name: Integration Tests with Testcontainers
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'backend/go.mod'
+          cache-dependency-path: 'backend/go.sum'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Verify Docker is running
+        run: |
+          docker --version
+          docker info
+
+      - name: Pull PostgreSQL Docker image (cache)
+        run: |
+          echo "Pre-pulling PostgreSQL image to speed up tests..."
+          docker pull postgres:15-alpine
+
+      - name: Run integration tests with testcontainers
+        working-directory: ./backend
+        env:
+          # Ensure Docker socket is accessible
+          DOCKER_HOST: unix:///var/run/docker.sock
+        run: |
+          echo "Running integration tests against real PostgreSQL database..."
+          echo "This tests our complete API endpoints with real database operations."
+          
+          # Run all integration test suites
+          go test -v -timeout=25m ./tests/integration -run "TestIntegrationSuite" \
+            -args -test.parallel=1
+            
+      - name: Cleanup Docker containers
+        if: always()
+        run: |
+          echo "Cleaning up any remaining test containers..."
+          docker container prune -f --filter "label=org.testcontainers=true" || true
+          docker network prune -f --filter "label=org.testcontainers=true" || true
+
+  # Run a subset of critical tests for faster feedback
+  quick-integration-test:
+    name: Quick Integration Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'backend/go.mod'
+          cache-dependency-path: 'backend/go.sum'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Pull PostgreSQL Docker image
+        run: docker pull postgres:15-alpine
+
+      - name: Run quick integration test (Plans API only)
+        working-directory: ./backend
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+        run: |
+          echo "Running quick integration test - Plans API only..."
+          go test -v -timeout=8m ./tests/integration \
+            -run "TestIntegrationSuite/TestPlansList" \
+            -args -test.parallel=1
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker container prune -f --filter "label=org.testcontainers=true" || true
