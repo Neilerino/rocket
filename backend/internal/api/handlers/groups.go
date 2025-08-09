@@ -75,7 +75,7 @@ func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
 		group_repo := repository.GroupsRepository{Queries: queries}
 
 		log.Printf("Calling repository.ListGroups with planId=%d, groupId=%d, intervalId=%d, limit=%d", planId, groupId, intervalId, limit)
-		
+
 		params := repository.GroupListParams{
 			PlanId:     planId,
 			GroupId:    groupId,
@@ -84,7 +84,7 @@ func (h *GroupsHandler) List(w http.ResponseWriter, r *http.Request) {
 			Limit:      int32(limit),
 			Offset:     0,
 		}
-		
+
 		dbGroups, err := group_repo.ListGroups(r.Context(), params)
 		if err != nil {
 			log.Printf("Error from ListGroups: %v", err)
@@ -168,18 +168,15 @@ func (h *GroupsHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *GroupsHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	groupId, err := api_utils.ParseBigInt(chi.URLParam(r, "groupId"))
+	groupId, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
 	if err != nil {
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid group ID")
 		return
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
 		group_repo := repository.GroupsRepository{Queries: queries}
-
-		_, err := group_repo.Delete(r.Context(), groupId)
-		if err != nil {
+		if _, err := group_repo.Delete(r.Context(), groupId); err != nil {
 			return err
 		}
 
@@ -187,7 +184,7 @@ func (h *GroupsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if success {
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusOK)
 	}
 }
 

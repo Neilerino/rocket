@@ -82,7 +82,7 @@ SELECT
     -- Exercise Variation Parameters
     evp.id as evp_id,
     evp.locked as evp_locked,
-    -- Parameter Type details  
+    -- Parameter Type details
     pt.id as pt_id,
     pt.name as pt_name,
     pt.data_type as pt_data_type,
@@ -103,3 +103,6 @@ WHERE
 ORDER BY iep.id, evp.id
 LIMIT @_limit::int
 OFFSET @_offset::int;
+
+-- name: IntervalExercisePrescription_DeleteByExerciseId :exec
+DELETE FROM interval_exercise_prescriptions WHERE exercise_variation_id IN (SELECT id FROM exercise_variations WHERE exercise_id = @exercise_id::BIGINT);

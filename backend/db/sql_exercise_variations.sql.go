@@ -11,6 +11,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const exerciseVariation_DeleteByExerciseId = `-- name: ExerciseVariation_DeleteByExerciseId :exec
+DELETE FROM exercise_variations WHERE exercise_variations.exercise_id = $1
+`
+
+func (q *Queries) ExerciseVariation_DeleteByExerciseId(ctx context.Context, exerciseID int64) error {
+	_, err := q.db.Exec(ctx, exerciseVariation_DeleteByExerciseId, exerciseID)
+	return err
+}
+
+const exerciseVariation_DeleteParamsByExerciseId = `-- name: ExerciseVariation_DeleteParamsByExerciseId :exec
+DELETE FROM exercise_variation_params WHERE exercise_variation_id IN (SELECT id FROM exercise_variations WHERE exercise_id = $1)
+`
+
+func (q *Queries) ExerciseVariation_DeleteParamsByExerciseId(ctx context.Context, exerciseID int64) error {
+	_, err := q.db.Exec(ctx, exerciseVariation_DeleteParamsByExerciseId, exerciseID)
+	return err
+}
+
 const exerciseVariations_AddParam = `-- name: ExerciseVariations_AddParam :one
 INSERT INTO
     exercise_variation_params (exercise_variation_id, parameter_type_id, locked)
@@ -80,7 +98,7 @@ FROM
     LEFT OUTER JOIN interval_exercise_prescriptions iep ON iep.exercise_variation_id = ev.id
     LEFT OUTER JOIN plan_intervals pi ON pi.id = iep.plan_interval_id
 WHERE
-    (ev.exercise_id = ANY($1::BIGINT[]) or cardinality($1::bigint[]) = 0) 
+    (ev.exercise_id = ANY($1::BIGINT[]) or cardinality($1::bigint[]) = 0)
     AND (e.user_id = $2::BIGINT or $2::bigint = 0)
     AND (iep.group_id = ANY($3::BIGINT[]) or cardinality($3::bigint[]) = 0)
     AND (iep.plan_interval_id = ANY($4::BIGINT[]) or cardinality($4::bigint[]) = 0)

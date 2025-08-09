@@ -6,10 +6,12 @@ import (
 	api_utils "backend/internal/api/utils"
 	"backend/internal/types"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 type ExercisesHandler struct {
@@ -56,7 +58,6 @@ func (h *ExercisesHandler) ListByUserId(w http.ResponseWriter, r *http.Request) 
 	}
 
 	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
 		dbExercises, err := exercise_repo.GetExercisesByUserId(r.Context(), userId, 100)
@@ -64,7 +65,6 @@ func (h *ExercisesHandler) ListByUserId(w http.ResponseWriter, r *http.Request) 
 			return err
 		}
 
-		// Convert DB exercises to API exercises
 		apiExercises := dbExercisesToApiExercises(dbExercises)
 
 		w.Header().Set("Content-Type", "application/json")
@@ -87,7 +87,6 @@ func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
 		dbExercise, err := exercise_repo.CreateExercise(r.Context(), args.Name, args.Description, args.UserId)
@@ -99,6 +98,8 @@ func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		apiExercise := dbExerciseToApiExercise(*dbExercise)
 
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+
 		log.Printf("Added exercise")
 		log.Println(apiExercise)
 
@@ -106,7 +107,6 @@ func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if success {
-		w.WriteHeader(http.StatusCreated)
 		return
 	}
 }
@@ -153,10 +153,19 @@ func (h *ExercisesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
-		if err := exercise_repo.DeleteExercise(r.Context(), id); err != nil {
+		_, err := exercise_repo.GetExerciseById(r.Context(), id)
+
+		if err != nil {
+			if errors.As(err, &pgx.ErrNoRows) {
+				w.WriteHeader(http.StatusNotFound)
+				return nil
+			}
+			return err
+		}
+
+		if err = exercise_repo.DeleteExercise(r.Context(), id); err != nil {
 			return err
 		}
 

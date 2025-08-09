@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS plans (
     description TEXT NOT NULL CONSTRAINT plans_description_chk CHECK (
         validate_length (description, 0, 255)
     ),
-    user_id BIGINT NOT NULL REFERENCES users (id),
+    user_id BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     is_template BOOLEAN NOT NULL DEFAULT FALSE,
     is_public BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS plans (
 
 CREATE TABLE IF NOT EXISTS plan_intervals (
     id BIGSERIAL PRIMARY KEY,
-    plan_id BIGINT NOT NULL REFERENCES plans (id),
+    plan_id BIGINT NOT NULL REFERENCES plans (id) ON DELETE CASCADE,
     name TEXT CONSTRAINT plan_intervals_name_chk CHECK (
         validate_length (name, 1, 255)
     ),
@@ -109,23 +109,23 @@ CREATE TABLE IF NOT EXISTS exercise_variations (
 
 CREATE TABLE IF NOT EXISTS exercise_variation_params (
     id BIGSERIAL PRIMARY KEY,
-    exercise_variation_id BIGINT NOT NULL REFERENCES exercise_variations (id),
-    parameter_type_id BIGINT NOT NULL REFERENCES parameter_types (id),
+    exercise_variation_id BIGINT NOT NULL REFERENCES exercise_variations (id) ON DELETE CASCADE,
+    parameter_type_id BIGINT NOT NULL REFERENCES parameter_types (id) ON DELETE CASCADE,
     locked BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS interval_group_assignments (
     id BIGSERIAL PRIMARY KEY,
     plan_interval_id BIGINT NOT NULL REFERENCES plan_intervals (id) ON DELETE CASCADE,
-    group_id BIGINT NOT NULL REFERENCES groups (id),
+    group_id BIGINT NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
     frequency INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS interval_exercise_prescriptions (
     id BIGSERIAL PRIMARY KEY,
-    group_id BIGINT NOT NULL REFERENCES groups (id),
-    exercise_variation_id BIGINT NOT NULL REFERENCES exercise_variations (id),
-    plan_interval_id BIGINT NOT NULL REFERENCES plan_intervals (id),
+    group_id BIGINT NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
+    exercise_variation_id BIGINT NOT NULL REFERENCES exercise_variations (id) ON DELETE CASCADE,
+    plan_interval_id BIGINT NOT NULL REFERENCES plan_intervals (id) ON DELETE CASCADE,
     rpe INTEGER,
     sets INTEGER NOT NULL,
     reps INTEGER,

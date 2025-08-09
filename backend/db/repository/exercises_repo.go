@@ -78,5 +78,21 @@ func (r *ExercisesRepository) UpdateExercise(ctx context.Context, id int64, name
 }
 
 func (r *ExercisesRepository) DeleteExercise(ctx context.Context, id int64) error {
-	return r.Queries.Exercises_DeleteOne(ctx, id)
+	err := r.Queries.ExerciseVariation_DeleteParamsByExerciseId(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = r.Queries.IntervalExercisePrescription_DeleteByExerciseId(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = r.Queries.ExerciseVariation_DeleteByExerciseId(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = r.Queries.Exercises_DeleteOne(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

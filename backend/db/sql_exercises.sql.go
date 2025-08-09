@@ -160,16 +160,16 @@ func (q *Queries) Exercises_GetByUserId(ctx context.Context, arg Exercises_GetBy
 }
 
 const exercises_List = `-- name: Exercises_List :many
-SELECT DISTINCT exercises.id, exercises.name, exercises.description, exercises.user_id, exercises.created_at, exercises.updated_at FROM exercises 
-JOIN exercise_variations on exercise_variations.exercise_id = exercises.id
-JOIN interval_exercise_prescriptions on exercise_variations.id = interval_exercise_prescriptions.exercise_variation_id
-JOIN plan_intervals on plan_intervals.id = interval_exercise_prescriptions.plan_interval_id
+SELECT DISTINCT exercises.id, exercises.name, exercises.description, exercises.user_id, exercises.created_at, exercises.updated_at FROM exercises
+LEFT JOIN exercise_variations on exercise_variations.exercise_id = exercises.id
+LEFT JOIN interval_exercise_prescriptions on exercise_variations.id = interval_exercise_prescriptions.exercise_variation_id
+LEFT JOIN plan_intervals on plan_intervals.id = interval_exercise_prescriptions.plan_interval_id
 WHERE
-    (exercises.id = $1::BIGINT or $1::bigint = 0) 
-    AND (exercises.user_id = $2::BIGINT or $2::bigint = 0)
-    AND (plan_intervals.plan_id = $3::BIGINT or $3::bigint = 0)
-    AND (interval_exercise_prescriptions.group_id = $4::BIGINT or $4::bigint = 0)
-    AND (plan_intervals.id = $5::BIGINT or $5::bigint = 0)
+    (exercises.id = $1::BIGINT or $1::BIGINT = 0)
+    AND (exercises.user_id = $2::BIGINT or $2::BIGINT = 0)
+    AND (plan_intervals.plan_id = $3::BIGINT or $3::BIGINT = 0)
+    AND (interval_exercise_prescriptions.group_id = $4::BIGINT or $4::BIGINT = 0)
+    AND (plan_intervals.id = $5::BIGINT or $5::BIGINT = 0)
 ORDER BY exercises.created_at DESC
 LIMIT $7::int
 OFFSET $6::int

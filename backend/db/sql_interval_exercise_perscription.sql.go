@@ -11,6 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const intervalExercisePrescription_DeleteByExerciseId = `-- name: IntervalExercisePrescription_DeleteByExerciseId :exec
+DELETE FROM interval_exercise_prescriptions WHERE exercise_variation_id IN (SELECT id FROM exercise_variations WHERE exercise_id = $1::BIGINT)
+`
+
+func (q *Queries) IntervalExercisePrescription_DeleteByExerciseId(ctx context.Context, exerciseID int64) error {
+	_, err := q.db.Exec(ctx, intervalExercisePrescription_DeleteByExerciseId, exerciseID)
+	return err
+}
+
 const intervalExercisePrescriptions_CreateOne = `-- name: IntervalExercisePrescriptions_CreateOne :one
 INSERT INTO
     interval_exercise_prescriptions (
@@ -198,7 +207,7 @@ SELECT
     -- Exercise Variation Parameters
     evp.id as evp_id,
     evp.locked as evp_locked,
-    -- Parameter Type details  
+    -- Parameter Type details
     pt.id as pt_id,
     pt.name as pt_name,
     pt.data_type as pt_data_type,

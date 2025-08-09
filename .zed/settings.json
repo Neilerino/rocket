@@ -15,8 +15,7 @@
           "parameterNames": true,
           "rangeVariableTypes": true
         },
-        "directoryFilters": ["-frontend", "-api_docs", "-design-docs"],
-        "workspaces": ["backend"]
+        "directoryFilters": ["-frontend", "-api_docs", "-design-docs"]
       }
     }
   }

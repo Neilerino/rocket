@@ -70,7 +70,7 @@ func (q *Queries) ParameterTypes_GetById(ctx context.Context, id int64) (Paramet
 }
 
 const parameterTypes_List = `-- name: ParameterTypes_List :many
-SELECT DISTINCT parameter_types.id, parameter_types.name, parameter_types.data_type, parameter_types.default_unit, parameter_types.min_value, parameter_types.max_value FROM parameter_types 
+SELECT DISTINCT parameter_types.id, parameter_types.name, parameter_types.data_type, parameter_types.default_unit, parameter_types.min_value, parameter_types.max_value FROM parameter_types
 LEFT JOIN user_parameter_types on parameter_types.id = user_parameter_types.parameter_type_id
 WHERE (user_parameter_types.user_id = $1::BIGINT OR user_parameter_types.user_id IS NULL OR $1::bigint = 0)
 AND (parameter_types.id = $2::BIGINT or $2::bigint = 0)

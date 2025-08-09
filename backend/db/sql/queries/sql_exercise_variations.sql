@@ -25,7 +25,7 @@ FROM
     LEFT OUTER JOIN interval_exercise_prescriptions iep ON iep.exercise_variation_id = ev.id
     LEFT OUTER JOIN plan_intervals pi ON pi.id = iep.plan_interval_id
 WHERE
-    (ev.exercise_id = ANY(@exercise_id::BIGINT[]) or cardinality(@exercise_id::bigint[]) = 0) 
+    (ev.exercise_id = ANY(@exercise_id::BIGINT[]) or cardinality(@exercise_id::bigint[]) = 0)
     AND (e.user_id = @user_id::BIGINT or @user_id::bigint = 0)
     AND (iep.group_id = ANY(@group_id::BIGINT[]) or cardinality(@group_id::bigint[]) = 0)
     AND (iep.plan_interval_id = ANY(@plan_interval_id::BIGINT[]) or cardinality(@plan_interval_id::bigint[]) = 0)
@@ -46,3 +46,9 @@ VALUES (@exercise_id::BIGINT, @name::TEXT) RETURNING *;
 INSERT INTO
     exercise_variation_params (exercise_variation_id, parameter_type_id, locked)
 VALUES (@exercise_variation_id::BIGINT, @parameter_type_id::BIGINT, @locked::BOOL) RETURNING *;
+
+-- name: ExerciseVariation_DeleteByExerciseId :exec
+DELETE FROM exercise_variations WHERE exercise_variations.exercise_id = $1;
+
+-- name: ExerciseVariation_DeleteParamsByExerciseId :exec
+DELETE FROM exercise_variation_params WHERE exercise_variation_id IN (SELECT id FROM exercise_variations WHERE exercise_id = $1);

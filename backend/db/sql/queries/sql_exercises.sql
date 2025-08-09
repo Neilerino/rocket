@@ -11,16 +11,16 @@ ORDER BY plan_intervals."order"
 LIMIT $2;
 
 -- name: Exercises_List :many
-SELECT DISTINCT exercises.* FROM exercises 
-JOIN exercise_variations on exercise_variations.exercise_id = exercises.id
-JOIN interval_exercise_prescriptions on exercise_variations.id = interval_exercise_prescriptions.exercise_variation_id
-JOIN plan_intervals on plan_intervals.id = interval_exercise_prescriptions.plan_interval_id
+SELECT DISTINCT exercises.* FROM exercises
+LEFT JOIN exercise_variations on exercise_variations.exercise_id = exercises.id
+LEFT JOIN interval_exercise_prescriptions on exercise_variations.id = interval_exercise_prescriptions.exercise_variation_id
+LEFT JOIN plan_intervals on plan_intervals.id = interval_exercise_prescriptions.plan_interval_id
 WHERE
-    (exercises.id = @exercise_id::BIGINT or @exercise_id::bigint = 0) 
-    AND (exercises.user_id = @user_id::BIGINT or @user_id::bigint = 0)
-    AND (plan_intervals.plan_id = @plan_id::BIGINT or @plan_id::bigint = 0)
-    AND (interval_exercise_prescriptions.group_id = @group_id::BIGINT or @group_id::bigint = 0)
-    AND (plan_intervals.id = @interval_id::BIGINT or @interval_id::bigint = 0)
+    (exercises.id = @exercise_id::BIGINT or @exercise_id::BIGINT = 0)
+    AND (exercises.user_id = @user_id::BIGINT or @user_id::BIGINT = 0)
+    AND (plan_intervals.plan_id = @plan_id::BIGINT or @plan_id::BIGINT = 0)
+    AND (interval_exercise_prescriptions.group_id = @group_id::BIGINT or @group_id::BIGINT = 0)
+    AND (plan_intervals.id = @interval_id::BIGINT or @interval_id::BIGINT = 0)
 ORDER BY exercises.created_at DESC
 LIMIT @_limit::int
 OFFSET @_offset::int;

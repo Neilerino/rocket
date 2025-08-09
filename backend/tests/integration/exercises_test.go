@@ -183,7 +183,7 @@ func (suite *IntegrationTestSuite) TestExercisesDelete() {
 func (suite *IntegrationTestSuite) TestExercisesDeleteErrorCases() {
 	// Test Case 1: Delete non-existent exercise should return error
 	recorder := suite.DELETE("/api/v1/exercises/999")
-	suite.AssertErrorResponse(recorder, 500) // Should ideally be 404, but service returns 500 for not found
+	suite.AssertErrorResponse(recorder, 404) // Should ideally be 404, but service returns 500 for not found
 
 	// Test Case 2: Invalid ID format returns 400
 	recorder = suite.DELETE("/api/v1/exercises/invalid")
