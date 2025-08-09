@@ -55,7 +55,7 @@ func (h *ExercisesHandler) ListByUserId(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
@@ -68,46 +68,21 @@ func (h *ExercisesHandler) ListByUserId(w http.ResponseWriter, r *http.Request) 
 		apiExercises := dbExercisesToApiExercises(dbExercises)
 
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(apiExercises)
 	})
-
-	if success {
-		w.WriteHeader(http.StatusOK)
-	}
-}
-
-func (h *ExercisesHandler) GetById(w http.ResponseWriter, r *http.Request) {
-	id, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
-	if err != nil {
-		api_utils.WriteError(w, http.StatusBadRequest, "Invalid exercise ID")
-		return
-	}
-
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
-		exercise_repo := repository.ExercisesRepository{Queries: queries}
-
-		dbExercise, err := exercise_repo.GetExerciseById(r.Context(), id)
-		if err != nil {
-			return err
-		}
-
-		// Convert DB exercise to API exercise
-		apiExercise := dbExerciseToApiExercise(*dbExercise)
-
-		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(apiExercise)
-	})
-
-	if success {
-		w.WriteHeader(http.StatusOK)
-	}
 }
 
 func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var args CreateExerciseApiArgs
 	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if args.Name == "" {
+		err := api_utils.ErrMissingParameter("Name")
+		api_utils.WriteError(w, 400, err.Message)
 		return
 	}
 
@@ -124,11 +99,15 @@ func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		apiExercise := dbExerciseToApiExercise(*dbExercise)
 
 		w.Header().Set("Content-Type", "application/json")
+		log.Printf("Added exercise")
+		log.Println(apiExercise)
+
 		return json.NewEncoder(w).Encode(apiExercise)
 	})
 
 	if success {
 		w.WriteHeader(http.StatusCreated)
+		return
 	}
 }
 
@@ -173,7 +152,7 @@ func (h *ExercisesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
@@ -181,12 +160,9 @@ func (h *ExercisesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
+		w.WriteHeader(http.StatusNoContent)
 		return nil
 	})
-
-	if success {
-		w.WriteHeader(http.StatusNoContent)
-	}
 }
 
 func (h *ExercisesHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -205,16 +181,14 @@ func (h *ExercisesHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get limit from query params
 	limit := filterParser.GetLimit(100)
-
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
-		log.Printf("Calling ListExercises with exerciseId=%d, userId=%d, planId=%d, groupId=%d, intervalId=%d, limit=%d", 
+		log.Printf("Calling ListExercises with exerciseId=%d, userId=%d, planId=%d, groupId=%d, intervalId=%d, limit=%d",
 			exerciseId, userId, planId, groupId, intervalId, limit)
-		
+
 		params := repository.ExerciseListParams{
 			ExerciseID: exerciseId,
 			UserID:     userId,
@@ -223,7 +197,7 @@ func (h *ExercisesHandler) List(w http.ResponseWriter, r *http.Request) {
 			IntervalID: intervalId,
 			Limit:      int32(limit),
 		}
-		
+
 		dbExercises, err := exercise_repo.ListExercises(r.Context(), params)
 		if err != nil {
 			log.Printf("Error retrieving exercises: %v", err)
@@ -234,12 +208,9 @@ func (h *ExercisesHandler) List(w http.ResponseWriter, r *http.Request) {
 		apiExercises := dbExercisesToApiExercises(dbExercises)
 
 		log.Printf("Successfully retrieved exercises")
-		
+
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(apiExercises)
 	})
-
-	if success {
-		w.WriteHeader(http.StatusOK)
-	}
 }

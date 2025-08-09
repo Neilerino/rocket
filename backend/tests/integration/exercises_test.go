@@ -9,11 +9,11 @@ func (suite *IntegrationTestSuite) TestExercisesList() {
 	// Test Case 1: userId=1 should return user 1's exercises
 	recorder := suite.GET("/api/v1/exercises?userId=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 3, "User 1 should have 3 exercises")
-	
+
 	// Verify all exercises belong to user 1
 	for _, exercise := range exercises {
 		suite.Equal(int64(1), exercise.UserID, "All exercises should belong to user 1")
@@ -31,7 +31,7 @@ func (suite *IntegrationTestSuite) TestExercisesList() {
 	// Test Case 2: id=1 should return specific exercise
 	recorder = suite.GET("/api/v1/exercises?id=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 1, "Should return exactly one exercise")
 	suite.Equal(int64(1), exercises[0].ID, "Exercise ID should be 1")
@@ -43,7 +43,7 @@ func (suite *IntegrationTestSuite) TestExercisesListUserIsolation() {
 	// User isolation - userId=2 should only return user 2's exercises
 	recorder := suite.GET("/api/v1/exercises?userId=2")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 1, "User 2 should have 1 exercise")
@@ -56,7 +56,7 @@ func (suite *IntegrationTestSuite) TestExercisesListErrorCases() {
 	// Test Case 1: Non-existent userId should return empty array
 	recorder := suite.GET("/api/v1/exercises?userId=999")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 0, "Non-existent user should return empty array")
@@ -74,10 +74,10 @@ func (suite *IntegrationTestSuite) TestExercisesCreate() {
 		"description": "A test exercise description",
 		"userId":      1,
 	}
-	
+
 	recorder := suite.POST("/api/v1/exercises", createRequest)
 	suite.AssertStatusCode(recorder, 201)
-	
+
 	var createdExercise types.Exercise
 	suite.GetResponseData(recorder, &createdExercise)
 	suite.Equal("Test New Exercise", createdExercise.Name, "Created exercise name should match")
@@ -88,7 +88,7 @@ func (suite *IntegrationTestSuite) TestExercisesCreate() {
 	// Verify exercise was created by listing exercises
 	recorder = suite.GET("/api/v1/exercises?userId=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 4, "User 1 should now have 4 exercises") // 3 original + 1 new
@@ -100,7 +100,7 @@ func (suite *IntegrationTestSuite) TestExercisesCreateErrorCases() {
 	createRequest := map[string]interface{}{
 		"description": "Exercise without name",
 	}
-	
+
 	recorder := suite.POST("/api/v1/exercises", createRequest)
 	suite.AssertErrorResponse(recorder, 400)
 
@@ -116,10 +116,10 @@ func (suite *IntegrationTestSuite) TestExercisesUpdate() {
 		"name":        "Updated Exercise Name",
 		"description": "Updated exercise description",
 	}
-	
+
 	recorder := suite.PUT("/api/v1/exercises/1", updateRequest)
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var updatedExercise types.Exercise
 	suite.GetResponseData(recorder, &updatedExercise)
 	suite.Equal("Updated Exercise Name", updatedExercise.Name, "Exercise name should be updated")
@@ -130,7 +130,7 @@ func (suite *IntegrationTestSuite) TestExercisesUpdate() {
 	// Verify update persisted by getting the exercise
 	recorder = suite.GET("/api/v1/exercises?id=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 1, "Should return the updated exercise")
@@ -166,7 +166,7 @@ func (suite *IntegrationTestSuite) TestExercisesDelete() {
 	// Verify exercise is deleted by trying to get it
 	recorder = suite.GET("/api/v1/exercises?id=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 0, "Deleted exercise should not be returned")
@@ -174,7 +174,7 @@ func (suite *IntegrationTestSuite) TestExercisesDelete() {
 	// Verify user's exercise count decreased
 	recorder = suite.GET("/api/v1/exercises?userId=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 2, "User 1 should now have 2 exercises") // 3 original - 1 deleted
 }
@@ -195,11 +195,11 @@ func (suite *IntegrationTestSuite) TestExercisesAdvancedFiltering() {
 	// Test limit parameter
 	recorder := suite.GET("/api/v1/exercises?userId=1&limit=2")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.LessOrEqual(len(exercises), 2, "Should respect limit parameter")
-	
+
 	// All returned exercises should belong to user 1
 	for _, exercise := range exercises {
 		suite.Equal(int64(1), exercise.UserID, "All exercises should belong to user 1")
@@ -211,17 +211,17 @@ func (suite *IntegrationTestSuite) TestExercisesResponseStructure() {
 	// Test that successful responses follow the expected structure
 	recorder := suite.GET("/api/v1/exercises?userId=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	// Parse the raw response to check structure
 	var response types.ApiSuccessResponse
 	suite.AssertJSON(recorder, &response)
 	suite.True(response.Success, "Response should indicate success")
 	suite.NotNil(response.Data, "Response should contain data")
-	
+
 	// Test that error responses follow the expected structure
 	recorder = suite.GET("/api/v1/exercises")
 	suite.AssertStatusCode(recorder, 400)
-	
+
 	var errorResponse types.ApiErrorResponse
 	suite.AssertJSON(recorder, &errorResponse)
 	suite.False(errorResponse.Success, "Error response should indicate failure")
@@ -234,11 +234,11 @@ func (suite *IntegrationTestSuite) TestExercisesFieldValidation() {
 	// Get an exercise and verify all expected fields are present
 	recorder := suite.GET("/api/v1/exercises?userId=1&limit=1")
 	suite.AssertStatusCode(recorder, 200)
-	
+
 	var exercises []types.Exercise
 	suite.GetResponseData(recorder, &exercises)
 	suite.Len(exercises, 1, "Should return one exercise")
-	
+
 	exercise := exercises[0]
 	suite.NotZero(exercise.ID, "Exercise should have an ID")
 	suite.NotEmpty(exercise.Name, "Exercise should have a name")

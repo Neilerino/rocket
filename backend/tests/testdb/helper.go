@@ -8,7 +8,6 @@ import (
 
 	"backend/db"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -38,7 +37,6 @@ type TestDatabase struct {
 	DB        *db.Database
 	Container *postgres.PostgresContainer
 	ConnStr   string
-	testTx    pgx.Tx // Transaction for test isolation
 }
 
 // SetupTestDB creates a new PostgreSQL testcontainer, applies schema, and returns configured database

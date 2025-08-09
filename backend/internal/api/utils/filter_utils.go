@@ -218,7 +218,7 @@ func (fp *FilterParser) GetIntFilterOrZero(paramName string) int64 {
 }
 
 // ErrMissingParameter creates an error for a missing required parameter
-func ErrMissingParameter(paramName string) error {
+func ErrMissingParameter(paramName string) *FilterError {
 	return &FilterError{
 		Message: "Missing required parameter: " + paramName,
 		Code:    "MISSING_PARAMETER",
