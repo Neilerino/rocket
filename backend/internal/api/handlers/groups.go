@@ -134,7 +134,7 @@ func (h *GroupsHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *GroupsHandler) Update(w http.ResponseWriter, r *http.Request) {
-	groupId, err := api_utils.ParseBigInt(chi.URLParam(r, "groupId"))
+	groupId, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
 	if err != nil {
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid group ID")
 		return
@@ -253,7 +253,7 @@ func (h *GroupsHandler) RemoveFromInterval(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	planIntervalId, err := api_utils.ParseBigInt(chi.URLParam(r, "planIntervalId"))
+	planIntervalId, err := api_utils.ParseBigInt(chi.URLParam(r, "intervalId"))
 	if err != nil {
 		api_utils.WriteError(w, http.StatusBadRequest, "Invalid plan interval ID")
 		return
