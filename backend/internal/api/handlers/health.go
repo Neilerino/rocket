@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -11,5 +12,8 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	println("Health check")
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	if err != nil {
+		log.Printf("Error encoding response: %v", err)
+	}
 }
