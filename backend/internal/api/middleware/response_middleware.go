@@ -8,15 +8,6 @@ import (
 	"net/http/httptest"
 )
 
-// ApiResponseWrapper represents the standardized API response format
-// that matches the frontend's ApiResponse<T> interface:
-//
-//	export interface ApiResponse<T> {
-//	  success: boolean;
-//	  data?: T;
-//	  error?: ApiError;
-//	  meta?: Record<string, any>;
-//	}
 type ApiResponseWrapper struct {
 	Success bool      `json:"success"`
 	Data    any       `json:"data,omitempty"`
@@ -24,34 +15,24 @@ type ApiResponseWrapper struct {
 	Meta    any       `json:"meta,omitempty"`
 }
 
-// ApiError represents the error structure expected by the frontend
 type ApiError struct {
 	Code    string `json:"code,omitempty"`
 	Message string `json:"message"`
 	Details string `json:"details,omitempty"`
 }
 
-// ResponseMiddleware ensures all API responses conform to the ApiResponseWrapper format
 func ResponseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Create a response recorder to capture the response
 		rec := httptest.NewRecorder()
-
-		// Call the next handler with our recorder
 		next.ServeHTTP(rec, r)
 
-		// Get the response from the recorder
 		response := rec.Result()
-		defer response.Body.Close()
-
-		// Read the response body
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			http.Error(w, "Error reading response body", http.StatusInternalServerError)
 			return
 		}
 
-		// Copy all headers from the response to the writer
 		for k, v := range response.Header {
 			for _, val := range v {
 				w.Header().Add(k, val)
