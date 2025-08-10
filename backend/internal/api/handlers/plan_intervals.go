@@ -5,7 +5,6 @@ import (
 	"backend/db/repository"
 	api_utils "backend/internal/api/utils"
 	"backend/internal/types"
-	"backend/internal/utils"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -38,15 +37,12 @@ type CreatePlanIntervalApiArgs struct {
 
 // Helper function to convert DB PlanInterval to API PlanInterval
 func dbPlanIntervalToApiPlanInterval(dbInterval db.PlanIntervals_ListRow) (types.PlanInterval, error) {
-	durationString, err := utils.IntervalToString(dbInterval.Duration)
-	if err != nil {
-		return types.PlanInterval{}, err
-	}
+	pgInterval := types.NewPostgreSQLInterval(dbInterval.Duration)
 
 	return types.PlanInterval{
 		ID:          dbInterval.ID,
 		PlanID:      dbInterval.PlanID,
-		Duration:    durationString,
+		Duration:    pgInterval,
 		Name:        dbInterval.Name.String,
 		Description: dbInterval.Description.String,
 		Order:       dbInterval.Order,
@@ -71,15 +67,12 @@ func dbPlanIntervalsToApiPlanIntervals(dbIntervals []db.PlanIntervals_ListRow) (
 
 // Helper function to convert simple DB PlanInterval to API PlanInterval (for Create/Delete operations)
 func dbPlanIntervalSimpleToApiPlanInterval(dbInterval db.PlanInterval, groupCount int) (types.PlanInterval, error) {
-	durationString, err := utils.IntervalToString(dbInterval.Duration)
-	if err != nil {
-		return types.PlanInterval{}, err
-	}
+	pgInterval := types.NewPostgreSQLInterval(dbInterval.Duration)
 
 	return types.PlanInterval{
 		ID:          dbInterval.ID,
 		PlanID:      dbInterval.PlanID,
-		Duration:    durationString,
+		Duration:    pgInterval,
 		Name:        dbInterval.Name.String,
 		Description: dbInterval.Description.String,
 		Order:       dbInterval.Order,
@@ -249,6 +242,6 @@ func (h *PlanIntervalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if success {
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusOK)
 	}
 }

@@ -158,7 +158,7 @@ func (h *ExercisesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		_, err := exercise_repo.GetExerciseById(r.Context(), id)
 
 		if err != nil {
-			if errors.As(err, &pgx.ErrNoRows) {
+			if errors.Is(err, pgx.ErrNoRows) {
 				w.WriteHeader(http.StatusNotFound)
 				return nil
 			}

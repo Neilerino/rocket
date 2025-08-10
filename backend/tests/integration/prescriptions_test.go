@@ -233,7 +233,7 @@ func (suite *IntegrationTestSuite) TestIntervalExercisePrescriptionsCreateDurati
 	suite.Equal(int64(3), createdPrescription.GroupId, "Should belong to core group")
 	suite.NotNil(createdPrescription.Duration, "Duration should be set")
 	if createdPrescription.Duration != nil {
-		suite.Equal("45 seconds", *createdPrescription.Duration, "Duration should be 45 seconds")
+		suite.Equal("PT45S", createdPrescription.Duration.String(), "Duration should be 45 seconds in ISO 8601 format (PT45S)")
 	}
 	suite.Nil(createdPrescription.Reps, "Reps should be nil for duration-based exercises")
 }
@@ -362,7 +362,7 @@ func (suite *IntegrationTestSuite) TestIntervalExercisePrescriptionsSpecificValu
 		suite.NotNil(prescription.Rest, "Rest should be set")
 		
 		if prescription.Rest != nil {
-			suite.Equal("00:01:30", *prescription.Rest, "Rest should be 1:30 for push-ups")
+			suite.Equal("PT1M30S", prescription.Rest.String(), "Rest should be 1:30 in ISO 8601 format (PT1M30S)")
 		}
 	}
 
@@ -378,7 +378,7 @@ func (suite *IntegrationTestSuite) TestIntervalExercisePrescriptionsSpecificValu
 		suite.Nil(plankPrescription.Reps, "Plank should not have reps")
 		
 		if plankPrescription.Duration != nil {
-			suite.Equal("00:00:45", *plankPrescription.Duration, "Plank should be 45 seconds")
+			suite.Equal("PT45S", plankPrescription.Duration.String(), "Plank should be 45 seconds in ISO 8601 format (PT45S)")
 		}
 	}
 }

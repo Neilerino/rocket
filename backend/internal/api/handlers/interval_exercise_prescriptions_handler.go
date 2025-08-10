@@ -38,21 +38,29 @@ func dbPrescriptionDetailRowsToApiPrescriptions(rows []db.IntervalExercisePrescr
 	for _, row := range rows {
 		// Handle prescription data
 		if _, exists := prescriptionsMap[row.ID]; !exists {
-			var duration *string
-			var rest *string
+			var duration *types.PostgreSQLInterval
+			var rest *types.PostgreSQLInterval
+			var subRepWorkDuration *types.PostgreSQLInterval
+			var subRepRestDuration *types.PostgreSQLInterval
 
 			if row.Duration.Valid {
-				durationVal, err := utils.IntervalToString(row.Duration)
-				if err == nil {
-					duration = &durationVal
-				}
+				pgInterval := types.NewPostgreSQLInterval(row.Duration)
+				duration = &pgInterval
 			}
 
 			if row.Rest.Valid {
-				restVal, err := utils.IntervalToString(row.Rest)
-				if err == nil {
-					rest = &restVal
-				}
+				pgInterval := types.NewPostgreSQLInterval(row.Rest)
+				rest = &pgInterval
+			}
+
+			if row.SubRepWorkDuration.Valid {
+				pgInterval := types.NewPostgreSQLInterval(row.SubRepWorkDuration)
+				subRepWorkDuration = &pgInterval
+			}
+
+			if row.SubRepRestDuration.Valid {
+				pgInterval := types.NewPostgreSQLInterval(row.SubRepRestDuration)
+				subRepRestDuration = &pgInterval
 			}
 
 			prescriptionsMap[row.ID] = &types.IntervalExercisePrescription{
@@ -65,6 +73,9 @@ func dbPrescriptionDetailRowsToApiPrescriptions(rows []db.IntervalExercisePrescr
 				Reps:                utils.If(row.Reps.Valid, &row.Reps.Int32, nil),
 				Duration:            duration,
 				Rest:                rest,
+				SubReps:             utils.If(row.SubReps.Valid, &row.SubReps.Int32, nil),
+				SubRepWorkDuration:  subRepWorkDuration,
+				SubRepRestDuration:  subRepRestDuration,
 			}
 		}
 

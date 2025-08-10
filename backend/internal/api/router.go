@@ -38,7 +38,6 @@ func NewRouter(db *db.Database) http.Handler {
 		r.Route("/plans", func(r chi.Router) {
 			r.Get("/", plans_handler.List)
 			r.Post("/", plans_handler.Create)
-			r.Get("/{id}", plans_handler.GetById)
 			r.Put("/{id}", plans_handler.Edit)
 			r.Delete("/{id}", plans_handler.Delete)
 		})

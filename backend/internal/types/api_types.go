@@ -30,15 +30,15 @@ type ApiErrorResponse struct {
 }
 
 type PlanInterval struct {
-	ID          int64  `json:"id"`
-	PlanID      int64  `json:"planId"`
-	Duration    string `json:"duration"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Order       int32  `json:"order"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
-	GroupCount  int    `json:"groupCount"`
+	ID          int64               `json:"id"`
+	PlanID      int64               `json:"planId"`
+	Duration    PostgreSQLInterval  `json:"duration"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Order       int32               `json:"order"`
+	CreatedAt   string              `json:"createdAt"`
+	UpdatedAt   string              `json:"updatedAt"`
+	GroupCount  int                 `json:"groupCount"`
 }
 
 type Group struct {
@@ -64,8 +64,8 @@ type ParameterType struct {
 	Name        string  `json:"name"`
 	DataType    string  `json:"dataType"`
 	DefaultUnit string  `json:"defaultUnit"`
-	MinValue    float64 `json:"minValue,omitempty"`
-	MaxValue    float64 `json:"maxValue,omitempty"`
+	MinValue    float64 `json:"minValue"`
+	MaxValue    float64 `json:"maxValue"`
 }
 
 type ExerciseVariationParam struct {
@@ -84,19 +84,19 @@ type ExerciseVariation struct {
 }
 
 type IntervalExercisePrescription struct {
-	ID                  int64             `json:"id"`
-	GroupId             int64             `json:"groupId"`
-	ExerciseVariationId int64             `json:"exerciseVariationId"`
-	PlanIntervalId      int64             `json:"planIntervalId"`
-	RPE                 *int32            `json:"rpe"`
-	Sets                int32             `json:"sets"`
-	Reps                *int32            `json:"reps"`
-	Duration            *string           `json:"duration"`
-	Rest                *string           `json:"rest"`
-	SubReps             *int32            `json:"subReps"`
-	SubRepWorkDuration  *string           `json:"subRepWorkDuration"`
-	SubRepRestDuration  *string           `json:"subRepRestDuration"`
-	ExerciseVariation   ExerciseVariation `json:"exerciseVariation,omitempty"`
+	ID                  int64                  `json:"id"`
+	GroupId             int64                  `json:"groupId"`
+	ExerciseVariationId int64                  `json:"exerciseVariationId"`
+	PlanIntervalId      int64                  `json:"planIntervalId"`
+	RPE                 *int32                 `json:"rpe"`
+	Sets                int32                  `json:"sets"`
+	Reps                *int32                 `json:"reps"`
+	Duration            *PostgreSQLInterval    `json:"duration"`
+	Rest                *PostgreSQLInterval    `json:"rest"`
+	SubReps             *int32                 `json:"subReps"`
+	SubRepWorkDuration  *PostgreSQLInterval    `json:"subRepWorkDuration"`
+	SubRepRestDuration  *PostgreSQLInterval    `json:"subRepRestDuration"`
+	ExerciseVariation   ExerciseVariation      `json:"exerciseVariation,omitempty"`
 }
 
 type IntervalGroupAssignment struct {

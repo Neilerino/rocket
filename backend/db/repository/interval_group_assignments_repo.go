@@ -3,9 +3,7 @@ package repository
 import (
 	"backend/db"
 	"backend/internal/types"
-	"backend/internal/utils"
 	"context"
-	"fmt"
 )
 
 type IntervalGroupAssignmentsRepository struct {
@@ -47,10 +45,7 @@ func (r *IntervalGroupAssignmentsRepository) GetByGroupId(ctx context.Context, g
 
 	assignments := make([]types.IntervalGroupAssignment, len(rows))
 	for i, row := range rows {
-		durationStr, err := utils.IntervalToString(row.PiDuration)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert interval to string for row %d: %w", i, err)
-		}
+		pgInterval := types.NewPostgreSQLInterval(row.PiDuration)
 		assignments[i] = types.IntervalGroupAssignment{
 			ID:             row.ID,
 			PlanIntervalId: row.PlanIntervalID,
@@ -60,7 +55,7 @@ func (r *IntervalGroupAssignmentsRepository) GetByGroupId(ctx context.Context, g
 				ID:        row.PiID,
 				PlanID:    row.PiPlanID,
 				Name:      row.PiName.String,
-				Duration:  durationStr,
+				Duration:  pgInterval,
 				Order:     row.PiOrder,
 				CreatedAt: row.PiCreatedAt.Time.String(),
 				UpdatedAt: row.PiUpdatedAt.Time.String(),

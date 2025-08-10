@@ -5,11 +5,14 @@ import (
 	"backend/db/repository"
 	api_utils "backend/internal/api/utils"
 	"backend/internal/types"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 type PlanHandler struct {
@@ -18,9 +21,9 @@ type PlanHandler struct {
 }
 
 type ListPlansResponse struct {
-	Items      []interface{} `json:"items"`
-	TotalCount int           `json:"totalCount"`
-	NextCursor string        `json:"nextCursor,omitempty"`
+	Items      []any  `json:"items"`
+	TotalCount int    `json:"totalCount"`
+	NextCursor string `json:"nextCursor,omitempty"`
 }
 
 type ListPlanApiArgs struct {
@@ -75,25 +78,19 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 	userId := filterParser.GetIntFilter("userId")
 	planId := filterParser.GetIntFilter("id")
 
-	// Require at least one filter (userId or planId)
 	if userId == nil && planId == nil {
 		api_utils.WriteError(w, http.StatusBadRequest, "Missing required filter: either userId or planId must be provided")
 		return
 	}
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
 		planRepo := repository.PlansRepository{Queries: queries}
 
-		// Get limit and offset from query params
 		limit := filterParser.GetLimit(100)
 		offset := filterParser.GetOffset(0)
-
-		// Get boolean filters
 		isTemplate := filterParser.GetBoolFilter("isTemplate")
 		isPublic := filterParser.GetBoolFilter("isPublic")
 
-		// Log the filters being applied
 		if isTemplate != nil {
 			log.Printf("Filtering plans by isTemplate=%v", *isTemplate)
 		}
@@ -103,10 +100,15 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("Filtering plans with userId=%v, planId=%v, limit=%d, offset=%d", userId, planId, int(limit), offset)
 
-		// Handle planId filter - get single plan
 		if planId != nil {
 			dbPlan, err := planRepo.GetPlanById(r.Context(), *planId)
 			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					log.Printf("Plan not found")
+					w.WriteHeader(http.StatusNotFound)
+					return nil
+				}
+
 				log.Printf("Error from GetPlanById: %v", err)
 				return err
 			}
@@ -207,38 +209,6 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetById is kept for backward compatibility with existing clients
-// New clients should use the List endpoint with planId parameter
-func (h *PlanHandler) GetById(w http.ResponseWriter, r *http.Request) {
-	id, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
-	if err != nil {
-		api_utils.WriteError(w, http.StatusBadRequest, "Invalid plan ID")
-		return
-	}
-
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
-		planRepo := repository.PlansRepository{Queries: queries}
-
-		dbPlan, err := planRepo.GetPlanById(r.Context(), id)
-		if err != nil {
-			return err
-		}
-
-		// Convert DB plan to API plan
-		apiPlan := dbPlanToApiPlan(*dbPlan)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		return json.NewEncoder(w).Encode(apiPlan)
-	})
-
-	if !success {
-		// Error already handled by WithTransaction
-		return
-	}
-}
-
 func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 	// Log the incoming request for debugging
 	log.Printf("Handling plans Edit request: %s %s", r.Method, r.URL.String())
@@ -258,7 +228,6 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
 	if args.Name == "" {
 		log.Printf("Error: Missing name parameter")
 		api_utils.WriteError(w, http.StatusBadRequest, "Missing required field: name")
@@ -268,11 +237,9 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Updating plan with name=%s, isTemplate=%v, isPublic=%v",
 		args.Name, args.IsTemplate, args.IsPublic)
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		planRepo := repository.PlansRepository{Queries: queries}
 
-		// Call repository to update plan
 		dbPlan, err := planRepo.UpdatePlan(
 			r.Context(),
 			id,
@@ -282,11 +249,14 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 			args.IsPublic,
 		)
 		if err != nil {
-			log.Printf("Error updating plan: %v", err)
+			if errors.Is(err, sql.ErrNoRows) {
+				log.Printf("Plan not found")
+				api_utils.WriteError(w, http.StatusNotFound, "Plan not found")
+				return nil
+			}
 			return err
 		}
 
-		// Convert DB plan to API plan
 		apiPlan := dbPlanToApiPlan(*dbPlan)
 
 		log.Printf("Successfully updated plan with ID: %d", apiPlan.ID)
@@ -294,11 +264,6 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(apiPlan)
 	})
-
-	if !success {
-		// Error already handled by WithTransaction
-		return
-	}
 }
 
 func (h *PlanHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -314,10 +279,14 @@ func (h *PlanHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Deleting plan with ID: %d", id)
 
 	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
-		// Create repository directly - no service layer needed
 		planRepo := repository.PlansRepository{Queries: queries}
 
 		if err := planRepo.DeletePlan(r.Context(), id); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				w.WriteHeader(http.StatusNotFound)
+				return nil
+			}
+
 			log.Printf("Error deleting plan: %v", err)
 			return err
 		}

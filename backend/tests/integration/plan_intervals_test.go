@@ -36,7 +36,7 @@ func (suite *IntegrationTestSuite) TestPlanIntervalsList() {
 	suite.Len(intervals, 1, "Should return exactly one interval")
 	suite.Equal(int64(1), intervals[0].ID, "Interval ID should be 1")
 	suite.Equal("Week 1", intervals[0].Name, "Interval name should match seed data")
-	suite.Equal("1 week", intervals[0].Duration, "Duration should match seed data")
+	suite.Equal("PT168H", intervals[0].Duration.String(), "Duration should be in ISO 8601 format (1 week = 168 hours)")
 
 	// Test Case 3: planId=2 should return template plan intervals
 	recorder = suite.GET("/api/v1/intervals?planId=2")
@@ -95,7 +95,7 @@ func (suite *IntegrationTestSuite) TestPlanIntervalsCreate() {
 	suite.Equal("Week 3", createdInterval.Name, "Created interval name should match")
 	suite.Equal("Third week of the plan", createdInterval.Description, "Created interval description should match")
 	suite.Equal(int64(1), createdInterval.PlanID, "Created interval should belong to plan 1")
-	suite.Equal("1 week", createdInterval.Duration, "Duration should match")
+	suite.Equal("PT168H", createdInterval.Duration.String(), "Duration should be in ISO 8601 format (1 week = PT168H)")
 	suite.Equal(int32(3), createdInterval.Order, "Order should match")
 	suite.NotZero(createdInterval.ID, "Created interval should have an ID")
 
@@ -299,7 +299,7 @@ func (suite *IntegrationTestSuite) TestPlanIntervalsSpecificValues() {
 	suite.Equal("Week 1", interval.Name, "Should be Week 1")
 	suite.Equal("First week of regular plan", interval.Description, "Description should match seed data")
 	suite.Equal(int64(1), interval.PlanID, "Should belong to plan 1")
-	suite.Equal("1 week", interval.Duration, "Duration should be 1 week")
+	suite.Equal("PT168H", interval.Duration.String(), "Duration should be 1 week in ISO 8601 format (PT168H)")
 	suite.Equal(int32(1), interval.Order, "Should be first in order")
 
 	// Test getting template interval (ID=3 from seed data)

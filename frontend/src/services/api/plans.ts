@@ -25,14 +25,6 @@ export const PlanService = {
     });
   },
 
-  async getPlanById(id: number): Promise<ApiResponse<Plan>> {
-    return apiClient.get(`/plans/${id}`);
-  },
-
-  async getPlansByUserId(userId: number): Promise<ApiResponse<Plan[]>> {
-    return apiClient.get(`/plans/user/${userId}`);
-  },
-
   async createPlan(planData: CreatePlanDto): Promise<ApiResponse<Plan>> {
     return apiClient.post('/plans', planData);
   },
