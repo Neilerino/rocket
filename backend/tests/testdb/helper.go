@@ -89,22 +89,17 @@ func SetupTestDB(ctx context.Context) (*TestDatabase, error) {
 	}, nil
 }
 
-// SeedTestData loads test data into the database
 func (td *TestDatabase) SeedTestData(ctx context.Context) error {
-	// Read seed data SQL file
 	seedSQL, err := loadSeedData()
 	if err != nil {
 		return fmt.Errorf("failed to load seed data: %w", err)
 	}
 
-	// Execute seed data in transaction
 	tx, err := td.DB.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start seed transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
 
-	// Execute the seed SQL
 	if _, err := tx.Exec(ctx, seedSQL); err != nil {
 		return fmt.Errorf("failed to execute seed data: %w", err)
 	}
@@ -135,9 +130,7 @@ func (td *TestDatabase) CleanupTestDB(ctx context.Context) error {
 	return nil
 }
 
-// Reset clears all data from tables while preserving schema
 func (td *TestDatabase) Reset(ctx context.Context) error {
-	// Get list of all tables to truncate (in dependency order)
 	truncateQueries := []string{
 		"TRUNCATE TABLE interval_exercise_prescriptions CASCADE",
 		"TRUNCATE TABLE exercise_variation_params CASCADE",
@@ -151,12 +144,10 @@ func (td *TestDatabase) Reset(ctx context.Context) error {
 		"TRUNCATE TABLE users CASCADE",
 	}
 
-	// Execute truncate queries in transaction
 	tx, err := td.DB.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
 
 	for _, query := range truncateQueries {
 		if _, err := tx.Exec(ctx, query); err != nil {

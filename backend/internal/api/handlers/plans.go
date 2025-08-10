@@ -16,8 +16,7 @@ import (
 )
 
 type PlanHandler struct {
-	Db       *db.Database
-	planRepo *repository.PlansRepository
+	Db *db.Database
 }
 
 type ListPlansResponse struct {
@@ -83,7 +82,7 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		planRepo := repository.PlansRepository{Queries: queries}
 
 		limit := filterParser.GetLimit(100)
@@ -141,12 +140,9 @@ func (h *PlanHandler) List(w http.ResponseWriter, r *http.Request) {
 		// This shouldn't happen due to earlier validation, but handle gracefully
 		result := []types.Plan{}
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(&result)
 	})
-
-	if success {
-		w.WriteHeader(http.StatusOK)
-	}
 }
 
 func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +172,7 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Creating plan with name=%s, userId=%d, isTemplate=%v, isPublic=%v",
 		args.Name, args.UserId, args.IsTemplate, args.IsPublic)
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		// Create repository directly - no service layer needed
 		planRepo := repository.PlansRepository{Queries: queries}
 
@@ -202,11 +198,6 @@ func (h *PlanHandler) Create(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		return json.NewEncoder(w).Encode(apiPlan)
 	})
-
-	if !success {
-		// Error already handled by WithTransaction
-		return
-	}
 }
 
 func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
@@ -267,7 +258,6 @@ func (h *PlanHandler) Edit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PlanHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	// Log the incoming request for debugging
 	log.Printf("Handling plans Delete request: %s %s", r.Method, r.URL.String())
 
 	id, err := api_utils.ParseBigInt(chi.URLParam(r, "id"))
@@ -278,7 +268,7 @@ func (h *PlanHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Deleting plan with ID: %d", id)
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		planRepo := repository.PlansRepository{Queries: queries}
 
 		if err := planRepo.DeletePlan(r.Context(), id); err != nil {
@@ -292,10 +282,7 @@ func (h *PlanHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Printf("Successfully deleted plan with ID: %d", id)
+		w.WriteHeader(http.StatusNoContent)
 		return nil
 	})
-
-	if success {
-		w.WriteHeader(http.StatusNoContent)
-	}
 }

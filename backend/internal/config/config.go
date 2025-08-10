@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -15,7 +16,10 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		return nil, errors.New("failed to load environment variables")
+	}
 
 	config := &Config{
 		HostName:    getEnv("HOST_NAME", "dev.rocket"),

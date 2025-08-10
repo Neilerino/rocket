@@ -92,7 +92,6 @@ func (db *Database) Close() {
 }
 
 func (db *Database) InitializeTables() error {
-	// Load all schema files (prefixed with "schema_")
 	schemaQueries, err := loadSQLFiles("schema")
 	if err != nil {
 		return fmt.Errorf("error loading schema files: %w", err)
@@ -103,10 +102,8 @@ func (db *Database) InitializeTables() error {
 	if err != nil {
 		return fmt.Errorf("error starting transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
 
 	for _, query := range schemaQueries {
-		// Print Query
 		fmt.Println(query)
 		if _, err := tx.Exec(ctx, query); err != nil {
 			return fmt.Errorf("error executing schema query: %w", err)

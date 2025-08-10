@@ -24,7 +24,7 @@ type ApiResponse struct {
 		Message string `json:"message"`
 		Details string `json:"details,omitempty"`
 	} `json:"error,omitempty"`
-	Meta map[string]interface{} `json:"meta,omitempty"`
+	Meta map[string]any `json:"meta,omitempty"`
 }
 
 // TestPlansListWithMiddleware tests that the plans list handler works with the response middleware
@@ -55,7 +55,7 @@ func TestPlansListWithMiddleware(t *testing.T) {
 
 	// Create a router with our middleware
 	r := chi.NewRouter()
-	
+
 	// Add the response middleware
 	r.Use(middleware.ResponseMiddleware)
 
@@ -88,12 +88,12 @@ func TestPlansListWithMiddleware(t *testing.T) {
 	// Verify the response structure
 	assert.True(t, response.Success)
 	assert.Nil(t, response.Error)
-	
+
 	// Parse the data into our expected format
 	var plans []types.Plan
 	err = json.Unmarshal(response.Data, &plans)
 	require.NoError(t, err)
-	
+
 	// Verify the data content
 	assert.Len(t, plans, 2)
 	assert.Equal(t, int64(1), plans[0].ID)
@@ -193,10 +193,11 @@ func (h *TestPlanHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the plans - use json.Marshal instead of json.NewEncoder to avoid trailing newline
 	w.Header().Set("Content-Type", "application/json")
 	planData, _ := json.Marshal(plans)
-	w.Write(planData)
+	_, err = w.Write(planData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
-
-// Note: MockPlansRepository and MockPlansService are defined in flexible_filtering_test.go

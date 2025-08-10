@@ -18,10 +18,18 @@ func main() {
 
 	switch os.Args[1] {
 	case "server":
-		serverCmd.Parse(os.Args[2:])
+		err := serverCmd.Parse(os.Args[2:])
+		if err != nil {
+			fmt.Println("error parsing server command:", err)
+			os.Exit(1)
+		}
 		cmd.Server()
 	case "migrate":
-		migrateCmd.Parse(os.Args[2:])
+		err := migrateCmd.Parse(os.Args[2:])
+		if err != nil {
+			fmt.Println("error parsing migrate command:", err)
+			os.Exit(1)
+		}
 		cmd.Migrate()
 	default:
 		fmt.Println("expected 'server' or 'migrate' subcommands")

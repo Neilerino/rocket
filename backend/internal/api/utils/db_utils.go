@@ -14,10 +14,9 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-// logErrorWithLocation logs an error with file and line information
 func logErrorWithLocation(err error) {
 	if err != nil {
-		_, file, line, ok := runtime.Caller(2) // Get caller of the function that called logErrorWithLocation
+		_, file, line, ok := runtime.Caller(2)
 		if ok {
 			file = filepath.Base(file)
 			log.Printf("ERROR [%s:%d] %v", file, line, err)
@@ -28,7 +27,6 @@ func logErrorWithLocation(err error) {
 }
 
 func WriteError(w http.ResponseWriter, status int, message string) {
-	// Log the error with its location
 	log.Printf("HTTP %d Error: %s", status, message)
 	_, file, line, ok := runtime.Caller(1)
 	if ok {
@@ -38,9 +36,14 @@ func WriteError(w http.ResponseWriter, status int, message string) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(ErrorResponse{
+	err := json.NewEncoder(w).Encode(ErrorResponse{
 		Error: message,
 	})
+
+	if err != nil {
+		logErrorWithLocation(err)
+		log.Printf("Failed to write error response: %v", err)
+	}
 }
 
 func WithTransaction(ctx context.Context, db *db.Database, w http.ResponseWriter, fn func(*db.Queries) error) bool {

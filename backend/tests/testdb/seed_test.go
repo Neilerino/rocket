@@ -73,7 +73,7 @@ func TestSeedTestData(t *testing.T) {
 	// Test 7: Verify complex relationship (prescriptions with variations)
 	var prescriptionCount int
 	query := `
-		SELECT COUNT(*) 
+		SELECT COUNT(*)
 		FROM interval_exercise_prescriptions iep
 		JOIN exercise_variations ev ON iep.exercise_variation_id = ev.id
 		JOIN exercises e ON ev.exercise_id = e.id
@@ -141,10 +141,8 @@ func TestSeedDataReset(t *testing.T) {
 	err = testDB.SeedTestData(ctx)
 	require.NoError(t, err, "Failed to re-seed test data")
 
-	// Verify data is back
 	tx2, err := testDB.DB.Begin(ctx)
 	require.NoError(t, err, "Failed to start re-verification transaction")
-	defer tx2.Rollback(ctx)
 
 	err = tx2.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&userCount)
 	require.NoError(t, err, "Failed to count users after re-seed")
