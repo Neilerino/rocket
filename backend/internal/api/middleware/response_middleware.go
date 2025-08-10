@@ -18,10 +18,10 @@ import (
 //	  meta?: Record<string, any>;
 //	}
 type ApiResponseWrapper struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   *ApiError   `json:"error,omitempty"`
-	Meta    interface{} `json:"meta,omitempty"`
+	Success bool      `json:"success"`
+	Data    any       `json:"data,omitempty"`
+	Error   *ApiError `json:"error,omitempty"`
+	Meta    any       `json:"meta,omitempty"`
 }
 
 // ApiError represents the error structure expected by the frontend
@@ -58,9 +58,7 @@ func ResponseMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// Check if the response is already in the correct format
 		if isApiResponseFormat(body) {
-			// Just write the response as is
 			w.WriteHeader(response.StatusCode)
 			_, err := w.Write(body)
 			if err != nil {
@@ -70,30 +68,24 @@ func ResponseMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Create a standardized response
 		standardizedResponse := ApiResponseWrapper{
 			Success: response.StatusCode >= 200 && response.StatusCode < 300,
 		}
 
-		// Handle different status codes
 		if response.StatusCode >= 400 {
-			// Error response
 			var errorMessage string
 			var errorDetails string
 
-			// Try to parse the error response body
 			if len(body) > 0 {
-				var parsedError map[string]interface{}
+				var parsedError map[string]any
 				if err := json.Unmarshal(body, &parsedError); err == nil {
 					if msg, ok := parsedError["error"].(string); ok {
 						errorMessage = msg
 					}
 				} else {
-					// Use the raw body as the error message
 					errorMessage = string(body)
 				}
 			} else {
-				// Use default error message based on status code
 				errorMessage = http.StatusText(response.StatusCode)
 			}
 
@@ -103,36 +95,29 @@ func ResponseMiddleware(next http.Handler) http.Handler {
 				Details: errorDetails,
 			}
 		} else if len(body) > 0 {
-			// Successful response with body
-			var parsedData interface{}
+			var parsedData any
 			if err := json.Unmarshal(body, &parsedData); err != nil {
-				// If we can't parse the JSON, use it as raw data
 				standardizedResponse.Data = string(body)
 			} else {
 				standardizedResponse.Data = parsedData
 			}
 		}
 
-		// Set content type header for our JSON response
 		w.Header().Set("Content-Type", "application/json")
-
-		// Write the status code
 		w.WriteHeader(response.StatusCode)
 
-		// Write the standardized response
 		if err := json.NewEncoder(w).Encode(standardizedResponse); err != nil {
 			log.Printf("Error encoding response: %v", err)
 		}
 	})
 }
 
-// isApiResponseFormat checks if the response is already in the ApiResponseWrapper format
 func isApiResponseFormat(body []byte) bool {
 	if len(body) == 0 {
 		return false
 	}
 
-	var response map[string]interface{}
+	var response map[string]any
 	if err := json.Unmarshal(body, &response); err != nil {
 		return false
 	}
@@ -143,7 +128,7 @@ func isApiResponseFormat(body []byte) bool {
 }
 
 // StandardizeResponse is a utility function to create an ApiResponseWrapper with data
-func StandardizeResponse(data interface{}) ApiResponseWrapper {
+func StandardizeResponse(data any) ApiResponseWrapper {
 	return ApiResponseWrapper{
 		Success: true,
 		Data:    data,
