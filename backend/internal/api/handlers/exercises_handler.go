@@ -86,7 +86,7 @@ func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
 		dbExercise, err := exercise_repo.CreateExercise(r.Context(), args.Name, args.Description, args.UserId)
@@ -105,10 +105,6 @@ func (h *ExercisesHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 		return json.NewEncoder(w).Encode(apiExercise)
 	})
-
-	if success {
-		return
-	}
 }
 
 func (h *ExercisesHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +120,7 @@ func (h *ExercisesHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
+	api_utils.WithTransaction(r.Context(), h.Db, w, func(queries *db.Queries) error {
 		// Create repository directly - no service layer needed
 		exercise_repo := repository.ExercisesRepository{Queries: queries}
 
@@ -137,12 +133,9 @@ func (h *ExercisesHandler) Update(w http.ResponseWriter, r *http.Request) {
 		apiExercise := dbExerciseToApiExercise(*dbExercise)
 
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		return json.NewEncoder(w).Encode(apiExercise)
 	})
-
-	if success {
-		w.WriteHeader(http.StatusOK)
-	}
 }
 
 func (h *ExercisesHandler) Delete(w http.ResponseWriter, r *http.Request) {

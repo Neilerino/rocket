@@ -32,7 +32,6 @@ func TestSeedTestData(t *testing.T) {
 	// Verify seed data was loaded correctly
 	tx, err := testDB.DB.Begin(ctx)
 	require.NoError(t, err, "Failed to start verification transaction")
-	defer tx.Rollback(ctx)
 
 	// Test 1: Verify users were created
 	var userCount int
@@ -122,7 +121,6 @@ func TestSeedDataReset(t *testing.T) {
 	// Verify data was cleared
 	tx, err := testDB.DB.Begin(ctx)
 	require.NoError(t, err, "Failed to start verification transaction")
-	defer tx.Rollback(ctx)
 
 	var userCount int
 	err = tx.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&userCount)

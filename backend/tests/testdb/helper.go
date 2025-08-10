@@ -188,7 +188,6 @@ func (td *TestDatabase) Health(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start health check transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
 
 	// Simple query to verify database is responsive
 	var result int
@@ -221,7 +220,6 @@ func (td *TestDatabase) QuickReset(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
 
 	for _, query := range deleteQueries {
 		if _, err := tx.Exec(ctx, query); err != nil {
